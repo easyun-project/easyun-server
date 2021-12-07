@@ -1,5 +1,5 @@
 # Everything the developer needs in addition to the production requirements
--r prod.txt
+-r min.txt
 
 # Testing
 pytest==6.2.5

@@ -1,6 +1,7 @@
 # Mini needed in Development
 
-boto3==1.20.10
-APIFlask==0.10.0
+APIFlask==0.11.0
 Flask-SQLAlchemy==2.5.1
+Flask-Migrate==3.1.0
 Flask-Cors==3.0.10
+boto3==1.20.21

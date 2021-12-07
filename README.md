@@ -23,7 +23,7 @@
     │  ├─common                 通用组件
     │  │  ├─auth.py             认证模块
     │  │  ├─models.py           模型定义
-    │  │  └─errors.p            错误消息定义
+    │  │  └─result.py           返回响应体定义
     │  ├─modules                功能组件
     │  │  ├─account             账户管理BP
     │  │  ├─dashboard           监控面板BP
@@ -34,7 +34,7 @@
     │  │  └─mstorage            存储管理BP
     │  ├─templates          
     │  │    └─no_need
-    │  └─easyun.db              数据库文件         
+    │  └─base.db              数据库文件         
     ├─keys                      KeyPair缓存   
     ├─logs                      运行日志
     ├─requirements              环境依赖
