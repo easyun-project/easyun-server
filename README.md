@@ -14,6 +14,48 @@
 - 采用 Cloud Control API 对受支持资源通过统一的方法实现生命周期管理；
 - 基于蓝图(BlurPrint)对功能模块进行拆分，一个目录/文件就是一个功能模块
 
+## 启动项目
+
+clone:
+```
+$ git clone https://github.com/aleck31/Easyun.git
+$ cd Easyun/server
+```
+
+create & activate virtual env then install dependency:
+with venv + pip:
+```
+$ python -m venv env  # use `virtualenv env` for Python2, use `python3 ...` for Python3 on Linux & macOS
+$ source env/bin/activate  # use `env\Scripts\activate` on Windows
+$ pip install -r requirements/min.txt
+```
+
+run:
+with flask cli:
+```
+$ flask run -p 6660
+* Running on http://127.0.0.1:6660/
+```
+with python:
+```
+$ python run.py # use python3 run.py for python3 on Linux & macOS
+```
+
+api docs:
+open url: http://127.0.0.1:6660/ with browser
+
+### 相关命令
+
+1. 初始化数据库
+```
+$ flask initdb
+```
+2. 删除数据库
+
+```
+$ flask dropdb
+```
+
 # 目录结构
 
 ```
@@ -44,32 +86,3 @@
     └─run.py                    启动脚本
 ```
 
-## 启动项目
-
-clone:
-```
-$ git clone https://github.com/aleck31/Easyun.git
-$ cd Easyun/server
-```
-
-create & activate virtual env then install dependency:
-with venv + pip:
-```
-$ python -m venv env  # use `virtualenv env` for Python2, use `python3 ...` for Python3 on Linux & macOS
-$ source env/bin/activate  # use `env\Scripts\activate` on Windows
-$ pip install -r requirements/min.txt
-```
-
-run:
-with flask cli:
-```
-$ flask run -p 6660
-* Running on http://127.0.0.1:6660/
-```
-with python:
-```
-$ python run.py # use python3 run.py for python3 on Linux & macOS
-```
-
-api docs:
-open url: http://127.0.0.1:6660/ with browser
