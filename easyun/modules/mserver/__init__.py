@@ -16,4 +16,4 @@ REGION = "us-east-1"
 # REGION = dc.get_region()
 FLAG = "Easyun"
 
-from . import server_add, server_act, server_get, server_mod
+from . import server_add, server_act, server_get, server_mod, server_parm
