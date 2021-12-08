@@ -9,7 +9,7 @@ from apiflask.validators import Length, OneOf
 from apiflask.fields import String, Integer
 from .. import db
 from .models import User
-from .result import make_resp, error_resp, bad_request
+from .result import Result, make_resp, error_resp, bad_request
 
 # define api version
 ver = '/api/v1'
@@ -108,7 +108,8 @@ def post_auth_token(user):
         # token = auth_token.current_user.get_token()
         token = login_user.get_token()
         db.session.commit()
-        return make_resp('Success', 200, {'token': token}) ,201
+        res = Result({'token': token}, http_status_code=201)
+        return res.make_resp()
         # jsonify({'token': token})
     else:
         return error_resp(401)

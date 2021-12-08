@@ -18,8 +18,9 @@ from flask_migrate import Migrate
 # define api version
 ver = '/api/v1.0'
 
-# db variable initialization
+# extensions initialization
 db = SQLAlchemy()
+cors = CORS()
 
 class BaseResponseSchema(Schema):
     message = String()
@@ -38,10 +39,9 @@ def create_app(run_env=None):
     # the data key should match the data field name in the base response schema
     # defaults to "data"
     app.config['BASE_RESPONSE_DATA_KEY'] = 'detail'
-
-    CORS(app)
-
-    db.init_app(app)
+    
+    # 初始化扩展
+    register_extensions(app=app)
 
     @app.before_first_request
     def init_database():
@@ -84,3 +84,7 @@ def configure_logger(app):
         file_handler.setLevel(logging.INFO)
         if not app.logger.handlers:
             app.logger.addHandler(file_handler)    
+
+def register_extensions(app:APIFlask):
+    db.init_app(app)
+    cors.init_app(app)
