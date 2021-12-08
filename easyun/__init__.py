@@ -59,15 +59,17 @@ def create_app(run_env=None):
 
 
 # 注册 Flask blueprints
-def register_blueprints(app):
+def register_blueprints(app:APIFlask):
     """Register Flask blueprints."""
     from .common import auth
     from .modules import mserver
     from .modules import datacenter
+    from .modules import account
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(mserver.bp)
     app.register_blueprint(datacenter.bp)
+    app.register_blueprint(account.bp)
     return None
 
 def configure_logger(app):
