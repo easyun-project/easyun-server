@@ -8,6 +8,7 @@ import logging
 from apiflask import APIFlask, Schema
 from apiflask.fields import String, Integer, Field, Nested
 from logging.handlers import RotatingFileHandler
+import click
 from flask_sqlalchemy import SQLAlchemy
 from config import env_config
 from flask_cors import CORS
@@ -42,11 +43,8 @@ def create_app(run_env=None):
     
     # 初始化扩展
     register_extensions(app=app)
-
-    @app.before_first_request
-    def init_database():
-        db.create_all()
-        return None
+    # 注册自定义命令
+    register_commands(app=app)
 
     migrate = Migrate(app, db, compare_type=True)
 
@@ -86,5 +84,26 @@ def configure_logger(app):
             app.logger.addHandler(file_handler)    
 
 def register_extensions(app:APIFlask):
+    """初始化扩展
+
+    Args:
+        app (APIFlask): application实例
+    """
     db.init_app(app)
     cors.init_app(app)
+
+def register_commands(app:APIFlask):
+    """注册自定义命令
+
+    Args:
+        app (APIFlask): application实例
+    """
+    @app.cli.command()
+    def initdb():
+        db.create_all()
+        click.echo("init dev databses.")
+    
+    @app.cli.command()
+    def dropdb():
+        db.drop_all()
+        click.echo("drop dev databses.")
