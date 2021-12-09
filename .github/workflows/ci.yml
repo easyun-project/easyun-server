@@ -18,6 +18,6 @@ jobs:
 
       # Runs a set of commands using the runners shell
       - name: Push to ec2 instance
-        run: 
-          git remote add prod ssh://ec2-user@54.156.105.123/home/ec2-user/cicd/flask-easyun-server.git
+        run: |
+          git remote add prod ssh://ec2-user@54.156.105.123/home/ec2-user/cicd/flask-easyun-server.git && 
           git push prod master
