@@ -43,6 +43,10 @@ def create_app(run_env=None):
     
     # 初始化扩展
     register_extensions(app=app)
+   # 初始化云环境基础信息
+   # (功能待实现，目前手动导表)
+    register_aws_env()
+
     # 注册自定义命令
     register_commands(app=app)
 
@@ -93,6 +97,17 @@ def register_extensions(app:APIFlask):
     """
     db.init_app(app)
     cors.init_app(app)
+
+
+def register_aws_env():
+    """注册云环境基础信息"""
+    # 获取 account_id
+    # 获取 Region
+    # 判断 account_type
+    # 获取 iam_role
+    # 数据写入 database
+    pass
+
 
 def register_commands(app:APIFlask):
     """注册自定义命令

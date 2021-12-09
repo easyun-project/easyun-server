@@ -8,7 +8,7 @@ from apiflask import APIBlueprint, HTTPTokenAuth, HTTPBasicAuth, auth_required, 
 from apiflask.validators import Length, OneOf
 from apiflask.fields import String, Integer
 from .. import db
-from .models import User
+from .models import User, Account
 from .result import Result, make_resp, error_resp, bad_request
 
 # define api version
@@ -42,8 +42,10 @@ def token_auth_error(status):
 
 
 class UserInSchema(Schema):
-    username = String(required=True, validate=Length(0, 20))
-    password = String(required=True, validate=Length(0, 30))
+    username = String(required=True, validate=Length(0, 20), 
+                    example="admin")
+    password = String(required=True, validate=Length(0, 30),
+                    example="admin")
 
 class UserOutSchema(Schema):
     id = Integer()
@@ -76,9 +78,11 @@ def add_user(newuser):
 
 
 class NewPassword(Schema):
-    password = String(required=True, validate=Length(0, 20))
+    password = String(
+        required=True, validate=Length(0, 20),
+        example="password")
 
-@bp.put('/change_password')
+@bp.put('/change_pwd')
 @auth_required(auth_token)
 @input(NewPassword)
 @output({}, 204, description='Password changed.')
@@ -108,7 +112,14 @@ def post_auth_token(user):
         # token = auth_token.current_user.get_token()
         token = login_user.get_token()
         db.session.commit()
-        res = Result({'token': token}, http_status_code=201)
+        # get account info from database
+        curr_account = Account.query.first()
+        res = Result({
+            'token': token,
+            'account_id': curr_account.account_id,
+            'account_type': curr_account.type,
+            'role': curr_account.role}, 
+            status_code=1001)    
         return res.make_resp()
         # jsonify({'token': token})
     else:
