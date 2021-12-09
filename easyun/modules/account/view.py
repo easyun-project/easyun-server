@@ -22,3 +22,15 @@ def aws_info():
     except Exception as e:
         res = Result(message=str(e), status_code=2001)
         res.err_resp()
+
+
+@bp.get("/test-cicd")
+def test():
+    try:
+        return "ok-cicd"
+        account:Account = Account.query.first()
+        res = Result(detail=account)
+        return res.make_resp()
+    except Exception as e:
+        res = Result(message=str(e), status_code=2001)
+        res.err_resp()
