@@ -31,7 +31,7 @@ class OperateOut(Schema):
     svr_ids = List(String) 
 
 @bp.post('/action')
-# @auth_required(auth_token)
+@auth_required(auth_token)
 @input(OperateIn)
 @output(OperateOut, description='Operation finished !')
 def operate_svr(operate):
@@ -59,7 +59,7 @@ def operate_svr(operate):
 
 
 @bp.delete('/delete')
-# @auth_required(auth_token)
+@auth_required(auth_token)
 @input(OperateIn)
 @output(OperateOut)
 def del_svr(operate):

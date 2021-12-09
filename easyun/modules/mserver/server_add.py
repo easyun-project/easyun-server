@@ -78,7 +78,7 @@ class NewSvrSchema(Schema):
 
 # 新增server
 @bp.post('/add')
-# @auth_required(auth_token)
+@auth_required(auth_token)
 @input(AddSvr)
 @output(NewSvrSchema)
 def add_server(newsvr):

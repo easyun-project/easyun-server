@@ -10,18 +10,8 @@ from easyun.common.models import Account
 import boto3
 import os
 import json
+from . import bp, REGION, FLAG, VERBOSE
 # from . import vpc_act
-# define api version
-ver = '/api/v1.0'
-
-bp = APIBlueprint('数据中心管理', __name__, url_prefix = ver) 
-
-REGION = "us-east-1"
-# REGION = Account().region
-FLAG = "Easyun"
-VERBOSE = 1
-
-from . import datacenter_add
 
 
 # 云服务器参数定义
@@ -60,13 +50,13 @@ class AddDatacenter(Schema):
     sgs3 = String(required=True ) 
     keypair = String(required=True)
 
-# 新建Datacenter
-@bp.post('/datacenter')
+
+@bp.post('/add_dc')
 @auth_required(auth_token)
 @input(AddDatacenter)
 @output({}, 201, description='add A new Datacenter')
-
 def add_datacenter(data):
+    '''新增 Datacenter'''
     # create easyun vpc
     # create 2 x pub-subnet
     # create 2 x pri-subnet
@@ -365,12 +355,13 @@ class VpcListOut(Schema):
     sgs = String() 
     keypair = String()
 
-# 获取当前Datacenter环境信息
-@bp.get('/datacenters')
-@auth_token.login_required
+
+@bp.get('/dc_info')
+@auth_required(auth_token)
 @input(VpcListIn)
 @output(VpcListOut, description='Get Datacenter info')
 def get_vpc(vpc_id):
+    '''获取当前Datacenter资源信息'''
     # get vpc info
     # get subnet info
     # get securitygroup info
@@ -391,13 +382,13 @@ def get_vpc(vpc_id):
     return '' #datacenter id
 
 
-# 删除Datacenter
+
 @bp.post('/cleanup')
 @auth_token.login_required
 @input({})
 @output({}, 201, description='Remove the Datacenter')
-
-def remove_datacenter(newdc):
+def remove_datacenter(this_dc):
+    '''删除Datacenter'''
     # delete easyun vpc
     # delete 2 x pub-subnet
     # delete 2 x pri-subnet

@@ -56,7 +56,7 @@ class DataCenterListOut(Schema):
 @auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Info')
 def get_datacentercfg():
-    '''获取Easyun环境下云数据中心信息'''
+    '''获取创建云数据中心默认参数'''
     RESOURCE = boto3.resource('ec2', region_name=REGION)
     vpcs = RESOURCE.describe_vpcs(Filters=[
             {'Name': 'tag:FLAG','Values': [FLAG],},
