@@ -1,3 +1,4 @@
+name: Deploy-to-DevServer(ec2)
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -24,7 +25,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY_USEAST1 }}
           SOURCE: "./"
-          REMOTE_HOST: ${{secrets.IP_USEAST1}}
+          REMOTE_HOST: ${{ secrets.IP_USEAST1 }}
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/easyun-server"
           EXCLUDE: ".git/, .venv"
