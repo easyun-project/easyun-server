@@ -11,7 +11,7 @@ from apiflask.validators import Length, OneOf
 from flask import jsonify
 from werkzeug.wrappers import response
 from easyun.common.auth import auth_token
-from easyun.common.result import make_resp, error_resp, bad_request,Result
+from easyun.common.result import Result, make_resp, error_resp, bad_request
 from . import bp, REGION, FLAG
 
 
@@ -53,11 +53,11 @@ Svrargs = {
         ]
 }
 
-class AddSvr(Schema):
+class SvrParmIn(Schema):
     name = String(                          #云服务器名称
         required=True, 
         validate=Length(0, 30),
-        example="new_server_name"
+        example="server_name"
     ) 
     Number = Integer(required=True, example=1)            #新建云服务器数量
     ImageId = String(required=True, example="ami-083654bd07b5da81d")          #ImageId
@@ -86,7 +86,7 @@ class NewSvrSchema(Schema):
 # 新增server
 @bp.post('/add')
 @auth_required(auth_token)
-@input(AddSvr)
+@input(SvrParmIn)
 # @output(NewSvrSchema)
 def add_server(newsvr):
     '''新建云服务器'''

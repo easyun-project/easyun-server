@@ -13,12 +13,7 @@ from . import bp, REGION, FLAG
 from flask import jsonify
 
 
-
-class SvrListIn(Schema):
-    ami_id = Integer()
-
-
-class SvrListOut(Schema):
+class DetailOut(Schema):
     ins_id = String()
     tag_name = Dict()
     ins_status = String()
@@ -31,37 +26,9 @@ class SvrListOut(Schema):
     category = String()
 
 
-@bp.get('/list')
+@bp.get('/detail/<svr_id>')
 @auth_required(auth_token)
-@output(SvrListOut, description='Get Servers list')
-def list_svrs():
-    '''获取Easyun环境下云服务器列表'''
-    RESOURCE = boto3.resource('ec2', region_name=REGION)
-    servers = RESOURCE.instances.filter(
-    Filters=[
-        {'Name': 'tag:Flag','Values': [FLAG]}
-    ])
-    svrlist = {}
-    for server in servers:
-        svrlist[str(server)]= server.id
-    return jsonify(svrlist) 
-
-
-class SvrDetail(Schema):
-    ins_id = String()
-    tag_name = Dict()
-    ins_status = String()
-    ins_type = String()
-    vcpu = Integer()
-    ram = String()
-    subnet_id = String()
-    ssubnet_id = String()
-    key_name = String()
-    category = String()
-
-@bp.get('/<svr_id>')
-@auth_required(auth_token)
-@output(SvrDetail, description='Server detail info')
+# @output(DetailOut, description='Server detail info')
 def get_svr(svr_id):
     '''查看指定云服务器详情'''
     CLIENT = boto3.client('ec2', region_name=REGION)

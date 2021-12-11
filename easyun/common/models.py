@@ -105,7 +105,7 @@ class Datacenter(db.Model):
     cloud = db.Column(db.String(20), nullable=False)                # Cloud Provider: AWS
     account_id = db.Column(db.String(30), nullable=False)           # Account ID
     region = db.Column(db.String(120))          # Deployed Region
-    vpc_id = db.Column(db.String(30))           # VPC ID 
+    vpc_id = db.Column(db.String(120))           # VPC ID 
     credate = db.Column(db.Date)                # Datacenter Create date
 
     def get_region(self):
