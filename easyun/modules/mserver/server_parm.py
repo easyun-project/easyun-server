@@ -161,14 +161,26 @@ def list_ins_types(InstypesIn):
     
     try:
         client_ec2 = boto3.client('ec2', region_name = REGION)
-        instypes = client_ec2.describe_instance_types(
-            #InstanceTypes=['t2.micro']
-            Filters = filters,
-        )  
-        
+        # instypes = client_ec2.describe_instance_types(
+        #     #InstanceTypes=['t2.micro']
+        #     Filters = filters,
+        # )  
+        describe_args = {}
+        ec2_types = []
+        while True:
+            describe_result = client_ec2.describe_instance_types(
+                **describe_args,
+                Filters = filters,
+            )
+    #         print(describe_result.keys())
+            for i in describe_result['InstanceTypes']:
+                ec2_types.append(i['InstanceType'])
+            if 'NextToken' not in describe_result:
+                break
+            describe_args['NextToken'] = describe_result['NextToken']
         # return instypes
         response = Result(
-            detail = instypes['InstanceTypes'],
+            detail = ec2_types,
             status_code=3001
         )
         return response.make_resp()
