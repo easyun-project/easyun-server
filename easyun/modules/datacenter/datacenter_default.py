@@ -47,9 +47,6 @@ class DataCenterListOut(Schema):
     region_name = String()
     az = String()
     ins_status = String()
-    ins_type = String()
-    vcpu = Integer()
-    ram = String()
     subnet_id = String()
     ssubnet_id = String()
     key_name = String()
@@ -57,7 +54,7 @@ class DataCenterListOut(Schema):
 
 
 @bp.get('/default')
-@auth_required(auth_token)
+#@auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Info')
 def get_datacentercfg():
     '''获取创建云数据中心默认参数'''

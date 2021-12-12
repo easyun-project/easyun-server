@@ -43,9 +43,14 @@ class datacentersdk():
 
 
     def add_VPC_db(vpc,region):
-        new_datacenter = Datacenter(id=1,name='Easyun',cloud='AWS', account='', region=region,vpc_id=vpc.id,credate=datetime.date())
+        print('entering add_VPC_db')
+        new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
+        print(new_datacenter)
         db.session.add(new_datacenter)
         
+        datacenter = Datacenter.query.filter(id=2).first()
+        print(datacenter)
+
 
 
     def view_func(request):

@@ -46,11 +46,11 @@ class DataCenterListIn(Schema):
 class DataCenterListOut(Schema):
     region_name = String()
     vpc_id = String()
-    az = String()
+    azs = List(String)
     
 
-@bp.get('/datacenter/all')
-@auth_required(auth_token)
+@bp.get('/all')
+#@auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Region Info')
 def get_datacenter_all():
     '''获取Easyun环境下云数据中心信息'''
@@ -69,19 +69,19 @@ def get_datacenter_all():
         list1.append(azs['AvailabilityZones'][i]['ZoneName'])
 
     svc_resp = {
-        'region': REGION,
+        'region_name': REGION,
         'vpc_id': 'easyrun',
         'azs': list1
     }
 
-    response = Result(detail = svc_resp, status_code=3001)
+    response = Result(detail=svc_resp, status_code=3001)
 
     return response.make_resp()
 
 
-@bp.get('/datacenter/AZ')
-@auth_required(auth_token)
-@output(DataCenterListOut, description='Get DataCenter AZ Info')
+@bp.get('/AZ')
+#@auth_required(auth_token)
+@output(DataCenterListOut(many=True), description='Get DataCenter AZ Info')
 def get_datacenter_AZ():
     '''获取Easyun环境下云数据中心信息'''
     RESOURCE = boto3.resource('ec2', region_name=REGION)
@@ -98,9 +98,9 @@ def get_datacenter_AZ():
 
         list_resp = []
         svc = {
-            'region': REGION,
+            'region_name': REGION,
             'vpc_id': 'easyrun',
-            'azs': list1
+            'azs': ['1', '2']
         }
 
         list_resp.append(svc)

@@ -101,4 +101,4 @@ TagEasyun= [{
                     'Easyun'
             }]
 
-from . import datacenter_add, datacenter_default, datacenter_get, datacentersdk
+from . import datacenter_add, datacenter_default, datacenter_get, datacenter_sdk
