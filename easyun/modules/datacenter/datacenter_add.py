@@ -126,7 +126,6 @@ def add_datacenter(data):
 
     list_resp = []
 
-    print('haha' + str(list_resp))
     try:
         vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC)
         print('VPC ID= '+ vpc.id )
@@ -136,6 +135,7 @@ def add_datacenter(data):
         }
 
         list_resp.append(svc)
+        print('haha' + str(list_resp))
 
         response = Result(detail = list_resp, status_code=3001)
 
@@ -144,7 +144,8 @@ def add_datacenter(data):
 
     except Exception:
         response = Result(message='Datacenter VPC creation failed, maximum VPC reached', status_code=3001,http_status_code=400)
-        response.err_resp()    
+        response.err_resp()   
+         
 
 
     # step 2: create Internet Gateway
