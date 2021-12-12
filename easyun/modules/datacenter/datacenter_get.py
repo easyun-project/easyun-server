@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: DataCenter Management - Get info: Data Center
-@LastEditors: 
-'''
+"""
+  @author:  pengchang
+  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
+  @file:    datacenter_get.py
+  @desc:    The DataCenter Get module
+"""
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
+from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
 from . import bp, REGION, FLAG
 from flask import jsonify
@@ -42,38 +45,38 @@ class DataCenterListIn(Schema):
 
 class DataCenterListOut(Schema):
     region_name = String()
+    vpc_id = String()
     az = String()
-    ins_status = String()
-    ins_type = String()
-    vcpu = Integer()
-    ram = String()
-    subnet_id = String()
-    ssubnet_id = String()
-    key_name = String()
-    category = String()
+    
 
-
-@bp.get('/datacenter/region')
+@bp.get('/datacenter/all')
 @auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Region Info')
-def get_datacenter_region():
+def get_datacenter_all():
     '''获取Easyun环境下云数据中心信息'''
     RESOURCE = boto3.resource('ec2', region_name=REGION)
+    ec2 = boto3.client('ec2', region_name=REGION)
 
-    vpcs = RESOURCE.describe_vpcs(Filters=[
-            {'Name': 'tag:FLAG','Values': [FLAG],},
-        ])
+    vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:FLAG','Values': [FLAG]}])
 
-    regions = RESOURCE.describe_regions(Filters=[
-            {'Name': 'region-name','Values': [REGION],},
-        ])
+    regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
 
-    azs = RESOURCE.describe_availability_zones(Filters=[
-            {'Name': 'group-name','Values': [REGION],},
-        ])
+    azs = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION]}])
 
+    list1=[]
+    for i in range(len(azs['AvailabilityZones'])):
+        print(azs['AvailabilityZones'][i]['ZoneName'])
+        list1.append(azs['AvailabilityZones'][i]['ZoneName'])
 
-    return (NewDataCenter['region']) 
+    svc_resp = {
+        'region': REGION,
+        'vpc_id': 'easyrun',
+        'azs': list1
+    }
+
+    response = Result(detail = svc_resp, status_code=3001)
+
+    return response.make_resp()
 
 
 @bp.get('/datacenter/AZ')
@@ -82,7 +85,32 @@ def get_datacenter_region():
 def get_datacenter_AZ():
     '''获取Easyun环境下云数据中心信息'''
     RESOURCE = boto3.resource('ec2', region_name=REGION)
-    azs = RESOURCE.describe_availability_zones(Filters=[
-            {'Name': 'group-name','Values': ['us-east-1'],},
-        ])
+    ec2 = boto3.client('ec2', region_name=REGION)
 
+    try:
+        azs = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION],}])
+        
+        list1=[]
+        for i in range(len(azs['AvailabilityZones'])):
+            print(azs['AvailabilityZones'][i]['ZoneName'])
+            list1.append(azs['AvailabilityZones'][i]['ZoneName'])
+        print('az1',str(list1))
+
+        list_resp = []
+        svc = {
+            'region': REGION,
+            'vpc_id': 'easyrun',
+            'azs': list1
+        }
+
+        list_resp.append(svc)
+        print('haha' + str(list_resp))
+
+        response = Result(detail = list_resp, status_code=3001)
+
+        print(response.make_resp())
+        return response.make_resp()
+
+    except Exception:
+        response = Result(message='datacenter query failed', status_code=3001,http_status_code=400)
+        response.err_resp()    
