@@ -76,7 +76,7 @@ class datacentersdk():
 
 
         now = datetime.utcnow()
-        datacenter = Datacenter(name='Easyun3',cloud='AWS', account_id='666621994060', region=region,vpc_id=vpc_id,create_date=now)
+        datacenter = Datacenter(name='Easyun',cloud='AWS', account_id='666621994060', region=region,vpc_id=vpc_id,create_date=now)
         # query account id from DB (only one account for both phase 1 and 2) ????
         #new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
         #dc
