@@ -106,7 +106,7 @@ class Datacenter(db.Model):
     account_id = db.Column(db.String(30), nullable=False)           # Account ID
     region = db.Column(db.String(120))          # Deployed Region
     vpc_id = db.Column(db.String(120))           # VPC ID 
-    credate = db.Column(db.Date)                # Datacenter Create date
+    create_date = db.Column(db.Date)                # Datacenter Create date
 
     def get_region(self):
         return (self.region)
