@@ -25,6 +25,11 @@ secure_group1 = 'easyun-sg-default'
 secure_group2 = 'easyun-sg-webapp'
 secure_group3 = 'easyun-sg-database'
 sg_list= ['easyun-sg-default','easyun-sg-webapp','easyun-sg-database']
+sg_dict={'easyun-sg-default' : 'Secure Group For Easyun Default',
+'easyun-sg-webapp' : 'Secure Group For Easyun Webapp',
+'easyun-sg-database' :  'Secure Group For Easyun Database'
+}
+
 
 IpPermissions1=[{
         'IpProtocol': 'tcp',
@@ -93,6 +98,11 @@ IpPermissions3=[{
         'CidrIp': '0.0.0.0/0'
     }]
 }]
+
+sg_ip_dict={'easyun-sg-default' : IpPermissions1,
+'easyun-sg-webapp' : IpPermissions2,
+'easyun-sg-database' :  IpPermissions3
+}
 
 TagEasyun= [{
                 'Key':
