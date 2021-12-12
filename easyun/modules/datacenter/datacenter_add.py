@@ -18,7 +18,7 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun
+from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict
 from  .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
@@ -132,7 +132,27 @@ def add_datacenter(data):
     # step 1: create VPC
     TagEasyunVPC= [{'ResourceType':'vpc','Tags': TagEasyun}]
 
-    list_resp = []
+    svc_list_resp = []
+
+    # datacenters = Datacenter.query.all()
+    # for datacenter in datacenters:
+    #     print(datacenter)
+    #     db.session.delete(datacenter)
+    #     db.session.commit()
+
+    # # datacenter = Datacenter.query.first()
+    # # print(datacenter)
+    # # db.session.delete(datacenter)
+    # # db.session.commit()
+
+    # now = datetime.utcnow()
+    # datacenter = Datacenter(name='Easyun2',cloud='AWS', account_id='666621994060', region=region,vpc_id='vpc_id',create_date=now)
+    # query account id from DB (only one account for both phase 1 and 2) ????
+    #new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
+    #dc
+    # #dc.from_dict(newuser, new_user=True)
+    # db.session.add(datacenter)
+    # db.session.commit()
 
     try:
         vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC)
@@ -141,18 +161,25 @@ def add_datacenter(data):
         'region': REGION,
         'vpc_id': vpc.id,
         }
-        a.add_VPC_db(vpc,REGION)
+        print('entering add_VPC_db')
 
-        list_resp.append(svc)
-        print('create_vpc1' + str(list_resp))
+        if datacentersdk.add_VPC_db('vpc.id',REGION):
+            print('db operation is ok') 
+        else:
+            print('db operatin is bad')
+            response = Result(detail ={'Result' : 'Errors'}, message='DB Insert failed', status_code=3001,http_status_code=400)
+            print(response.err_resp())
+            response.err_resp()   
 
-        response = Result(detail = svc, status_code=3001)
 
-        print(response.make_resp())
-        return response.make_resp()
-
+        svc_list_resp.append(svc)
+        print('create_vpc1' + str(svc_list_resp))
+        # response = Result(detail = svc, status_code=3001)
+        # print(response.make_resp())
+        # return response.make_resp()
     except Exception:
-        response = Result(detail ={}, message='Datacenter VPC creation failed, maximum VPC reached', status_code=3001,http_status_code=400)
+        response = Result(detail ={'Result' : 'Errors'}, message='Datacenter VPC creation failed, maximum VPC reached', status_code=3001,http_status_code=400)
+        print(response.err_resp())
         response.err_resp()   
  
 
@@ -179,14 +206,14 @@ def add_datacenter(data):
 
     # step 3: create 2 pub-subnet
 
-    a.add_subnet(ec2,vpc,route_table,public_subnet_1)
-    a.add_subnet(ec2,vpc,route_table,public_subnet_2)
-    a.add_subnet(ec2,vpc,route_table,private_subnet_1)
-    a.add_subnet(ec2,vpc,route_table,private_subnet_2)
+    datacentersdk.add_subnet(ec2,vpc,route_table,public_subnet_1)
+    datacentersdk.add_subnet(ec2,vpc,route_table,public_subnet_2)
+    natSubnetId=datacentersdk.add_subnet(ec2,vpc,route_table,private_subnet_1)
+    datacentersdk.add_subnet(ec2,vpc,route_table,private_subnet_2)
 
 
     # Create public Subnet1
-    TagEasyunSubnet= [{'ResourceType':'subnet','Tags': TagEasyun}]
+    # TagEasyunSubnet= [{'ResourceType':'subnet','Tags': TagEasyun}]
     
     # pub_subnet1 = ec2.create_subnet(CidrBlock=public_subnet_1, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
     # print('Public subnet1= '+ pub_subnet1['Subnet']['SubnetId'])
@@ -194,60 +221,32 @@ def add_datacenter(data):
     # # associate the route table with the subnet
     # route_table.associate_with_subnet(SubnetId=pub_subnet1['Subnet']['SubnetId'])
 
-    # # Create public Subnet2
-    # pub_subnet2 = ec2.create_subnet(CidrBlock=public_subnet_2, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
-    # print('Public subnet2= '+pub_subnet2['Subnet']['SubnetId'])
-
-    # # associate the route table with the subnet
-    # route_table.associate_with_subnet(SubnetId=pub_subnet2['Subnet']['SubnetId'])
-
-    # # step 3: create 2 private-subnet
-    # # Create private Subnet1
-    # private_subnet1 = ec2.create_subnet(CidrBlock=private_subnet_1, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
-    # print('Private subnet1= '+private_subnet1['Subnet']['SubnetId'])
-
-    # # associate the route table with the subnet
-    # route_table.associate_with_subnet(SubnetId=private_subnet1['Subnet']['SubnetId'])
-
-    # # Create private Subnet2
-    # private_subnet2 = ec2.create_subnet(CidrBlock=private_subnet_2, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
-    # print('Private subnet2= '+private_subnet2['Subnet']['SubnetId'])
-
-    # # associate the route table with the subnet
-    # route_table.associate_with_subnet(SubnetId=private_subnet2['Subnet']['SubnetId'])
-
     # step 2: create NAT Gateway and allocate EIP
     # allocate IPV4 address for NAT gateway
-    eip = ec2.allocate_address(Domain='vpc')
-    print(eip)
-    # create NAT gateway
-    TagEasyunNATGateway= [{'ResourceType':'natgateway','Tags': TagEasyun}]
+    try:
+        print('Entering applying EIP')
+        eip = ec2.allocate_address(Domain='vpc')
+        print(eip)
+        # create NAT gateway
+        TagEasyunNATGateway= [{'ResourceType':'natgateway','Tags': TagEasyun}]
 
-    response = ec2.create_nat_gateway(
-        AllocationId=eip['AllocationId'],
-        SubnetId=private_subnet_1['Subnet']['SubnetId'],
-        TagSpecifications=TagEasyunNATGateway,
-        ConnectivityType='public')
-    nat_gateway_id = response['NatGateway']['NatGatewayId']
+        response = ec2.create_nat_gateway(
+            AllocationId=eip['AllocationId'],
+            SubnetId=natSubnetId,
+            TagSpecifications=TagEasyunNATGateway,
+            ConnectivityType='public')
 
+        nat_gateway_id = response['NatGateway']['NatGatewayId']
+
+        # wait until the NAT gateway is available
+        waiter = ec2.get_waiter('nat_gateway_available')
+        waiter.wait(NatGatewayIds=[nat_gateway_id])
+    except Exception:
+        response = Result(detail ={'Result' : 'Errors'}, message='Datacenter VPC creation failed, maximum EIP/NAT reached', status_code=3001,http_status_code=400)
+        print(response.err_resp())
+        response.err_resp()   
+ 
     # wait until the NAT gateway is available
-    waiter = ec2.get_waiter('nat_gateway_available')
-    waiter.wait(NatGatewayIds=[nat_gateway_id])
-
-    # eip = ec2.allocate_address(Domain='vpc')
-    #
-    # # Create and Attach the NAT Gateway
-    # nat_gatway = ec2.create_nat_gateway(SubnetId=private_subnet1['Subnet']['SubnetId'],AllocationId=eip['AllocationId'],TagSpecifications=[{
-    #                                             'ResourceType':'natgateway',
-    #                                             'Tags': [{
-    #                                                 'Key':'FLAG',
-    #                                                 'Value':'easyun'
-    #                                             }]
-    #                                                 }])
-    # nat_gateway_id = nat_gatway['NatGateway']['NatGatewayId']
-    # print('NAT gateway id= '+nat_gateway_id)
-
-            # wait until the NAT gateway is available
     # waiter = client1.get_waiter('nat_gateway_available')
     # waiter.wait(nat_gateway_id)
 
@@ -260,46 +259,49 @@ def add_datacenter(data):
     TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
 
     for sg in sg_list:
-        secure_group1 = ec2.create_security_group(GroupName=sg, Description='Secure Group For Default', VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
-        ec2.authorize_security_group_ingress(
-            GroupId=secure_group1['GroupId'],
-            IpPermissions=IpPermissions1)
+        secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,sg,sg_dict[sg],sg_ip_dict[sg])
+        print('secure_group1= '+secure_groupid)
+    
+    # secure_group1 = ec2.create_security_group(GroupName=sg, Description=sg_dict[sg], VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
+    # ec2.authorize_security_group_ingress(
+    #     GroupId=secure_group1['GroupId'],
+    #     IpPermissions=IpPermissions1)
     # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=22)
     # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=3389, ToPort=3389)
     # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='icmp', FromPort=-1, ToPort=-1)
-        print('secure_group1= '+secure_group1['GroupId'])
+    
 
     # Step 5-2:  create security group easyun-sg-webapp
 
-    secure_group2 = ec2.create_security_group(GroupName='easyun-sg-webapp', Description='Secure Group For Webapp', VpcId=vpc.id,
-                                            TagSpecifications=TagEasyunSecurityGroup)
-    # secure_group2.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=80)
-    # secure_group2.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=443)
+    # secure_group2 = ec2.create_security_group(GroupName='easyun-sg-webapp', Description='Secure Group For Webapp', VpcId=vpc.id,
+    #                                         TagSpecifications=TagEasyunSecurityGroup)
+    # # secure_group2.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=80)
+    # # secure_group2.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=443)
 
-    ec2.authorize_security_group_ingress(
-    GroupId=secure_group2['GroupId'],
-    IpPermissions=IpPermissions2)
+    # ec2.authorize_security_group_ingress(
+    # GroupId=secure_group2['GroupId'],
+    # IpPermissions=IpPermissions2)
 
-    print('secure_group2= '+secure_group2['GroupId'])
+    # print('secure_group2= '+secure_group2['GroupId'])
 
-    # Step 5-3:  create security group easyun-sg-database
+    # # Step 5-3:  create security group easyun-sg-database
 
-    secure_group3 = ec2.create_security_group(GroupName='easyun-sg-database', Description='Secure Group For Database', VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
-    # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=3306)
-    # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=5432)
-    # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=1521)
-    # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=1443)
+    # secure_group3 = ec2.create_security_group(GroupName='easyun-sg-database', Description='Secure Group For Database', VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
+    # # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=3306)
+    # # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=5432)
+    # # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=1521)
+    # # secure_group3.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=1443)
     
-    ec2.authorize_security_group_ingress(
-        GroupId=secure_group3['GroupId'],
-        IpPermissions=IpPermissions3)
+    # ec2.authorize_security_group_ingress(
+    #     GroupId=secure_group3['GroupId'],
+    #     IpPermissions=IpPermissions3)
     
    
     # add_VPC_security_group(ec2,'easyun-sg-default','Secure Group For default',vpc,IpPermissions1);
     # add_VPC_security_group(ec2,'easyun-sg-webapp','Secure Group For webapp',vpc,IpPermissions2);
     # add_VPC_security_group(ec2,'easyun-sg-database','Secure Group For database',vpc,IpPermissions3);
 
-    print('secure_group3= '+secure_group3['GroupId'])
+    # print('secure_group3= '+secure_group3['GroupId'])
 
     # create key pairs
     TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
@@ -307,7 +309,11 @@ def add_datacenter(data):
     response = ec2.create_key_pair(KeyName='key-easyun-user',TagSpecifications=TagEasyunKeyPair)
     print(response)
 
-    a.add_VPC_db(vpc,REGION)
+    # a.add_VPC_db(vpc,REGION)
+    print('create_vpc1' + str(svc_list_resp))
+    response = Result(detail = svc_list_resp, status_code=3001)
+    print(response.make_resp())
+    return response.make_resp()
 
     response = Result(
         # detail = servers,
