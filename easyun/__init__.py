@@ -9,6 +9,7 @@ from apiflask import APIFlask, Schema
 from apiflask.fields import String, Integer, Field, Nested
 from logging.handlers import RotatingFileHandler
 import click
+import boto3
 from flask_sqlalchemy import SQLAlchemy
 from config import env_config
 from flask_cors import CORS
@@ -43,14 +44,11 @@ def create_app(run_env=None):
     
     # 初始化扩展
     register_extensions(app=app)
-   # 初始化云环境基础信息
-   # (功能待实现，目前手动导表)
-    register_aws_env()
 
     # 注册自定义命令
     register_commands(app=app)
 
-    migrate = Migrate(app, db, compare_type=True)
+    migrate = Migrate(app, db, compare_type=True, render_as_batch=True, compare_server_default=True)
 
     register_blueprints(app)
     configure_logger(app)
@@ -87,7 +85,7 @@ def configure_logger(app):
             '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
         file_handler.setLevel(logging.INFO)
         if not app.logger.handlers:
-            app.logger.addHandler(file_handler)    
+            app.logger.addHandler(file_handler)
 
 def register_extensions(app:APIFlask):
     """初始化扩展
@@ -95,18 +93,34 @@ def register_extensions(app:APIFlask):
     Args:
         app (APIFlask): application实例
     """
-    db.init_app(app)
+    db.init_app(app)    
     cors.init_app(app)
-
-
-def register_aws_env():
+    
     """注册云环境基础信息"""
+    from easyun.common.models import Account
+    client_sts = boto3.client('sts')
     # 获取 account_id
-    # 获取 Region
-    # 判断 account_type
+    account_id = client_sts.get_caller_identity().get('Account')
     # 获取 iam_role
+    role = client_sts.get_caller_identity().get('Arn').split('/')[1]
+    # 获取 deployed region
+    this_region = boto3.session.Session().region_name
+    # 判断 account_type
+    gcr_regions = ['cn-north-1', 'cn-northwest-1']
+    if this_region in gcr_regions:
+        type = 'GCR'
+    else:
+        type = 'Global'
+
     # 数据写入 database
-    pass
+    # exist_account = Account.query.first()
+    # if exist_account:
+    #     exist_account.update(cloud='aws', account_id=account_id, role=role, deploy_region=this_region,type=type)
+    # else:
+    #     this_account = Account(cloud='aws', account_id=account_id, role=role, deploy_region=this_region,type=type)
+    #     db.session.add(this_account)
+    # db.session.commit()
+
 
 
 def register_commands(app:APIFlask):

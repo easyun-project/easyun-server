@@ -76,16 +76,4 @@ def list_all_svrs():
         response = Result(
             message='list servers failed', status_code=3001,http_status_code=400
         )
-        response.err_resp()    
-
-class SvrDetail(Schema):
-    ins_id = String()
-    tag_name = Dict()
-    ins_status = String()
-    ins_type = String()
-    vcpu = Integer()
-    ram = String()
-    subnet_id = String()
-    ssubnet_id = String()
-    key_name = String()
-    category = String()
+        response.err_resp()
