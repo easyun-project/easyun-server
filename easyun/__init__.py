@@ -59,8 +59,7 @@ def create_app(run_env=None):
         app.logger.info('Easyun API Start')
 
     # 初始化云环境基础信息
-    # (功能待实现，目前手动导表)
-    register_aws_env()
+    set_cloud_env(app)
 
     return app
 
@@ -111,8 +110,8 @@ def register_extensions(app: APIFlask):
             migrate.init_app(app, db, compare_type=True)
 
 
-def register_aws_env():
-    """注册云环境基础信息"""
+def set_cloud_env(app: APIFlask):
+    """设置云环境基础信息"""
     from easyun.common.models import Account
     client_sts = boto3.client('sts')
     # 获取 account_id
@@ -124,18 +123,19 @@ def register_aws_env():
     # 判断 account_type
     gcr_regions = ['cn-north-1', 'cn-northwest-1']
     if this_region in gcr_regions:
-        type = 'GCR'
+        aws_type = 'GCR'
     else:
-        type = 'Global'
+        aws_type = 'Global'
 
     # 数据写入 database
-    # exist_account = Account.query.first()
-    # if exist_account:
-    #     exist_account.update(cloud='aws', account_id=account_id, role=role, deploy_region=this_region,type=type)
-    # else:
-    #     this_account = Account(cloud='aws', account_id=account_id, role=role, deploy_region=this_region,type=type)
-    #     db.session.add(this_account)
-    # db.session.commit()
+    with app.app_context():
+        exist_account = Account.query.filter_by(cloud='aws').first()
+        if exist_account:
+            exist_account.update_aws(account_id=account_id, role=role, deploy_region=this_region,aws_type=aws_type)
+        else:
+            this_account = Account(cloud='aws', account_id=account_id, role=role, deploy_region=this_region,aws_type=aws_type)
+            db.session.add(this_account)
+        db.session.commit()
 
 
 def register_commands(app: APIFlask):
@@ -148,28 +148,33 @@ def register_commands(app: APIFlask):
     def initdb():
         from easyun.common.models import User, Account, Datacenter
         db.create_all()
+        # 预设user
         admin = User(username='admin', email='admin@mail.com')
         admin.set_password('admin')
         db.session.add(admin)
-        center = Datacenter(**{
-            "id": "1",
-            "name": "Easyun",
-            "cloud": "aws",
-            "account_id": "666621994060",
-            "region": "us-east-1",
-            "vpc_id": "vpc-057f0e3d715c24147"
-        })
-        db.session.add(center)
-        account = Account(**{
-            "id": "1",
-            "cloud": "aws",
-            "account_id": "567820214060",
-            "role": "easyun-service-control-role",
-            "type": "Global",
-            "atvdate": datetime.now(),
-            "remind": True
-        })
-        db.session.add(account)
+
+        # 预设datacenter
+        # center = Datacenter(**{
+        #     "id": "1",
+        #     "name": "Easyun",
+        #     "cloud": "aws",
+        #     "account_id": "666621994060",
+        #     "region": "us-east-1",
+        #     "vpc_id": "vpc-057f0e3d715c24147"
+        # })
+        # db.session.add(center)
+
+        # 预设account
+        # account = Account(**{
+        #     "id": "1",
+        #     "cloud": "aws",
+        #     "account_id": "567820214060",
+        #     "role": "easyun-service-control-role",
+        #     "type": "Global",
+        #     "active_date": datetime.now(),
+        #     "remind": True
+        # })
+        # db.session.add(account)
         db.session.commit()
         click.echo("init dev databses.")
 

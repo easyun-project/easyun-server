@@ -140,9 +140,8 @@ cython_debug/
 
 # client
 node_modules
-.db
-easyun/base.db
-migrations
+# .db
+# easyun/base.db
 
 
 # PyCharm
