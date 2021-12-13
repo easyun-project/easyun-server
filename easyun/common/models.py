@@ -78,11 +78,12 @@ class Account(db.Model):
     """
     __tablename__ = 'account'
     id = db.Column(db.Integer, primary_key=True) 
-    cloud = db.Column(db.String(10), primary_key=True)     # AWS
+    cloud = db.Column(db.String(10), nullable=False, primary_key=True)     # AWS
     account_id = db.Column(db.String(20), nullable=False, unique=True)  # e.g. 567820214060
-    role = db.Column(db.String(100), nullable=False)       # e.g easyun-service-control-role    
+    role = db.Column(db.String(100), nullable=False)       # e.g easyun-service-control-role
+    deploy_region = db.Column(db.String(60), nullable=False)        # Easyun deploy region
     type = db.Column(db.String(10))        # Global / GCR
-    atvdate = db.Column(db.Date)           # Account Activation date
+    active_date = db.Column(db.Date)           # Account Activation date
     remind = db.Column(db.Boolean) 
 
     def get_role(self):

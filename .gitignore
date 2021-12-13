@@ -142,6 +142,7 @@ cython_debug/
 node_modules
 .db
 easyun/base.db
+migrations
 
 
 # PyCharm
@@ -165,3 +166,4 @@ easyun/base.db
 .vscode
 .idea
 .DS_Store
+
