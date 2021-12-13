@@ -95,7 +95,25 @@ class DataCenterResultOut(Schema):
 @input(AddDatacenter)
 @output(DataCenterResultOut, 201, description='add A new Datacenter')
 def add_datacenter(data):
-    '''新增 Datacenter'''
+    '''新增 Datacenter
+    curl -X 'POST' \
+  'http://127.0.0.1:6660/api/v1/datacenter/add_dc' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer cYOaaQ1Xj6Ejdap0tYcLLZrHWExs42Ll' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "keypair": "xiyunuser",
+  "private_subnet_1": "192.168.1.0/24",
+  "private_subnet_2": "192.168.2.0/24",
+  "public_subnet_1": "192.168.3.0/24",
+  "public_subnet_2": "192.168.4.0/24",
+  "region": "us-east-1",
+  "sgs1_flag": "True",
+  "sgs2_flag": "True",
+  "sgs3_flag": "True",
+  "vpc_cidr": "192.168.0.0/16"
+    }'
+    '''
     # create easyun vpc
     # create 2 x pub-subnet
     # create 2 x pri-subnet

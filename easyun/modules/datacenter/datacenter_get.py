@@ -10,6 +10,7 @@ from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
+from easyun.common.models import Account,Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
 from . import bp, REGION, FLAG
@@ -57,7 +58,14 @@ def get_datacenter_all():
     RESOURCE = boto3.resource('ec2', region_name=REGION)
     ec2 = boto3.client('ec2', region_name=REGION)
 
-    vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:FLAG','Values': [FLAG]}])
+    vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
+
+    # vpcs = client1.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
+
+    datacenters = Datacenter.query.filter(id!=2).first()
+    vpc_id=datacenters.vpc_id
+    print(vpc_id)
+    print(datacenters.id)
 
     regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
 
@@ -70,7 +78,7 @@ def get_datacenter_all():
 
     svc_resp = {
         'region_name': REGION,
-        'vpc_id': 'easyrun',
+        'vpc_id': vpc_id,
         'azs': list1
     }
 

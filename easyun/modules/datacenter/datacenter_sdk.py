@@ -38,9 +38,7 @@ class datacentersdk():
         
         secure_group = ec2.create_security_group(GroupName=groupname, Description=description, VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
         
-        ec2.authorize_security_group_ingress(
-            GroupId=secure_group['GroupId'],
-            IpPermissions=IpPermissions)
+        ec2.authorize_security_group_ingress(GroupId=secure_group['GroupId'],IpPermissions=IpPermissions)
         
         print('secure_group= '+secure_group['GroupId'])
         print('exiting add_VPC_security_group')
@@ -94,16 +92,3 @@ class datacentersdk():
         # datacenter = Datacenter.query.filter(id=2).first()
         # print(datacenter)
 
-
-
-    def view_func(request):
-        # 增
-        new_datacenter = Datacenter(id=1, region='test')
-        db.session.add(new_datacenter)
-
-        # 查
-        datacenter = Datacenter.query.filter(id=1).first()
-
-        # 修改
-        datacenter.region = 'new_test'
-        db.session.commit()
