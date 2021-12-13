@@ -69,11 +69,13 @@ def register_blueprints(app:APIFlask):
     from .modules import mserver
     from .modules import datacenter
     from .modules import account
+    from .modules import mstorage
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(mserver.bp)
     app.register_blueprint(datacenter.bp)
     app.register_blueprint(account.bp)
+    app.register_blueprint(mstorage.bp)
     return None
 
 def configure_logger(app):
