@@ -59,7 +59,8 @@ def create_app(run_env=None):
     app.logger.setLevel(logging.INFO)
     if run_env != 'test':
         app.logger.info('Easyun API Start')
-
+    
+    
     return app
 
 
@@ -100,7 +101,12 @@ def register_extensions(app: APIFlask):
     """
     db.init_app(app)
     cors.init_app(app)
-    migrate.init_app(app, db, compare_type=True)
+    with app.app_context():
+        if db.engine.url.drivername == 'sqlite':
+            # dev test
+            migrate.init_app(app, db, render_as_batch=True, compare_type=True)
+        else:
+            migrate.init_app(app, db, compare_type=True)
 
 
 def register_aws_env():
