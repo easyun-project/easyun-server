@@ -3,6 +3,7 @@
 @Description: The app module, containing the app factory function.
 @LastEditors: 
 '''
+from datetime import datetime
 import os
 import logging
 from apiflask import APIFlask, Schema
@@ -22,6 +23,8 @@ ver = '/api/v1.0'
 # extensions initialization
 db = SQLAlchemy()
 cors = CORS()
+migrate = Migrate()
+
 
 class BaseResponseSchema(Schema):
     message = String()
@@ -33,14 +36,14 @@ def create_app(run_env=None):
     if run_env is None:
         run_env = os.getenv("FLASK_CONFIG", 'development')
 
-    app = APIFlask(__name__, docs_path='/api/docs', redoc_path='/api/redoc') 
+    app = APIFlask(__name__, docs_path='/api/docs', redoc_path='/api/redoc')
     app.config.from_object(env_config[run_env])
 
     app.config['BASE_RESPONSE_SCHEMA'] = BaseResponseSchema
     # the data key should match the data field name in the base response schema
     # defaults to "data"
     app.config['BASE_RESPONSE_DATA_KEY'] = 'detail'
-    
+
     # 初始化扩展
     register_extensions(app=app)
    # 初始化云环境基础信息
@@ -49,8 +52,6 @@ def create_app(run_env=None):
 
     # 注册自定义命令
     register_commands(app=app)
-
-    migrate = Migrate(app, db, compare_type=True)
 
     register_blueprints(app)
     configure_logger(app)
@@ -63,7 +64,7 @@ def create_app(run_env=None):
 
 
 # 注册 Flask blueprints
-def register_blueprints(app:APIFlask):
+def register_blueprints(app: APIFlask):
     """Register Flask blueprints."""
     from .common import auth
     from .modules import mserver
@@ -76,6 +77,7 @@ def register_blueprints(app:APIFlask):
     app.register_blueprint(account.bp)
     return None
 
+
 def configure_logger(app):
     """Configure loggers."""
     if not app.debug and not app.testing:
@@ -87,9 +89,10 @@ def configure_logger(app):
             '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
         file_handler.setLevel(logging.INFO)
         if not app.logger.handlers:
-            app.logger.addHandler(file_handler)    
+            app.logger.addHandler(file_handler)
 
-def register_extensions(app:APIFlask):
+
+def register_extensions(app: APIFlask):
     """初始化扩展
 
     Args:
@@ -97,6 +100,7 @@ def register_extensions(app:APIFlask):
     """
     db.init_app(app)
     cors.init_app(app)
+    migrate.init_app(app, db, compare_type=True)
 
 
 def register_aws_env():
@@ -109,7 +113,7 @@ def register_aws_env():
     pass
 
 
-def register_commands(app:APIFlask):
+def register_commands(app: APIFlask):
     """注册自定义命令
 
     Args:
@@ -117,9 +121,33 @@ def register_commands(app:APIFlask):
     """
     @app.cli.command()
     def initdb():
+        from easyun.common.models import User, Account, Datacenter
         db.create_all()
+        admin = User(username='admin', email='admin@mail.com')
+        admin.set_password('admin')
+        db.session.add(admin)
+        center = Datacenter(**{
+            "id": "1",
+            "name": "Easyun",
+            "cloud": "aws",
+            "account_id": "666621994060",
+            "region": "us-east-1",
+            "vpc_id": "vpc-057f0e3d715c24147"
+        })
+        db.session.add(center)
+        account = Account(**{
+            "id": "1",
+            "cloud": "aws",
+            "account_id": "567820214060",
+            "role": "easyun-service-control-role",
+            "type": "Global",
+            "atvdate": datetime.now(),
+            "remind": True
+        })
+        db.session.add(account)
+        db.session.commit()
         click.echo("init dev databses.")
-    
+
     @app.cli.command()
     def dropdb():
         db.drop_all()
