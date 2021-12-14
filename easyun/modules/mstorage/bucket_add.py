@@ -22,7 +22,7 @@ class newBucket:
 @bp.post('/add')
 @auth_required(auth_token)
 @input(newBucket)
-def add_bucket():
+def add_bucket(newBucket):
     try:
         # 获取桶名
         bucketName = newBucket['BucketName']
