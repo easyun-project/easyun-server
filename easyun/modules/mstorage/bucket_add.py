@@ -60,4 +60,4 @@ def add_bucket():
         response = Result(
             message='bucket creation failed', status_code=4001,http_status_code=400
         )
-        response.err_resp()
+        return response.err_resp()
