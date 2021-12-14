@@ -7,7 +7,7 @@ from easyun.common.models import Account, Datacenter
 # define api version
 ver = '/api/v1.0'
 
-bp = APIBlueprint('存储管理', __name__, url_prefix = ver) 
+bp = APIBlueprint('存储管理', __name__, url_prefix = ver+'/storage') 
 
 CLIENT = boto3.client('cloudcontrol')
 
