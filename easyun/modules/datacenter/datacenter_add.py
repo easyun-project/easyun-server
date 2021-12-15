@@ -102,16 +102,16 @@ def add_datacenter(data):
   -H 'Authorization: Bearer cYOaaQ1Xj6Ejdap0tYcLLZrHWExs42Ll' \
   -H 'Content-Type: application/json' \
   -d '{
-  "keypair": "xiyunuser",
-  "private_subnet_1": "192.168.1.0/24",
-  "private_subnet_2": "192.168.2.0/24",
-  "public_subnet_1": "192.168.3.0/24",
-  "public_subnet_2": "192.168.4.0/24",
+  "keypair": "aaa",
+  "private_subnet_1": "10.10.1.0/24",
+  "private_subnet_2": "10.10.2.0/24",
+  "public_subnet_1": "10.10.3.0/24",
+  "public_subnet_2": "10.10.4.0/24",
   "region": "us-east-1",
   "sgs1_flag": "True",
   "sgs2_flag": "True",
   "sgs3_flag": "True",
-  "vpc_cidr": "192.168.0.0/16"
+  "vpc_cidr": "10.10.0.0/16"
     }'
     '''
     # create easyun vpc
