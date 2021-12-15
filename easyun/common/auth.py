@@ -70,11 +70,21 @@ def add_user(newuser):
         return bad_request('please use a different username')
     if User.query.filter_by(email=newuser['email']).first():
         return bad_request('please use a different email address')
-    user = User()
-    user.from_dict(newuser, new_user=True)
-    db.session.add(user)
+
+    new_user = User()
+    new_user.from_dict(newuser, new_user=True)
+    # user.from_dict(newuser, new_user=True)
+    db.session.add(new_user)
     db.session.commit()
-    return make_resp("Add a new user.", 201, user)
+
+    resp = Result({
+        'user': new_user.username
+        }, 
+        status_code=1001)    
+    return resp.make_resp()
+
+
+    return make_resp("Add a new user.", 201, new_user)
 
 
 class NewPassword(Schema):
@@ -114,13 +124,13 @@ def post_auth_token(user):
         db.session.commit()
         # get account info from database
         curr_account = Account.query.first()
-        res = Result({
+        resp = Result({
             'token': token,
             'account_id': curr_account.account_id,
             'account_type': curr_account.aws_type,
             'role': curr_account.role}, 
             status_code=1001)    
-        return res.make_resp()
+        return resp.make_resp()
         # jsonify({'token': token})
     else:
         return error_resp(401)
