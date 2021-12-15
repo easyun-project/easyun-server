@@ -117,7 +117,7 @@ def post_auth_token(user):
         res = Result({
             'token': token,
             'account_id': curr_account.account_id,
-            'account_type': curr_account.type,
+            'account_type': curr_account.aws_type,
             'role': curr_account.role}, 
             status_code=1001)    
         return res.make_resp()

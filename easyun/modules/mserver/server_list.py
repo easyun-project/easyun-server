@@ -8,10 +8,9 @@ from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
-from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
-from . import bp, REGION, FLAG
+from . import bp, REGION, FLAG, VPC
 from flask import jsonify
 
 class SvrListOut(Schema):
@@ -43,22 +42,33 @@ def list_all_svrs():
 
     try:
         # this_dc = Datacenter.query.filter_by(name='Easyun').first()
-        this_dc = Datacenter.query.first()
+        # this_dc = Datacenter.query.first()
 
         resource_ec2 = boto3.resource('ec2', region_name=REGION)
-        vpc = resource_ec2.Vpc(this_dc.vpc_id)
-        # vpc.instances.all() 返回 EC2.Instance 对象
+        vpc = resource_ec2.Vpc(VPC)
+                
         list_resp = []
+        # vpc.instances.all() 返回 EC2.Instance 对象
         for s in vpc.instances.all():
+            #获取tag:Name
             name = [tag['Value'] for tag in s.tags if tag['Key'] == 'Name'][0]
+            #获取ebs卷大小并进行累加
+            ebs_size = 0
+            for disk in s.block_device_mappings:            
+                ebs_id = disk['Ebs']['VolumeId']
+                ebs_size = ebs_size + resource_ec2.Volume(ebs_id).size        
+            #获取内存        
+            client_ec2 = boto3.client('ec2', region_name = REGION)
+            ins_type = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
+            ram_m = ins_type['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
             svr = {
                 'svr_id' : s.id,
                 'svr_name' : name,
                 'svr_state' : s.state["Name"],
                 'ins_type' : s.instance_type,
                 'vcpu' : s.cpu_options['CoreCount'],
-                'ram' : 'N/A', # 查找中
-                'ebs' : 'N/A', # 查找中
+                'ram' : ram_m/1024,
+                'ebs' : ebs_size, 
                 'os' : resource_ec2.Image(s.image_id).platform_details,               
                 'rg_az' : resource_ec2.Subnet(s.subnet_id).availability_zone,
                 'pub_ip' : s.public_ip_address
