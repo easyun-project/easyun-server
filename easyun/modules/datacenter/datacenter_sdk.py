@@ -18,7 +18,7 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import TagEasyun
+from . import FLAG,TagEasyun
 
 class datacentersdk():
     def add_subnet(ec2,vpc,route_table,subnet):
@@ -92,3 +92,34 @@ class datacentersdk():
         # datacenter = Datacenter.query.filter(id=2).first()
         # print(datacenter)
 
+
+    def list_Subnets(ec2,vpc_id):
+        subnet_list = ec2.describe_subnets(
+            Filters=[
+                {
+                    'Name': 'vpc-id', 'Values': [vpc_id]
+                },
+                {
+                    'Name': 'state', 'Values': ['available']
+                },
+                {
+                    'Name': 'tag:Flag', 'Values': [FLAG]
+                },             
+            ],
+        )
+        response = []    
+        #????? why unorder or messup using this...
+        # subnet_ids = [ { subnet['SubnetId'], subnet['CidrBlock'],subnet['AvailableIpAddressCount'] } for subnet in subnet_list['Subnets'] ]
+        # response.append(subnet_ids)
+
+        for subnet in subnet_list['Subnets']:
+            subnet_id =  subnet['SubnetId']
+            subnet_cidr =  subnet['CidrBlock']
+            subnet_ipcount = subnet['AvailableIpAddressCount']
+            subnet_record = {'SubnetId': subnet_id,
+                    'CidrBlock': subnet_cidr,
+                    'AvailableIpAddressCount': subnet_ipcount
+            }
+            response.append(subnet_record)
+        
+        return response

@@ -15,15 +15,17 @@ from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
 from . import bp, REGION, FLAG
 from flask import jsonify
+from  .datacenter_sdk import datacentersdk
+
 
 NewDataCenter = {
-    'region': 'us-east-2',
+    'region': 'us-east-1',
     'vpc_cidr' : '10.10.0.0/16',
-    'avaibility_zone' : '10.10.0.0/16',
-    'pub_subnet1' : '192.168.1.0/24',
-    'pub_subnet2' : '192.168.2.0/24',
-    'pri_subnet1' : '192.168.3.0/24',
-    'pri_subnet2' : '192.168.4.0/24',
+    'avaibility_zone' : 'us-east-1a',
+    'pub_subnet1' : '10.10.1.0/24',
+    'pub_subnet2' : '10.10.2.0/24',
+    'pri_subnet1' : '10.10.3.0/24',
+    'pri_subnet2' : '10.10.4.0/24',
     'key' : "key_easyun_dev",
     'secure_group1' : 'easyun-sg-default',
     'secure_group2' : 'easyun-sg-webapp',
@@ -48,6 +50,8 @@ class DataCenterListOut(Schema):
     region_name = String()
     vpc_id = String()
     azs = List(String)
+    subnets = List(String)
+    create_date = String()
     
 
 @bp.get('/all')
@@ -62,24 +66,37 @@ def get_datacenter_all():
 
     # vpcs = client1.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
 
-    datacenters = Datacenter.query.filter(id!=2).first()
+#    datacenters = Datacenter.query.filter_by(id=2).first()
+    datacenters:Datacenter  = Datacenter.query.filter_by(id=1).first()
+#    datacenters = Datacenter.query.first()
     vpc_id=datacenters.vpc_id
-    print(vpc_id)
-    print(datacenters.id)
+    region_name=datacenters.region
+    create_date =datacenters.create_date
+    
 
-    regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
 
-    azs = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION]}])
+    # print(vpc_id)
+    # print(datacenters.id)
 
-    list1=[]
-    for i in range(len(azs['AvailabilityZones'])):
-        print(azs['AvailabilityZones'][i]['ZoneName'])
-        list1.append(azs['AvailabilityZones'][i]['ZoneName'])
 
+    # regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
+
+    az_list = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION]}])
+
+    az_ids = [ az['ZoneName'] for az in az_list['AvailabilityZones'] ]
+
+#    list1=[]
+    # for i in range(len(az_list['AvailabilityZones'])):
+    # for i, azids in enumerate(az_list['AvailabilityZones']):
+    #     print(az_list['AvailabilityZones'][i]['ZoneName'])
+    #     list1.append(az_list['AvailabilityZones'][i]['ZoneName'])
+    subnet_list=datacentersdk.list_Subnets(ec2,vpc_id)
     svc_resp = {
-        'region_name': REGION,
+        'region_name': region_name,
         'vpc_id': vpc_id,
-        'azs': list1
+        'azs': az_ids,
+        'subnets': subnet_list,
+        'create_date': create_date
     }
 
     response = Result(detail=svc_resp, status_code=3001)
@@ -87,38 +104,39 @@ def get_datacenter_all():
     return response.make_resp()
 
 
-@bp.get('/AZ')
-#@auth_required(auth_token)
-@output(DataCenterListOut(many=True), description='Get DataCenter AZ Info')
-def get_datacenter_AZ():
-    '''获取Easyun环境下云数据中心信息'''
-    RESOURCE = boto3.resource('ec2', region_name=REGION)
-    ec2 = boto3.client('ec2', region_name=REGION)
+# @bp.get('/AZ')
+# #@auth_required(auth_token)
+# @output(DataCenterListOut(many=True), description='Get DataCenter AZ Info')
+# def get_datacenter_AZ():
+#     '''已经废除，请使用/all来获取Easyun环境下云数据中心信息'''
+#     RESOURCE = boto3.resource('ec2', region_name=REGION)
+#     ec2 = boto3.client('ec2', region_name=REGION)
 
-    try:
-        azs = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION],}])
-        
-        list1=[]
-        for i in range(len(azs['AvailabilityZones'])):
-            print(azs['AvailabilityZones'][i]['ZoneName'])
-            list1.append(azs['AvailabilityZones'][i]['ZoneName'])
-        print('az1',str(list1))
+#     try:
+#         az_list = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION],}])
+#         az_id = [ az['ZoneName'] for az in az_list['AvailabilityZones']]
 
-        list_resp = []
-        svc = {
-            'region_name': REGION,
-            'vpc_id': 'easyrun',
-            'azs': ['1', '2']
-        }
+#         list1=[]
+#         for i in range(len(azs['AvailabilityZones'])):
+#             print(azs['AvailabilityZones'][i]['ZoneName'])
+#             list1.append(azs['AvailabilityZones'][i]['ZoneName'])
+#         print('az1',str(list1))
 
-        list_resp.append(svc)
-        print('haha' + str(list_resp))
+#         list_resp = []
+#         svc = {
+#             'region_name': REGION,
+#             'vpc_id': 'easyrun',
+#             'azs': ['1', '2']
+#         }
 
-        response = Result(detail = list_resp, status_code=3001)
+#         list_resp.append(svc)
+#         print('haha' + str(list_resp))
 
-        print(response.make_resp())
-        return response.make_resp()
+#         response = Result(detail = list_resp, status_code=3001)
 
-    except Exception:
-        response = Result(message='datacenter query failed', status_code=3001,http_status_code=400)
-        response.err_resp()    
+#         print(response.make_resp())
+#         return response.make_resp()
+
+#     except Exception:
+#         response = Result(message='datacenter query failed', status_code=3001,http_status_code=400)
+#         response.err_resp()    

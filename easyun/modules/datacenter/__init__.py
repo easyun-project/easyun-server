@@ -108,7 +108,7 @@ TagEasyun= [{
                 'Key':
                     'Flag',
                 'Value':
-                    'Easyun'
+                    FLAG
             }]
 
 from . import datacenter_add, datacenter_default, datacenter_get, datacenter_sdk
