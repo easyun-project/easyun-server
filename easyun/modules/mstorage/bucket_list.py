@@ -21,6 +21,7 @@ from . import TYPE, bp, FLAG, CLIENT
 def get_all_bucket_name():
     # 将获取到所有的存储桶名字存入列表
     bucketNames = []
+    CLIENT = boto3.client('cloudcontrol')
     response = CLIENT.list_resources(
         TypeName = TYPE,
     )
@@ -30,6 +31,7 @@ def get_all_bucket_name():
         name = properties['BucketName']
         bucketNames.append(name)
     return bucketNames
+
 def get_bucket_Region(bucketName):
     client = boto3.client('s3')
     response = client.get_bucket_location(
@@ -40,6 +42,7 @@ def get_bucket_Region(bucketName):
     else:
         region = response['LocationConstraint']
     return region
+
 
 @bp.post('/list')
 @auth_required(auth_token)
