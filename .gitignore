@@ -140,8 +140,7 @@ cython_debug/
 
 # client
 node_modules
-!easyun/base.db
-.db
+*.db
 
 # PyCharm
 #  JetBrains specific template is maintainted in a separate JetBrains.gitignore that can
