@@ -1,37 +1,34 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: DataCenter Management - Get info: Data Center
-@LastEditors: 
-'''
+"""
+  @author:  pengchang
+  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
+  @file:    datacenter_default.py
+  @desc:    The DataCenter default module
+"""
+
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
+from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
-from . import bp, REGION, FLAG
+from . import bp, REGION, FLAG, TagEasyun
 from flask import jsonify
 
 NewDataCenter = {
-    'region': 'us-east-2',
+    'region': 'us-east-1',
+    'az' : 'us-east-1a',
     'vpc_cidr' : '10.10.0.0/16',
-    'pub_subnet1' : '192.168.1.0/24',
-    'pub_subnet2' : '192.168.2.0/24',
-    'pri_subnet1' : '192.168.3.0/24',
-    'pri_subnet2' : '192.168.4.0/24',
-    'key' : "key_easyun_dev",
+    'pub_subnet1' : '10.10.1.0/24',
+    'pub_subnet2' : '10.10.2.0/24',
+    'pri_subnet1' : '10.10.3.0/24',
+    'pri_subnet2' : '10.10.4.0/24',
     'secure_group1' : 'easyun-sg-default',
     'secure_group2' : 'easyun-sg-webapp',
     'secure_group3' : 'easyun-sg-database',
-    'tag_spec' : [
-        {
-        "ResourceType":"instance",
-        "Tags": [
-                {"Key": "Flag", "Value": FLAG},
-                {"Key": "Name", "Value": 'test-from-api'}
-            ]
-        }
-        ]
+    'key' : "key_easyun_dev",
+    'tag_spec' : [{ "ResourceType":"instance","Tags": TagEasyun}]
 }
 
 
@@ -41,25 +38,27 @@ class DataCenterListIn(Schema):
 
 class DataCenterListOut(Schema):
     region_name = String()
-    az = String()
-    ins_status = String()
-    ins_type = String()
-    vcpu = Integer()
-    ram = String()
-    subnet_id = String()
-    ssubnet_id = String()
+    azs = String()
+    vpc_cidr = String()
+    pub_subnet1 = String()
+    pub_subnet2 = String()
+    pri_subnet1 = String()
+    pri_subnet2 = String()
+    secure_group1 = String() 
+    secure_group2 = String() 
+    secure_group3 = String()
     key_name = String()
     category = String()
 
 
 @bp.get('/default')
-@auth_required(auth_token)
+#@auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Info')
 def get_datacentercfg():
     '''获取创建云数据中心默认参数'''
     RESOURCE = boto3.resource('ec2', region_name=REGION)
-    vpcs = RESOURCE.describe_vpcs(Filters=[
-            {'Name': 'tag:FLAG','Values': [FLAG],},
-        ])
+    ec2 = boto3.client('ec2', region_name=REGION)
+    
+    # vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
 
     return jsonify(NewDataCenter) 

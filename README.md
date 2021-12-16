@@ -55,6 +55,13 @@ $ flask initdb
 ```
 $ flask dropdb
 ```
+3. 迁移数据库
+
+```
+$ flask db init # 初始化migrate仓库
+$ flask db migrate -m "<your commit message>" # 创建迁移脚本文件
+$ flask db upgrade # 运行更新脚本迁移数据库
+```
 
 # 目录结构
 

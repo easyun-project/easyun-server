@@ -161,14 +161,26 @@ def list_ins_types(InstypesIn):
     
     try:
         client_ec2 = boto3.client('ec2', region_name = REGION)
-        instypes = client_ec2.describe_instance_types(
-            #InstanceTypes=['t2.micro']
-            Filters = filters,
-        )  
-        
+        # instypes = client_ec2.describe_instance_types(
+        #     #InstanceTypes=['t2.micro']
+        #     Filters = filters,
+        # )  
+        describe_args = {}
+        ec2_types = []
+        while True:
+            describe_result = client_ec2.describe_instance_types(
+                **describe_args,
+                Filters = filters,
+            )
+    #         print(describe_result.keys())
+            for i in describe_result['InstanceTypes']:
+                ec2_types.append(i['InstanceType'])
+            if 'NextToken' not in describe_result:
+                break
+            describe_args['NextToken'] = describe_result['NextToken']
         # return instypes
         response = Result(
-            detail = instypes['InstanceTypes'],
+            detail = ec2_types,
             status_code=3001
         )
         return response.make_resp()
@@ -178,16 +190,3 @@ def list_ins_types(InstypesIn):
             message= ex, status_code=3001,http_status_code=400
         )
         response.err_resp()
-
-
-@bp.get('/instypes/<family>')
-# @auth_required(auth_token)
-# @input()
-# @output()
-def get_types():
-    '''获取当前服务器支持的Instance Types列表'''
-
-    # 1.查询云服务器的架构 x86-64bit / arm-64bit
-    # 2.查询相同架构下的Instance Types
-
-    return ''
