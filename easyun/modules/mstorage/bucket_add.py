@@ -24,6 +24,7 @@ class newBucket:
 @auth_required(auth_token)
 @input(newBucket)
 def add_bucket(newBucket):
+    print('============')
     try:
         # 获取桶名
         bucketName = newBucket['BucketName']
@@ -43,7 +44,7 @@ def add_bucket(newBucket):
             'BucketEncryption' : {"ServerSideEncryptionConfiguration":[{'BucketKeyEnabled' : isEncryption ,'ServerSideEncryptionByDefault' : {'SSEAlgorithm' : 'AES256'}}]},
             'Tags' : Tag
         }
-        CLIENT = boto3.client('cloudcontrol')
+        CLIENT = boto3.client('cloudcontrol',region_name = newBucket['region'])
         # 通过boto3发起请求
         bucket = CLIENT.create_resource(
             TypeName = TYPE,
