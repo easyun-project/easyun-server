@@ -123,3 +123,53 @@ class datacentersdk():
             response.append(subnet_record)
         
         return response
+
+    def list_keypairs(ec2,vpc_id):
+        keypair_list = ec2.describe_key_pairs(
+            Filters=[
+                {
+                    'Name': 'tag:Flag', 'Values': [FLAG]
+                },             
+            ],
+        )
+
+        response = []    
+
+
+        for keypair in keypair_list['KeyPairs']:
+            kp_KeyName =  keypair['KeyName']
+            kp_KeyPairId =  keypair['KeyPairId']
+            kp_KeyFingerprint = keypair['KeyFingerprint']
+            kp_record = {'GroupID': kp_KeyName,
+                    'GroupName': kp_KeyPairId,
+                    'KeyFingerprint': kp_KeyFingerprint,
+                    # 'IpPermissions': sg_IpPermissions
+            }
+            response.append(kp_record)
+        
+        return response
+
+    def list_securitygroup(ec2,vpc_id):
+        sg_list = ec2.describe_security_groups(
+            Filters=[
+                {
+                    'Name': 'vpc-id', 'Values': [vpc_id]
+                },
+                {
+                    'Name': 'tag:Flag', 'Values': [FLAG]
+                },             
+            ],
+        )
+        response = []    
+
+        for sg in sg_list['SecurityGroups']:
+            sg_GroupName =  sg['GroupName']
+            sg_IpPermissions =  sg['IpPermissions']
+            sg_GroupId = sg['GroupId']
+            sg_record = {'GroupID': sg_GroupId,
+                    'GroupName': sg_GroupName,
+                    # 'IpPermissions': sg_IpPermissions
+            }
+            response.append(sg_record)
+        
+        return response

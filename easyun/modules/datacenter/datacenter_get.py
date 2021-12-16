@@ -5,6 +5,7 @@
   @file:    datacenter_get.py
   @desc:    The DataCenter Get module
 """
+# from _typeshed import NoneType
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
@@ -51,6 +52,8 @@ class DataCenterListOut(Schema):
     vpc_id = String()
     azs = List(String)
     subnets = List(String)
+    securitygroup = List(String)
+    keypair = List(String)
     create_date = String()
     
 
@@ -68,13 +71,20 @@ def get_datacenter_all():
 
 #    datacenters = Datacenter.query.filter_by(id=2).first()
     datacenters:Datacenter  = Datacenter.query.filter_by(id=1).first()
-#    datacenters = Datacenter.query.first()
-    vpc_id=datacenters.vpc_id
-    region_name=datacenters.region
-    create_date =datacenters.create_date
+    # datacenters:Datacenter  = Datacenter.query.get(1)
+
+    # datacenters = Datacenter.query.first()
+    # if len(datacenters) == 0:
+    # if (datacenters.count()  == 0):
+    if (datacenters is None):
+        response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
+        print(response.err_resp())
+        response.err_resp()   
+    else:
+        vpc_id=datacenters.vpc_id
+        region_name=datacenters.region
+        create_date =datacenters.create_date
     
-
-
     # print(vpc_id)
     # print(datacenters.id)
 
@@ -91,11 +101,16 @@ def get_datacenter_all():
     #     print(az_list['AvailabilityZones'][i]['ZoneName'])
     #     list1.append(az_list['AvailabilityZones'][i]['ZoneName'])
     subnet_list=datacentersdk.list_Subnets(ec2,vpc_id)
+    sg_list=datacentersdk.list_securitygroup(ec2,vpc_id)
+    keypair_list=datacentersdk.list_keypairs(ec2,vpc_id)
+    
     svc_resp = {
         'region_name': region_name,
         'vpc_id': vpc_id,
         'azs': az_ids,
         'subnets': subnet_list,
+        'securitygroup': sg_list,
+        'keypair': keypair_list,        
         'create_date': create_date
     }
 
@@ -104,39 +119,3 @@ def get_datacenter_all():
     return response.make_resp()
 
 
-# @bp.get('/AZ')
-# #@auth_required(auth_token)
-# @output(DataCenterListOut(many=True), description='Get DataCenter AZ Info')
-# def get_datacenter_AZ():
-#     '''已经废除，请使用/all来获取Easyun环境下云数据中心信息'''
-#     RESOURCE = boto3.resource('ec2', region_name=REGION)
-#     ec2 = boto3.client('ec2', region_name=REGION)
-
-#     try:
-#         az_list = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION],}])
-#         az_id = [ az['ZoneName'] for az in az_list['AvailabilityZones']]
-
-#         list1=[]
-#         for i in range(len(azs['AvailabilityZones'])):
-#             print(azs['AvailabilityZones'][i]['ZoneName'])
-#             list1.append(azs['AvailabilityZones'][i]['ZoneName'])
-#         print('az1',str(list1))
-
-#         list_resp = []
-#         svc = {
-#             'region_name': REGION,
-#             'vpc_id': 'easyrun',
-#             'azs': ['1', '2']
-#         }
-
-#         list_resp.append(svc)
-#         print('haha' + str(list_resp))
-
-#         response = Result(detail = list_resp, status_code=3001)
-
-#         print(response.make_resp())
-#         return response.make_resp()
-
-#     except Exception:
-#         response = Result(message='datacenter query failed', status_code=3001,http_status_code=400)
-#         response.err_resp()    
