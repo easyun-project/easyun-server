@@ -20,7 +20,7 @@ class OperateIn(Schema):
     svr_ids = List(         #云服务器ID
         String(),
         required=True
-    )     
+    )
     action = String(
         required=True, 
         validate=OneOf(['start', 'stop', 'restart'])  #Operation TYPE
@@ -48,19 +48,31 @@ def operate_svr(operate):
         else:
             operation_result = servers.restart()
         response = Result(
-            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=3002,
+            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=3001,
         )
         return response.make_resp()
     except Exception:
         response = Result(
-            message='{} server failed'.format(operate["action"]), status_code=3002,http_status_code=400
+            message='{} server failed'.format(operate["action"]), status_code=3004,http_status_code=400
         )
         response.err_resp()
 
 
-@bp.delete('/delete')
+
+class DeleteIn(Schema):
+    svr_ids = List(         #云服务器ID
+        String(),
+        required=True
+    )
+    action = String(
+        required=True, 
+        validate=OneOf(['delete'])  #Operation TYPE
+        )   
+
+
+@bp.delete('/delete/')
 @auth_required(auth_token)
-@input(OperateIn)
+@input(DeleteIn)
 @output(OperateOut)
 def del_svr(operate):
     '''删除指定云服务器'''
@@ -75,10 +87,15 @@ def del_svr(operate):
         for server in servers:
             response = server.terminate()
             # server.wait_until_terminated()
-        # return 'Server Deleted'
         return response
+
+        response = Result(
+            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=3001,
+        )
+        return response.make_resp()
+
     except Exception:
         response = Result(
-            message='delete server failed'.format(operate["action"]), status_code=3002,http_status_code=400
+            message='{} server failed'.format(operate["action"]), status_code=3004, http_status_code=400
         )
         response.err_resp()

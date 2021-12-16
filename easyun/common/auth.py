@@ -41,72 +41,18 @@ def token_auth_error(status):
     return error_resp(status)
 
 
+class TokenOutSchema(Schema):
+    token = String(),
+    account_id = String() ,
+    aws_type = String(),
+    role = String() 
+
+
 class UserInSchema(Schema):
     username = String(required=True, validate=Length(0, 20), 
                     example="admin")
     password = String(required=True, validate=Length(0, 30),
                     example="admin")
-
-class UserOutSchema(Schema):
-    id = Integer()
-    username = String()
-    email = String()
-
-class NewUser(Schema):
-    username = String(required=True, validate=Length(0, 20))
-    password = String(required=True, validate=Length(0, 30))
-    email = String(required=True, validate=Length(0, 80))
-
-
-@bp.post('/adduser')
-@input(NewUser)
-@output(UserOutSchema, 201)
-@doc(tag='【仅限测试用】', operation_id='Add New User')
-def add_user(newuser):
-    '''向数据库添加新用户'''
-    if 'username' not in newuser or 'password' not in newuser:
-        return bad_request('must include username and password fields')
-    if User.query.filter_by(username=newuser['username']).first():
-        return bad_request('please use a different username')
-    if User.query.filter_by(email=newuser['email']).first():
-        return bad_request('please use a different email address')
-
-    new_user = User()
-    new_user.from_dict(newuser, new_user=True)
-    # user.from_dict(newuser, new_user=True)
-    db.session.add(new_user)
-    db.session.commit()
-
-    resp = Result({
-        'user': new_user.username
-        }, 
-        status_code=1001)    
-    return resp.make_resp()
-
-
-    return make_resp("Add a new user.", 201, new_user)
-
-
-class NewPassword(Schema):
-    password = String(
-        required=True, validate=Length(0, 20),
-        example="password")
-
-@bp.put('/change_pwd')
-@auth_required(auth_token)
-@input(NewPassword)
-@output({}, 204, description='Password changed.')
-def change_passowrd(newpwd):
-    '''修改当前用户密码'''
-    auth_token.current_user.set_password(newpwd['password'])
-    db.session.commit()
-    return ''
-
-
-class TokenOutSchema(Schema):
-    api_code = Integer()
-    api_msg = String()
-    token = String()
 
 
 @bp.post('/auth')
@@ -136,6 +82,79 @@ def post_auth_token(user):
         return error_resp(401)
 
 
+@bp.delete('/logout')
+@auth_required(auth_token)
+def revoke_auth_token():
+    '''注销当前用户 (撤销token)'''
+    # Headers
+    # Token Bearer Authorization
+    #     token    
+    auth_token.current_user.revoke_token()
+    db.session.commit()
+    resp = Result({
+            'description': 'Current user logout.'}, 
+            status_code=1001)    
+    return resp.make_resp()
+
+
+class NewPassword(Schema):
+    password = String(
+        required=True, validate=Length(0, 20),
+        example="password")
+
+@bp.put('/change_pwd')
+@auth_required(auth_token)
+@input(NewPassword)
+def change_passowrd(newpwd):
+    '''修改当前用户密码'''
+    auth_token.current_user.set_password(newpwd['password'])
+    db.session.commit()
+    resp = Result({
+            'description': 'Password changed.'}, 
+            status_code=1001)    
+    return resp.make_resp()
+
+
+class NewUserOut(Schema):
+    id = Integer()
+    username = String()
+    email = String()
+
+class NewUserIn(Schema):
+    username = String(required=True, validate=Length(0, 20), 
+                    example="user")
+    password = String(required=True, validate=Length(0, 30), 
+                    example="password")
+    email = String(required=True, validate=Length(0, 80), 
+                    example="user@mail.com")
+
+
+@bp.post('/adduser')
+@input(NewUserIn)
+@output(NewUserOut)
+@doc(tag='【仅限测试用】', operation_id='Add New User')
+def add_user(newuser):
+    '''向数据库添加新用户'''
+    if 'username' not in newuser or 'password' not in newuser:
+        return bad_request('must include username and password fields')
+    if User.query.filter_by(username=newuser['username']).first():
+        return bad_request('please use a different username')
+    if User.query.filter_by(email=newuser['email']).first():
+        return bad_request('please use a different email address')
+
+    new_user = User()
+    new_user.from_dict(newuser, new_user=True)
+    # user.from_dict(newuser, new_user=True)
+    db.session.add(new_user)
+    db.session.commit()
+
+    resp = Result(
+        detail = new_user,
+        status_code=1001)
+
+    return resp.make_resp()
+
+
 @bp.get('/token')
 @auth_required(auth_basic)
 @doc(tag='【仅限测试用】', operation_id='Get token')
@@ -145,16 +164,3 @@ def get_auth_token():
     db.session.commit()
     # return jsonify({'token': token})
     return make_resp('Success', 200, {'token': token})
-
-
-@bp.delete('/logout')
-@auth_required(auth_token)
-@output({}, 204, description='Current user logout')
-def revoke_auth_token():
-    '''注销当前用户 (撤销token)'''
-    # Headers
-    # Token Bearer Authorization
-    #     token    
-    auth_token.current_user.revoke_token()
-    db.session.commit()
-    return ''

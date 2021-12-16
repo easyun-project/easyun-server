@@ -9,8 +9,8 @@ ver = '/api/v1.0'
 
 bp = APIBlueprint('存储管理', __name__, url_prefix = ver+'/storage') 
 
-CLIENT = boto3.client('cloudcontrol')
-
+REGION = 'us-east-1'
 TYPE = 'AWS::S3::Bucket'
-
 FLAG = "Easyun"
+
+CLIENT = boto3.client('cloudcontrol', region_name=REGION)

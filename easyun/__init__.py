@@ -105,6 +105,9 @@ def register_extensions(app: APIFlask):
     cors.init_app(app)
 
     with app.app_context():
+        #先建表避免account 数据写入失败
+        from easyun.common.models import User, Account, Datacenter
+        db.create_all()
         if db.engine.url.drivername == 'sqlite':
             # dev test
             migrate.init_app(app, db, render_as_batch=True, compare_type=True)
@@ -172,7 +175,7 @@ def register_commands(app: APIFlask):
         #     "cloud": "aws",
         #     "account_id": "567820214060",
         #     "role": "easyun-service-control-role",
-        #     "type": "Global",
+        #     "aww_type": "Global",
         #     "active_date": datetime.now(),
         #     "remind": True
         # })

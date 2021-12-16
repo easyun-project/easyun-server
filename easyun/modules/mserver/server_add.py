@@ -68,7 +68,7 @@ class SvrParmIn(Schema):
     BlockDeviceMappings = List(
         Dict(
             example={
-                "DeviceName": "/dev/xvda",
+                "DeviceName": "/dev/sda1",
                 "Ebs": {
                     "DeleteOnTermination": True,
                     "VolumeType": "gp2",
