@@ -18,7 +18,7 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import FLAG,TagEasyun
+from . import FLAG,TagEasyun,keypair_filename,keypair_name
 
 class datacentersdk():
     def add_subnet(ec2,vpc,route_table,subnet):
@@ -49,18 +49,8 @@ class datacentersdk():
         print('entered add_VPC_db')
         #dc = Datacenter(name='Easyun',cloud='AWS', account_id='666621994060', region=region,vpc_id='vpc-00bcc6b87f368643f',create_date=datetime.utcnow())
                 # print("11123")
-        # print(str(datetime.utcnow())+"\n")
-        # print("cccc")
-        # #dc = Datacenter(id=1,name='Easyun',cloud='AWS', account_id='666621994060', region=REGION,vpc_id='vpc-00bcc6b87f368643f')
         # dc = Datacenter(id=1,name='Easyun',cloud='AWS', account_id='666621994060', region=REGION,vpc_id='vpc-00bcc6b87f368643f',create_date=datetime.utcnow())
         # # query account id from DB (only one account for both phase 1 and 2) ????
-        # #new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
-        # #dc
-        # #dc.from_dict(newuser, new_user=True)
-        # db.session.add(dc)
-        # print("ddddd")
-        # db.session.commit()
-        # print("eeeee")
         # datacenter = Datacenter.query.filter(id=1).first()
         # print(datacenter)
 
@@ -74,23 +64,28 @@ class datacentersdk():
 
 
         now = datetime.utcnow()
-        datacenter = Datacenter(name='Easyun',cloud='AWS', account_id='666621994060', region=region,vpc_id=vpc_id,create_date=now)
-        # query account id from DB (only one account for both phase 1 and 2) ????
-        #new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
-        #dc
-        #dc.from_dict(newuser, new_user=True)
-        db.session.add(datacenter)
-        db.session.commit()
-        # datacenter = Datacenter.query.first()
-        # print(datacenter)
-        print('exiting add_VPC_db')
-        return True
 
-        # print(new_datacenter)
-        # db.session.add(new_datacenter)
-        
-        # datacenter = Datacenter.query.filter(id=2).first()
-        # print(datacenter)
+        account:Account = Account.query.get(1)
+        # account:Account = Account.query.filter_by(id=1).first()
+        if (account is None):
+            response = Result(detail ={'Result' : 'Errors'}, message='No Account available, kindly create it first!', status_code=3001,http_status_code=400)
+            print(response.err_resp())
+            response.err_resp() 
+        else:
+            account_id=account.account_id
+            region=account.deploy_region
+            datacenter = Datacenter(name='Easyun',cloud='AWS', account_id=account_id, region=region,vpc_id=vpc_id,create_date=now)
+            # query account id from DB (only one account for both phase 1 and 2) ????
+            #new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
+            #dc
+            #dc.from_dict(newuser, new_user=True)
+            db.session.add(datacenter)
+            db.session.commit()
+            # datacenter = Datacenter.query.first()
+            # print(datacenter)
+            print('exiting add_VPC_db')
+            return True
+
 
 
     def list_Subnets(ec2,vpc_id):
@@ -135,17 +130,17 @@ class datacentersdk():
 
         response = []    
 
-
-        for keypair in keypair_list['KeyPairs']:
-            kp_KeyName =  keypair['KeyName']
-            kp_KeyPairId =  keypair['KeyPairId']
-            kp_KeyFingerprint = keypair['KeyFingerprint']
-            kp_record = {'GroupID': kp_KeyName,
-                    'GroupName': kp_KeyPairId,
-                    'KeyFingerprint': kp_KeyFingerprint,
-                    # 'IpPermissions': sg_IpPermissions
-            }
-            response.append(kp_record)
+        # for keypair in keypair_list['KeyPairs']:
+        #     kp_KeyName =  keypair['KeyName']
+        #     kp_KeyPairId =  keypair['KeyPairId']
+        #     kp_KeyFingerprint = keypair['KeyFingerprint']
+        #     kp_record = {'GroupID': kp_KeyName,
+        #             'GroupName': kp_KeyPairId,
+        #             'KeyFingerprint': kp_KeyFingerprint,
+        #             # 'IpPermissions': sg_IpPermissions
+        #     }
+        kp_record={'Keypair filename',keypair_filename}
+        response.append(kp_record)
         
         return response
 

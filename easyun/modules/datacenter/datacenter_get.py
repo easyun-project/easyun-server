@@ -5,7 +5,7 @@
   @file:    datacenter_get.py
   @desc:    The DataCenter Get module
 """
-# from _typeshed import NoneType
+
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
@@ -14,8 +14,9 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account,Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
-from . import bp, REGION, FLAG
-from flask import jsonify
+from . import bp, REGION, FLAG,keypair_name,keypair_filename,TagEasyun
+from flask import jsonify,send_file, send_from_directory,make_response
+import os
 from  .datacenter_sdk import datacentersdk
 
 
@@ -33,10 +34,10 @@ NewDataCenter = {
     'secure_group3' : 'easyun-sg-database',
     'tag_spec' : [
         {
-        "ResourceType":"instance",
+        "ResourceType":"vpc",
         "Tags": [
                 {"Key": "Flag", "Value": FLAG},
-                {"Key": "Name", "Value": 'test-from-api'}
+                {"Key": "Name", "Value": FLAG}
             ]
         }
         ]
@@ -56,6 +57,24 @@ class DataCenterListOut(Schema):
     keypair = List(String)
     create_date = String()
     
+@bp.get('/download/<filename>')
+#@auth_required(auth_token)
+def download_keypair(filename):
+   '''获取Easyun环境下keypair'''
+   directory = os.getcwd()  # 假设在当前目录
+   ec2 = boto3.client('ec2', region_name=REGION)
+   vpc_resource = boto3.resource('ec2', region_name=REGION)
+   TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
+   new_keypair = vpc_resource.create_key_pair(KeyName=filename,TagSpecifications=TagEasyunKeyPair)
+# keypair_name = 'key-easyun-user'
+   with open('./'+keypair_filename, 'w') as file:
+       file.write(new_keypair.key_material)
+       print(new_keypair)
+#    return send_from_directory(directory, filename, as_attachment=True)
+   response = make_response(send_from_directory(directory, filename, as_attachment=True))
+   response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
+   return response
+
 
 @bp.get('/all')
 #@auth_required(auth_token)
@@ -118,4 +137,26 @@ def get_datacenter_all():
 
     return response.make_resp()
 
+
+@bp.get('/testget')
+#@auth_required(auth_token)
+def testget():
+    '''数据中心测试专用'''
+    directory = os.getcwd()  # 假设在当前目录
+    ec2 = boto3.client('ec2', region_name=REGION)
+    vpc_resource = boto3.resource('ec2', region_name=REGION)
+    TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
+    try:
+            new_keypair = vpc_resource.create_key_pair(KeyName=keypair_filename,TagSpecifications=TagEasyunKeyPair)
+            # keypair_name = 'key-easyun-user'
+            with open('./'+keypair_filename, 'w') as file:
+                file.write(new_keypair.key_material)
+                print(new_keypair)
+    except Exception:
+            response = Result(detail ={'Result' : 'Errors'}, message='Create key pairs failed due to already existed', status_code=3001,http_status_code=400)
+            print(response)
+    #    return send_from_directory(directory, filename, as_attachment=True)
+    response = make_response(send_from_directory(directory, keypair_filename, as_attachment=True))
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(keypair_filename.encode().decode('latin-1'))
+    return response
 

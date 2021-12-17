@@ -19,7 +19,7 @@ import boto3
 import os, time
 import json
 from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun
-from datacenter_sdk import datacentersdk
+from .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
 
@@ -62,9 +62,9 @@ class VpcListOut(Schema):
     keypair = String()
 
 
-@bp.get('/dc_info')
-@auth_required(auth_token)
-@input(VpcListIn)
+@bp.get('/dc_info/<vpc_id>')
+#@auth_required(auth_token)
+#@input(VpcListIn)
 @output(VpcListOut, description='Get Datacenter info')
 def get_vpc(vpc_id):
     '''获取当前Datacenter资源信息'''
@@ -73,9 +73,9 @@ def get_vpc(vpc_id):
     # get securitygroup info
     # get keypair info
 
-    ec2 = boto3.resource('ec2', region_name=REGION)
-    vpcs = ec2.describer_vpcs( VpcIds=[
-        'VpcListIn',
+    ec2 = boto3.client('ec2', region_name=REGION)
+    vpcs = ec2.describe_vpcs( VpcIds=[
+        vpc_id,
     ],
     Filters=[
         {'Name': 'tag:Flag','Values': [FLAG]}
@@ -83,10 +83,11 @@ def get_vpc(vpc_id):
     vpclist = {}
     print(json.dumps(vpcs, sort_keys=True, indent=4))
 
-    return jsonify(vpcs)
-    
-    return '' #datacenter id
+    response = Result(detail = vpcs, status_code=3001)
+    return response.make_resp()
 
+#    return jsonify(vpcs)
+    
 
 
 @bp.post('/cleanup')
