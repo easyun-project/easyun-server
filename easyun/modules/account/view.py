@@ -10,6 +10,9 @@ from easyun.common.models import Account
 
 class AWSInfoOutSchema(Schema):
     account_id = String()
+    aws_type = String()
+    role = String()
+
 
 @auth_required(auth_token)
 @bp.get("/aws_info")
@@ -20,17 +23,5 @@ def aws_info():
         res = Result(detail=account)
         return res.make_resp()
     except Exception as e:
-        res = Result(message=str(e), status_code=2001)
-        res.err_resp()
-
-
-@bp.get("/test-cicd")
-def test():
-    try:
-        return "ok-cicd"
-        account:Account = Account.query.first()
-        res = Result(detail=account)
-        return res.make_resp()
-    except Exception as e:
-        res = Result(message=str(e), status_code=2001)
+        res = Result(message=str(e), status_code=2001, http_status_code=500)
         res.err_resp()
