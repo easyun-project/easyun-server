@@ -2,8 +2,21 @@
 import os
 import base64
 from datetime import datetime, timedelta
+from typing import Dict
 from werkzeug.security import check_password_hash, generate_password_hash
 from easyun import db
+
+
+def universal_update_dict(obj, d: Dict):
+    """批量更新数据库
+
+    Args:
+        obj (Model): 模型对象
+        dict (dict): 内容字典
+    """
+    for key, value in d.items():
+        if key in obj.__dict__:
+            setattr(obj, key, value)
 
 
 class User(db.Model):
@@ -51,7 +64,7 @@ class User(db.Model):
         if new_user and 'password' in data:
             self.set_password(data['password'])
 
-    def get_token(self, expires_in=7200):  #设置 2 小时过期
+    def get_token(self, expires_in=7200):  # 设置 2 小时过期
         utcnow = datetime.utcnow()
         if self.token and self.token_expiration > utcnow + timedelta(seconds=60):
             return self.token
@@ -70,6 +83,8 @@ class User(db.Model):
             return None
         return user
 
+    def update_dict(self, items: Dict):
+        universal_update_dict(self, items)
 
 
 class Account(db.Model):
@@ -77,14 +92,17 @@ class Account(db.Model):
     Create a Account table
     """
     __tablename__ = 'account'
-    id = db.Column(db.Integer, primary_key=True) 
+    id = db.Column(db.Integer, primary_key=True)
     cloud = db.Column(db.String(10), nullable=False)     # AWS
-    account_id = db.Column(db.String(20), nullable=False, unique=True)  # e.g. 567820214060
-    role = db.Column(db.String(100), nullable=False)       # e.g easyun-service-control-role
-    deploy_region = db.Column(db.String(60), nullable=False)        # Easyun deploy region
+    account_id = db.Column(db.String(20), nullable=False,
+                           unique=True)  # e.g. 567820214060
+    # e.g easyun-service-control-role
+    role = db.Column(db.String(100), nullable=False)
+    # Easyun deploy region
+    deploy_region = db.Column(db.String(60), nullable=False)
     aws_type = db.Column(db.String(10))        # Global / GCR
     active_date = db.Column(db.Date)           # Account Activation date
-    remind = db.Column(db.Boolean) 
+    remind = db.Column(db.Boolean)
 
     def update_aws(self, account_id, role, deploy_region, aws_type):
         self.account_id = account_id
@@ -98,8 +116,11 @@ class Account(db.Model):
     def get_days(self):
         now = datetime.now()
         nowday = datetime.date(now)
-        days =  nowday - self.atvdate
+        days = nowday - self.atvdate
         return days
+
+    def update_dict(self, items: Dict):
+        universal_update_dict(self, items)
 
 
 class Datacenter(db.Model):
@@ -108,12 +129,19 @@ class Datacenter(db.Model):
     """
     __tablename__ = 'datacenter'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(20), nullable=False, unique=True)    # Datacenter Name: Easyun
-    cloud = db.Column(db.String(20), nullable=False)                # Cloud Provider: AWS
-    account_id = db.Column(db.String(30), nullable=False)           # Account ID
+    name = db.Column(db.String(20), nullable=False,
+                     unique=True)    # Datacenter Name: Easyun
+    # Cloud Provider: AWS
+    cloud = db.Column(db.String(20), nullable=False)
+    account_id = db.Column(
+        db.String(30), nullable=False)           # Account ID
     region = db.Column(db.String(120))          # Deployed Region
-    vpc_id = db.Column(db.String(120))           # VPC ID 
-    create_date = db.Column(db.DateTime)                # Datacenter Create date
+    vpc_id = db.Column(db.String(120))           # VPC ID
+    # Datacenter Create date
+    create_date = db.Column(db.DateTime)
 
     def get_region(self):
         return (self.region)
+
+    def update_dict(self, items: Dict):
+        universal_update_dict(self, items)
