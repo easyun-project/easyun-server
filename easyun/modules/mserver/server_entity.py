@@ -42,7 +42,7 @@ def get_svr(svr_id):
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         raise TypeError ("Type %s not serializable" % type(obj))
-
+    try:
         response = CLIENT.describe_instances(InstanceIds=[svr_id])
         print(response)
         res = Result(detail = response['Reservations'][0]['Instances'][0],
