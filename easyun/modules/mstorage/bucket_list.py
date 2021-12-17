@@ -57,14 +57,14 @@ def listBucket():
             try:
                 # 获取存储桶的权限
                 access = client.get_public_access_block(Bucket=name)
-                if access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == True:
-                    bucketStatus = 'Public'
+                if access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == False or access['PublicAccessBlockConfiguration']['IgnorePublicAcls'] == False or access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == False or access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == False:
+                    bucketStatus = 'Objects can be public'
                 else:
-                    bucketStatus = 'Individual objects can be public'
+                    bucketStatus = 'Bucket and objects not public'
             except Exception as e:
                 if e.response['Error']['Code'] == 'NoSuchPublicAccessBlockConfiguration':
                     # print('\t no Public Access')
-                    bucketStatus = 'All Objects are private'
+                    bucketStatus = 'Objects can be public'
                 else:
                     print("unexpected error: %s" % (e.response))
             bucketDetial = {'bucketName':name,'bucketStatus':bucketStatus,'bucketRegion':bucketRegion}

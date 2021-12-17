@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
-import boto3
 from apiflask import APIBlueprint
 from easyun.common.models import Account, Datacenter
 
@@ -13,6 +12,6 @@ TYPE = 'AWS::S3::Bucket'
 
 FLAG = "Easyun"
 
-Region = "us-east-1"
+REGION = "us-east-1"
 
 from . import bucket_add, bucket_list
