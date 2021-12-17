@@ -104,6 +104,8 @@ class Result:
                 result.err_resp()
             ```
         """
+        if self.http_status_code == 200:
+            self.http_status_code = 500
         abort(self.http_status_code,
               extra_data=generate_payload(
                   self.detail,
