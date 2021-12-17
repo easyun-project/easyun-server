@@ -8,7 +8,7 @@ from flask import jsonify
 from werkzeug.wrappers import response
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from . import TYPE, bp, FLAG, Region
+from . import TYPE, bp, FLAG, REGION
 
 # bucket detail:
 # bucketName
