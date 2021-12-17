@@ -21,7 +21,7 @@ class newBucket(Schema):
     
 # 新增bucket
 @bp.post('/add_bucket')
-#@auth_required(auth_token)
+@auth_required(auth_token)
 @input(newBucket)
 def add_bucket(newBucket):
     print(newBucket)
