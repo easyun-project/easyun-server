@@ -105,10 +105,12 @@ sg_ip_dict={'easyun-sg-default' : IpPermissions1,
 }
 
 TagEasyun= [{
-                'Key':
-                    'Flag',
-                'Value':
-                    FLAG
-            }]
+        'Key':
+        'Flag',
+        'Value':
+        FLAG
+        }]
 
-from . import datacenter_add, datacenter_default, datacenter_get, datacenter_sdk
+keypair_name = 'key-easyun-user'
+keypair_filename = 'key-easyun-user.pem'
+from . import datacenter_add, datacenter_default, datacenter_get, datacenter_sdk, datacenter_delete

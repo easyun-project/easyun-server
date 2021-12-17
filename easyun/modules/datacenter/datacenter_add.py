@@ -18,7 +18,7 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict
+from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict,keypair_filename,keypair_name
 from  .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
@@ -46,33 +46,6 @@ NewDataCenter = {
         }
         ]
 }
-
-# def add_subnet(ec2,vpc,route_table,subnet):
-#             TagEasyunSubnet= [{'ResourceType':'subnet','Tags': TagEasyun}]
-
-#             subnet = ec2.create_subnet(CidrBlock=subnet, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
-#             # associate the route table with the subnet
-#             route_table.associate_with_subnet(SubnetId=subnet['Subnet']['SubnetId'])
-#             print('Public subnet1= '+ subnet['Subnet']['SubnetId'])
-
-
-# def add_VPC_security_group(ec2,vpc,groupname,description,IpPermissions):
-#     TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
-    
-#     secure_group = ec2.create_security_group(GroupName=groupname, Description=description, VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
-    
-#     ec2.authorize_security_group_ingress(
-#         GroupId=secure_group['GroupId'],
-#         IpPermissions=IpPermissions)
-    
-#     print('secure_group2= '+secure_group['GroupId'])
-
-
-# def add_VPC_db(vpc,region):
-#     new_datacenter = Datacenter(id=1,name='Easyun',cloud='AWS', account='', region=region,vpc_id=vpc.id,credate=datetime.date())
-#     db.session.add(new_datacenter)
-        
-
 
 class AddDatacenter(Schema):
     region = String(required=True, validate=Length(0, 20))     #VPC name
@@ -285,16 +258,17 @@ def add_datacenter(data):
     # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='icmp', FromPort=-1, ToPort=-1)
     
 
-   
-
     # create key pairs
     TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
     
     print('Entering applying key pairs')
 
     try:
-        response = ec2.create_key_pair(KeyName='key-easyun-user',TagSpecifications=TagEasyunKeyPair)
-        print(response)
+        new_keypair = vpc_resource.create_key_pair(KeyName=keypair_name,TagSpecifications=TagEasyunKeyPair)
+        # keypair_name = 'key-easyun-user'
+        with open('./'+keypair_filename, 'w') as file:
+            file.write(new_keypair.key_material)
+            print(new_keypair)
     except Exception:
         response = Result(detail ={'Result' : 'Errors'}, message='Create key pairs failed due to already existed', status_code=3001,http_status_code=400)
         print(response)
@@ -308,48 +282,4 @@ def add_datacenter(data):
     # }
     response = Result(detail = svc, status_code=3001)
     return response.make_resp()
-
-
-
-
-
-
-class VpcListIn(Schema):
-    vpc_id = String()
-
-
-class VpcListOut(Schema):
-    vpc_id = String()
-    pub_subnet1 = String() 
-    pub_subnet2 = String() 
-    private_subnet1 = String() 
-    private_subnet2 = String() 
-    sgs = String() 
-    keypair = String()
-
-
-@bp.get('/dc_info')
-@auth_required(auth_token)
-@input(VpcListIn)
-@output(VpcListOut, description='Get Datacenter info')
-def get_vpc(vpc_id):
-    '''获取当前Datacenter资源信息'''
-    # get vpc info
-    # get subnet info
-    # get securitygroup info
-    # get keypair info
-
-    ec2 = boto3.resource('ec2', region_name=REGION)
-    vpcs = ec2.describer_vpcs( VpcIds=[
-        'VpcListIn',
-    ],
-    Filters=[
-        {'Name': 'tag:Flag','Values': [FLAG]}
-    ])
-    vpclist = {}
-    print(json.dumps(vpcs, sort_keys=True, indent=4))
-
-    return jsonify(vpcs)
-    
-    return '' #datacenter id
 
