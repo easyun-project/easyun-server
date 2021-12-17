@@ -53,7 +53,7 @@ def listBucket():
         client = boto3.client('s3', region_name = Region)
         for name in bucketNames:
             # 获取存储桶所在的region
-            bucketRegion = client.get_bucket_Region(name)
+            bucketRegion = get_bucket_Region(name)
             try:
                 # 获取存储桶的权限
                 access = client.get_public_access_block(Bucket=name)
@@ -78,6 +78,6 @@ def listBucket():
         return response.make_resp()
     except Exception:
         response = Result(
-            message='Get bucket list failed', status_code=4001, http_status_code=400
+            message='Get bucket list failed', status_code=4002, http_status_code=400
         )
         return response.err_resp()
