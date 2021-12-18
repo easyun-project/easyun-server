@@ -20,6 +20,7 @@ from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissi
 from .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
+from .schemas import VpcListOut
 
 a = datacentersdk()
 # 云服务器参数定义
@@ -44,21 +45,6 @@ NewDataCenter = {
         }
         ]
 }
-
-
-class VpcListIn(Schema):
-    vpc_id = String()
-
-
-class VpcListOut(Schema):
-    vpc_id = String()
-    pub_subnet1 = String() 
-    pub_subnet2 = String() 
-    private_subnet1 = String() 
-    private_subnet2 = String() 
-    sgs = String() 
-    keypair = String()
-
 
 @bp.get('/dc_info/<vpc_id>')
 #@auth_required(auth_token)

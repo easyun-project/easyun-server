@@ -22,6 +22,7 @@ from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissi
 from  .datacenter_sdk import datacentersdk,app_log
 
 # from . import vpc_act
+from .schemas import AddDatacenter, DataCenterResultOut
 
 a = datacentersdk()
 # 云服务器参数定义
@@ -46,22 +47,6 @@ NewDataCenter = {
         }
         ]
 }
-
-class AddDatacenter(Schema):
-    region = String(required=True, validate=Length(0, 20))     #VPC name
-    vpc_cidr = String(required=True, validate=Length(0, 20))     #IP address range
-    public_subnet_1 = String(required=True)
-    public_subnet_2 = String(required=True)
-    private_subnet_1 = String(required=True)
-    private_subnet_2 = String(required=True)
-    sgs1_flag = String(required=True) 
-    sgs2_flag = String(required=True) 
-    sgs3_flag = String(required=True) 
-    keypair = String(required=True)
-
-class DataCenterResultOut(Schema):
-    region_name = String()
-    vpc_id = String()
 
 @bp.post('/add_dc')
 @auth_required(auth_token)
