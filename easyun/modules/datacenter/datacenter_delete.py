@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @author:  pengchang
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
-  @file:    datacenter_add.py
-  @desc:    The DataCenter Create module
+  @file:    datacenter_delete.py
+  @desc:    DataCenter Deletion module
 """
 
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
@@ -65,6 +63,7 @@ class VpcListOut(Schema):
 @bp.get('/dc_info/<vpc_id>')
 #@auth_required(auth_token)
 #@input(VpcListIn)
+# @app_log('')
 @output(VpcListOut, description='Get Datacenter info')
 def get_vpc(vpc_id):
     '''获取当前Datacenter资源信息'''
