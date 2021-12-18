@@ -46,6 +46,7 @@ from flask import current_app
 
 # logger.addHandler(file_handler1)
 # logger.addHandler(file_handler)
+from .schemas import DataCenter2ListOut
 
 NewDataCenter = {
     'region': 'us-east-1',
@@ -70,19 +71,6 @@ NewDataCenter = {
         ]
 }
 
-
-class DataCenterListIn(Schema):
-    vpc_id = String()
-
-
-class DataCenterListOut(Schema):
-    region_name = String()
-    vpc_id = String()
-    azs = List(String)
-    subnets = List(String)
-    securitygroup = List(String)
-    keypair = List(String)
-    create_date = String()
     
 @app_log('download keypairs')
 @bp.get('/download/<filename>')
@@ -107,7 +95,7 @@ def download_keypair(filename):
 @app_log('get all')
 @bp.get('/all')
 @auth_required(auth_token)
-@output(DataCenterListOut, description='Get DataCenter Region Info')
+@output(DataCenter2ListOut, description='Get DataCenter Region Info')
 def get_datacenter_all():
     '''获取Easyun环境下云数据中心信息'''
     RESOURCE = boto3.resource('ec2', region_name=DC_REGION)

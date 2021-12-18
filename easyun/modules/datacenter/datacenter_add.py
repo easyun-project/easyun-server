@@ -22,6 +22,7 @@ from . import bp, bp, DC_REGION, DC_NAME, VERBOSE,IpPermissions1,IpPermissions2,
 from  .datacenter_sdk import datacentersdk,app_log
 
 # from . import vpc_act
+from .schemas import AddDatacenter, DataCenterResultOut
 
 a = datacentersdk()
 # 云服务器参数定义

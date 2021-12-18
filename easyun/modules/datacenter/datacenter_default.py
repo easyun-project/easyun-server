@@ -14,6 +14,7 @@ from datetime import date, datetime
 from . import bp, REGION, FLAG, TagEasyun
 from flask import jsonify
 from  .datacenter_sdk import datacentersdk
+from .schemas import DataCenterListOut
 
 NewDataCenter = {
     'region': 'us-east-1',
@@ -31,25 +32,6 @@ NewDataCenter = {
 }
 
 
-class DataCenterListIn(Schema):
-    vpc_id = String()
-
-
-class DataCenterListOut(Schema):
-    region_name = String()
-    azs = String()
-    vpc_cidr = String()
-    pub_subnet1 = String()
-    pub_subnet2 = String()
-    pri_subnet1 = String()
-    pri_subnet2 = String()
-    secure_group1 = String() 
-    secure_group2 = String() 
-    secure_group3 = String()
-    key_name = String()
-    category = String()
-
-
 @bp.get('/default')
 #@auth_required(auth_token)
 # @app_log('get default info of data center')
@@ -60,5 +42,5 @@ def get_datacentercfg():
     ec2 = boto3.client('ec2', region_name=REGION)
     
     # vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
-
-    return jsonify(NewDataCenter) 
+    response = Result(detail=NewDataCenter, status_code=2001)
+    return response.make_resp()
