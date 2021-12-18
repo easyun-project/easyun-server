@@ -11,6 +11,7 @@ from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
 from flask import jsonify
 from datetime import date, datetime
+from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result, make_resp, error_resp, bad_request
@@ -18,7 +19,7 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun
+from . import bp, DC_REGION, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun
 from .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
@@ -63,7 +64,7 @@ class VpcListOut(Schema):
 
 
 @bp.get('/dc_info/<vpc_id>')
-#@auth_required(auth_token)
+@auth_required(auth_token)
 #@input(VpcListIn)
 @output(VpcListOut, description='Get Datacenter info')
 def get_vpc(vpc_id):
@@ -73,7 +74,7 @@ def get_vpc(vpc_id):
     # get securitygroup info
     # get keypair info
 
-    ec2 = boto3.client('ec2', region_name=REGION)
+    ec2 = boto3.client('ec2', region_name=DC_REGION)
     vpcs = ec2.describe_vpcs( VpcIds=[
         vpc_id,
     ],
@@ -91,7 +92,7 @@ def get_vpc(vpc_id):
 
 
 @bp.post('/cleanup')
-@auth_token.login_required
+@auth_required(auth_token)
 @input({})
 @output({}, 201, description='Remove the Datacenter')
 def remove_datacenter(this_dc):
@@ -106,7 +107,7 @@ def remove_datacenter(this_dc):
     # delete 3 x easyun-sg-xxx
     # delete 1 x key-easyun-user (默认keypair)
     try:
-        ec2 = boto3.resource('ec2', region_name=REGION)
+        ec2 = boto3.resource('ec2', region_name=DC_REGION)
         vpc_id = ec2.describer_vpcs( VpcIds='vpc_id',
     Filters=[
         {'Name': 'tag:Flag','Values': [FLAG]}

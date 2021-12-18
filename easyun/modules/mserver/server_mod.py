@@ -10,9 +10,10 @@ from apiflask.validators import Length, OneOf
 from flask import jsonify
 from marshmallow.utils import pprint
 from werkzeug.wrappers import response
+from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.result import make_resp, error_resp, bad_request, Result
-from . import bp, REGION, FLAG
+from . import bp, REGION
 
 
 class NewNameIn(Schema):

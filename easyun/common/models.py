@@ -113,6 +113,9 @@ class Account(db.Model):
     def get_role(self):
         return (self.role)
 
+    def get_region(self):
+        return (self.deploy_region)
+
     def get_days(self):
         now = datetime.now()
         nowday = datetime.date(now)

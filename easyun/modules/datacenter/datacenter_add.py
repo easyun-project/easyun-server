@@ -14,11 +14,11 @@ from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun import db
+from easyun import db, FLAG
 import boto3
 import os, time
 import json
-from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict,keypair_filename,keypair_name
+from . import bp, DC_REGION, DC_NAME, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict,keypair_filename,keypair_name
 from  .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
@@ -40,33 +40,43 @@ NewDataCenter = {
         {
         "ResourceType":"instance",
         "Tags": [
-                {"Key": "Flag", "Value": FLAG},
+                {"Key": "Flag", "Value": 'Easyun'},
                 {"Key": "Name", "Value": 'test-from-api'}
             ]
         }
         ]
 }
 
-class AddDatacenter(Schema):
-    region = String(required=True, validate=Length(0, 20))     #VPC name
-    vpc_cidr = String(required=True, validate=Length(0, 20))     #IP address range
-    public_subnet_1 = String(required=True)
-    public_subnet_2 = String(required=True)
-    private_subnet_1 = String(required=True)
-    private_subnet_2 = String(required=True)
-    sgs1_flag = String(required=True) 
-    sgs2_flag = String(required=True) 
-    sgs3_flag = String(required=True) 
-    keypair = String(required=True)
+class DcParmIn(Schema):
+    region = String(required=True, validate=Length(0, 20),
+        example="us-east-1")     #VPC name
+    vpc_cidr = String(required=True, validate=Length(0, 20),
+        example="10.10.0.0/16")     #IP address range
+    public_subnet_1 = String(required=True,
+        example="10.10.1.0/24")
+    public_subnet_2 = String(required=True,
+        example="10.10.2.0/24")
+    private_subnet_1 = String(required=True,
+        example="10.10.11.0/24")
+    private_subnet_2 = String(required=True,
+        example="10.10.12.0/24")
+    sgs1_flag = String(required=True,
+        example="easyun-sg-default") 
+    sgs2_flag = String(required=True,
+        example="easyun-sg-webapp") 
+    sgs3_flag = String(required=True,
+        example="easyun-sg-database") 
+    keypair = String(required=True,
+        example="key_easyun_user")
 
-class DataCenterResultOut(Schema):
+class DcResultOut(Schema):
     region_name = String()
     vpc_id = String()
 
 @bp.post('/add_dc')
 @auth_required(auth_token)
-@input(AddDatacenter)
-@output(DataCenterResultOut, 201, description='add A new Datacenter')
+@input(DcParmIn)
+@output(DcResultOut, 201, description='add A new Datacenter')
 def add_datacenter(data):
     '''新增 Datacenter
     curl -X 'POST' \
@@ -137,12 +147,12 @@ def add_datacenter(data):
         vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC)
         print('VPC ID= '+ vpc.id )
         svc = {
-        'region_name': REGION,
+        'region_name': DC_REGION,
         'vpc_id': vpc.id,
         }
         print('entering add_VPC_db')
 
-        if datacentersdk.add_VPC_db(vpc.id,REGION):
+        if datacentersdk.add_VPC_db(vpc.id, DC_REGION):
             print('db operation is ok') 
         else:
             print('db operatin is bad')
@@ -265,6 +275,8 @@ def add_datacenter(data):
 
     try:
         new_keypair = vpc_resource.create_key_pair(KeyName=keypair_name,TagSpecifications=TagEasyunKeyPair)
+        # if not os.path.exists('keys'):
+        #     os.mkdir('keys')
         # keypair_name = 'key-easyun-user'
         with open('./'+keypair_filename, 'w') as file:
             file.write(new_keypair.key_material)

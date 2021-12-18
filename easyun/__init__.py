@@ -17,9 +17,11 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 # from .common.result import BaseResponseSchema
 
-
 # define api version
 ver = '/api/v1.0'
+
+#保留 FLAG 用于兼容旧代码
+FLAG = "Easyun"
 
 # extensions initialization
 db = SQLAlchemy()
@@ -124,6 +126,7 @@ def set_cloud_env(app: APIFlask):
     # 获取 iam_role
     role = client_sts.get_caller_identity().get('Arn').split('/')[1]
     # 获取 deployed region
+    # 目前该方法需要 aws configure 配置默认region后才能取到值
     this_region = boto3.session.Session().region_name
     # 判断 account_type
     gcr_regions = ['cn-north-1', 'cn-northwest-1']
@@ -134,7 +137,7 @@ def set_cloud_env(app: APIFlask):
 
     # 数据写入 database
     with app.app_context():
-        exist_account = Account.query.filter_by(cloud='aws').first()
+        exist_account:Account = Account.query.filter_by(cloud='aws').first()
         if exist_account:
             exist_account.update_aws(account_id=account_id, role=role, deploy_region=this_region,aws_type=aws_type)
         else:
@@ -181,9 +184,9 @@ def register_commands(app: APIFlask):
         # })
         # db.session.add(account)
         db.session.commit()
-        click.echo("init dev databses.")
+        click.echo("init dev database.")
 
     @app.cli.command()
     def dropdb():
         db.drop_all()
-        click.echo("drop dev databses.")
+        click.echo("drop dev database.")

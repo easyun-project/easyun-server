@@ -10,11 +10,12 @@ import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Account,Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
-from . import bp, REGION, FLAG,keypair_name,keypair_filename,TagEasyun
+from . import bp, DC_NAME, DC_REGION, keypair_name, keypair_filename,TagEasyun
 from flask import jsonify,send_file, send_from_directory,make_response
 import os
 from  .datacenter_sdk import datacentersdk
@@ -37,7 +38,7 @@ NewDataCenter = {
         "ResourceType":"vpc",
         "Tags": [
                 {"Key": "Flag", "Value": FLAG},
-                {"Key": "Name", "Value": FLAG}
+                {"Key": "Name", "Value": DC_NAME}
             ]
         }
         ]
@@ -58,12 +59,12 @@ class DataCenterListOut(Schema):
     create_date = String()
     
 @bp.get('/download/<filename>')
-#@auth_required(auth_token)
+@auth_required(auth_token)
 def download_keypair(filename):
    '''获取Easyun环境下keypair'''
    directory = os.getcwd()  # 假设在当前目录
-   ec2 = boto3.client('ec2', region_name=REGION)
-   vpc_resource = boto3.resource('ec2', region_name=REGION)
+   ec2 = boto3.client('ec2', region_name=DC_REGION)
+   vpc_resource = boto3.resource('ec2', region_name=DC_REGION)
    TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
    new_keypair = vpc_resource.create_key_pair(KeyName=filename,TagSpecifications=TagEasyunKeyPair)
 # keypair_name = 'key-easyun-user'
@@ -77,14 +78,14 @@ def download_keypair(filename):
 
 
 @bp.get('/all')
-#@auth_required(auth_token)
+@auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Region Info')
 def get_datacenter_all():
     '''获取Easyun环境下云数据中心信息'''
-    RESOURCE = boto3.resource('ec2', region_name=REGION)
-    ec2 = boto3.client('ec2', region_name=REGION)
+    RESOURCE = boto3.resource('ec2', region_name=DC_REGION)
+    ec2 = boto3.client('ec2', region_name=DC_REGION)
 
-    vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
+    vpcs = ec2.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [DC_NAME]}])
 
     # vpcs = client1.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
 
@@ -110,7 +111,7 @@ def get_datacenter_all():
 
     # regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
 
-    az_list = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [REGION]}])
+    az_list = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [DC_REGION]}])
 
     az_ids = [ az['ZoneName'] for az in az_list['AvailabilityZones'] ]
 
@@ -143,15 +144,17 @@ def get_datacenter_all():
 def testget():
     '''数据中心测试专用'''
     directory = os.getcwd()  # 假设在当前目录
-    ec2 = boto3.client('ec2', region_name=REGION)
-    vpc_resource = boto3.resource('ec2', region_name=REGION)
+    ec2 = boto3.client('ec2', region_name=DC_REGION)
+    vpc_resource = boto3.resource('ec2', region_name=DC_REGION)
     TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
     try:
-            new_keypair = vpc_resource.create_key_pair(KeyName=keypair_filename,TagSpecifications=TagEasyunKeyPair)
-            # keypair_name = 'key-easyun-user'
-            with open('./'+keypair_filename, 'w') as file:
-                file.write(new_keypair.key_material)
-                print(new_keypair)
+        # if not os.path.exists('keys'):
+        #     os.mkdir('keys')
+        new_keypair = vpc_resource.create_key_pair(KeyName=keypair_filename,TagSpecifications=TagEasyunKeyPair)
+        # keypair_name = 'key-easyun-user'
+        with open('./'+keypair_filename, 'w') as file:
+            file.write(new_keypair.key_material)
+            print(new_keypair)
     except Exception:
             response = Result(detail ={'Result' : 'Errors'}, message='Create key pairs failed due to already existed', status_code=3001,http_status_code=400)
             print(response)

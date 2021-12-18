@@ -14,11 +14,11 @@ from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Account,Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun import db
+from easyun import db, FLAG
 import boto3
 import os, time
 import json
-from . import FLAG,TagEasyun,keypair_filename,keypair_name
+from . import DC_NAME,TagEasyun, keypair_filename, keypair_name
 
 class datacentersdk():
     def add_subnet(ec2,vpc,route_table,subnet):

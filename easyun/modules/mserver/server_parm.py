@@ -8,10 +8,11 @@ import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from datetime import date, datetime
-from . import bp, REGION, FLAG
+from . import bp, REGION
 from flask import jsonify
 
 
