@@ -14,4 +14,4 @@ FLAG = "Easyun"
 
 REGION = "us-east-1"
 
-from . import bucket_add, bucket_list
+from . import bucket_add, bucket_list, bucket_delete
