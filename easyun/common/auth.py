@@ -69,12 +69,13 @@ def post_auth_token(user):
         token = login_user.get_token()
         db.session.commit()
         # get account info from database
-        curr_account = Account.query.first()
+        curr_account:Account = Account.query.first()
         resp = Result({
             'token': token,
             'account_id': curr_account.account_id,
             'account_type': curr_account.aws_type,
-            'role': curr_account.role}, 
+            'role': curr_account.role,
+            'deploy_region': curr_account.get_region()}, 
             status_code=1001)    
         return resp.make_resp()
         # jsonify({'token': token})

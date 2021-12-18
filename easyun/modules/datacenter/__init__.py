@@ -5,6 +5,7 @@
 """
 
 from apiflask import APIBlueprint
+from easyun import FLAG
 from easyun.common.models import Account
 
 # define api version
@@ -12,13 +13,23 @@ ver = '/api/v1'
 
 bp = APIBlueprint('数据中心管理', __name__, url_prefix = ver+'/datacenter') 
 
-REGION = "us-east-1"
-# dc = Datacenter.query.filter_by(name="Easyun").first()
-# REGION = dc.get_region()
-FLAG = "Easyun"
+#单数据中心模式下，名称默认：Easyun
+#tag:FLAG = DC_NAME,
+DC_NAME = "Easyun"
+#单数据中心模式下，DC Region 同 Deployed Region
+DC_REGION = 'us-east-1'
+# this_account = Account.query.filter_by(id=1).first()
+# DC_REGION = this_account.get_region()
+
+TagEasyun= [{
+        'Key': 'Flag', 
+        #单数据中心版本，DC名称默认Easyun
+        'Value': FLAG   
+        }]
+
+
 VERBOSE = 1
 DryRun=False
-
 
 secure_group1 = 'easyun-sg-default'
 secure_group2 = 'easyun-sg-webapp'
@@ -103,15 +114,9 @@ sg_ip_dict={'easyun-sg-default' : IpPermissions1,
 'easyun-sg-database' :  IpPermissions3
 }
 
-TagEasyun= [{
-        'Key':
-        'Flag',
-        'Value':
-        FLAG
-        }]
 
-keypair_name = 'key-easyun-user'
-keypair_filename = 'key-easyun-user.pem'
+keypair_name = 'key_easyun_user'
+keypair_filename = keypair_name+'.pem'
 
-from . import datacenter_add, datacenter_default, datacenter_get, datacenter_sdk, datacenter_delete
 
+from . import datacenter_parm, datacenter_add, datacenter_get, datacenter_sdk, datacenter_delete 
