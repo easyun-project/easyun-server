@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-  @author:  pengchang
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
-  @file:    datacenter_add.py
-  @desc:    The DataCenter Create module
+  @file:    datacenter_sdk.py
+  @desc:    DataCenter SDK module
 """
 
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
-from flask import jsonify
+from flask import current_app,jsonify
 from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Account,Datacenter
@@ -18,35 +16,51 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import FLAG,TagEasyun,keypair_filename,keypair_name
+import logging
+from . import FLAG,TagEasyun,keypair_filename,keypair_name,DryRun
+
+def app_log(name):
+    def wrapper1(func):
+        def sub_wrapper1(*args,**kwargs):
+            print("entering into===>",func.__name__,name)
+            current_app.logger.info("entering===>"+func.__name__)
+            return func(*args,**kwargs)
+            print("exiting from===>",func.__name__,name)
+            current_app.logger.info("exit from===>"+func.__name__,name)
+        return sub_wrapper1    
+    return wrapper1
 
 class datacentersdk():
+
+    @staticmethod
+    @app_log("add_subnet")
     def add_subnet(ec2,vpc,route_table,subnet):
-        print('entered add_subnet')
+
         TagEasyunSubnet= [{'ResourceType':'subnet','Tags': TagEasyun}]
 
-        subnet = ec2.create_subnet(CidrBlock=subnet, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
+        subnet = ec2.create_subnet(CidrBlock=subnet, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet,DryRun=DryRun)
         # associate the route table with the subnet
-        route_table.associate_with_subnet(SubnetId=subnet['Subnet']['SubnetId'])
+        route_table.associate_with_subnet(SubnetId=subnet['Subnet']['SubnetId'],DryRun=DryRun)
         print('Public subnet1= '+ subnet['Subnet']['SubnetId'])
-        print('exiting add_subnet')
         return(subnet['Subnet']['SubnetId']) 
-
+    
+    @staticmethod
+    @app_log("add_VPC_security_group")
     def add_VPC_security_group(ec2,vpc,groupname,description,IpPermissions):
-        print('entered add_VPC_security_group')
+
         TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
         
-        secure_group = ec2.create_security_group(GroupName=groupname, Description=description, VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
+        secure_group = ec2.create_security_group(GroupName=groupname, Description=description, VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup,DryRun=DryRun)
         
-        ec2.authorize_security_group_ingress(GroupId=secure_group['GroupId'],IpPermissions=IpPermissions)
+        ec2.authorize_security_group_ingress(GroupId=secure_group['GroupId'],IpPermissions=IpPermissions,DryRun=DryRun)
         
         print('secure_group= '+secure_group['GroupId'])
-        print('exiting add_VPC_security_group')
+
         return(secure_group['GroupId'])
 
-
+    @staticmethod
+    @app_log("add_VPC_db")
     def add_VPC_db(vpc_id,region):
-        print('entered add_VPC_db')
         #dc = Datacenter(name='Easyun',cloud='AWS', account_id='666621994060', region=region,vpc_id='vpc-00bcc6b87f368643f',create_date=datetime.utcnow())
                 # print("11123")
         # dc = Datacenter(id=1,name='Easyun',cloud='AWS', account_id='666621994060', region=REGION,vpc_id='vpc-00bcc6b87f368643f',create_date=datetime.utcnow())
@@ -83,11 +97,12 @@ class datacentersdk():
             db.session.commit()
             # datacenter = Datacenter.query.first()
             # print(datacenter)
-            print('exiting add_VPC_db')
+
             return True
 
 
-
+    @staticmethod
+    @app_log("list_Subnets")
     def list_Subnets(ec2,vpc_id):
         subnet_list = ec2.describe_subnets(
             Filters=[
@@ -117,8 +132,11 @@ class datacentersdk():
             }
             response.append(subnet_record)
         
+        current_app.logger.info(response)
         return response
 
+    @staticmethod
+    @app_log("list_keypairs")
     def list_keypairs(ec2,vpc_id):
         keypair_list = ec2.describe_key_pairs(
             Filters=[
@@ -142,8 +160,11 @@ class datacentersdk():
         kp_record={'Keypair filename',keypair_filename}
         response.append(kp_record)
         
+        current_app.logger.info(response)
         return response
 
+    @staticmethod
+    @app_log("list_securitygroup")
     def list_securitygroup(ec2,vpc_id):
         sg_list = ec2.describe_security_groups(
             Filters=[
@@ -166,5 +187,6 @@ class datacentersdk():
                     # 'IpPermissions': sg_IpPermissions
             }
             response.append(sg_record)
-        
+
+        current_app.logger.info(response)
         return response

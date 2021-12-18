@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @author:  pengchang
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
   @file:    datacenter_default.py
-  @desc:    The DataCenter default module
+  @desc:    DataCenter Default Value Module
 """
 
 import boto3
@@ -15,6 +13,7 @@ from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
 from . import bp, REGION, FLAG, TagEasyun
 from flask import jsonify
+from  .datacenter_sdk import datacentersdk
 
 NewDataCenter = {
     'region': 'us-east-1',
@@ -53,6 +52,7 @@ class DataCenterListOut(Schema):
 
 @bp.get('/default')
 #@auth_required(auth_token)
+# @app_log('get default info of data center')
 @output(DataCenterListOut, description='Get DataCenter Info')
 def get_datacentercfg():
     '''获取创建云数据中心默认参数'''
