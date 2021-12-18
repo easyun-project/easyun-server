@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-  @author:  pengchang
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
+  @Description: DataCenter Management - action: start, restart, stop, delete; and get status
+  @LastEditors: 
   @file:    datacenter_add.py
-  @desc:    The DataCenter Create module
+  @desc:    DataCenter Creation module
 """
 
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
-from flask import jsonify
+from flask import current_app,jsonify
 from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
@@ -18,8 +18,8 @@ from easyun import db, FLAG
 import boto3
 import os, time
 import json
-from . import bp, DC_REGION, DC_NAME, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict,keypair_filename,keypair_name
-from  .datacenter_sdk import datacentersdk
+from . import bp, bp, DC_REGION, DC_NAME, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun,sg_dict,sg_ip_dict,keypair_filename,keypair_name,DryRun
+from  .datacenter_sdk import datacentersdk,app_log
 
 # from . import vpc_act
 
@@ -106,7 +106,8 @@ def add_datacenter(data):
     # create 1 x easyun-route-nat
     # create 3 x easyun-sg-xxx
     # create 1 x key-easyun-user (默认keypair)
-    print(data)
+    # print(data)
+    # logger.debug(data)
     region = data["region"]
     vpc_cidr = data["vpc_cidr"]
     public_subnet_1 = data["public_subnet_1"]
@@ -124,16 +125,8 @@ def add_datacenter(data):
 
     #a = datacentersdk()
 
-#    datacentersdk.add_subnet()
-
-    # svc = {
-    #     'region_name': 'REGION',
-    #     'vpc_id': 'easyrun'
-    # }
-    # response = Result(detail = svc, status_code=3001)
-    # return response.make_resp()
-
-    print('haha'+str(sg_list))
+    # print('haha'+str(sg_list))
+    # logger.debug('haha'+str(sg_list))
 
     vpc_resource = boto3.resource('ec2', region_name=region)
     ec2 = boto3.client('ec2', region_name=region)
@@ -144,31 +137,30 @@ def add_datacenter(data):
     # query account id from DB (only one account for both phase 1 and 2) ????
    
     try:
-        vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC)
+        vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC,DryRun=DryRun)
         print('VPC ID= '+ vpc.id )
         svc = {
         'region_name': DC_REGION,
         'vpc_id': vpc.id,
         }
-        print('entering add_VPC_db')
 
-        if datacentersdk.add_VPC_db(vpc.id, DC_REGION):
-            print('db operation is ok') 
+        if datacentersdk.add_VPC_db(vpc.id,DC_REGION):
+            current_app.logger.info('db operation is ok') 
         else:
-            print('db operatin is bad')
+            current_app.logger.info('db operation failed') 
             response = Result(detail ={'Result' : 'Errors'}, message='DB Insert failed', status_code=3001,http_status_code=400)
-            print(response.err_resp())
+            current_app.logger.info(response.err_resp())
             response.err_resp()   
 
 
         svc_list_resp.append(svc)
-        print('create_vpc1' + str(svc_list_resp))
+        current_app.logger.info('create_vpc1' + str(svc_list_resp))
         # response = Result(detail = svc, status_code=3001)
         # print(response.make_resp())
         # return response.make_resp()
     except Exception:
         response = Result(detail ={'Result' : 'Errors'}, message='Datacenter VPC creation failed, maximum VPC reached', status_code=3001,http_status_code=400)
-        print(response.err_resp())
+        current_app.logger.info(response.err_resp())
         response.err_resp()   
  
 
@@ -177,25 +169,24 @@ def add_datacenter(data):
     # Create and Attach the Internet Gateway
     TagEasyunIG= [{'ResourceType':'internet-gateway','Tags': TagEasyun}]
     try:
-        igw = ec2.create_internet_gateway(TagSpecifications=TagEasyunIG)
-        print(f'Internet gateway created with: {json.dumps(igw, indent=4)}')
-        vpc.attach_internet_gateway(InternetGatewayId=igw['InternetGateway']['InternetGatewayId'])
-        print('Internet Gateway ID= '+ igw['InternetGateway']['InternetGatewayId'])
+        igw = ec2.create_internet_gateway(TagSpecifications=TagEasyunIG,DryRun=DryRun)
+        current_app.logger.info(f'Internet gateway created with: {json.dumps(igw, indent=4)}')
+        vpc.attach_internet_gateway(InternetGatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun)
+        current_app.logger.info('Internet Gateway ID= '+ igw['InternetGateway']['InternetGatewayId'])
     except Exception:
         response = Result(detail ={'Result' : 'Errors'}, message='Datacenter internet-gateway creation failed, maximum  reached', status_code=3001,http_status_code=400)
-        print(response.err_resp())
+        current_app.logger.info(response.err_resp())
         response.err_resp()   
 
     # Create a route table and a public route to Internet Gateway
     TagEasyunRouteTable= [{'ResourceType':'route-table','Tags': TagEasyun}]
 
-    route_table = vpc.create_route_table(TagSpecifications=TagEasyunRouteTable)
+    route_table = vpc.create_route_table(TagSpecifications=TagEasyunRouteTable,DryRun=DryRun)
     route = route_table.create_route(
         DestinationCidrBlock='0.0.0.0/0',
-        GatewayId=igw['InternetGateway']['InternetGatewayId']
-
+        GatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun
     )
-    print('Route Table ID= '+ route_table.id)
+    current_app.logger.info('Route Table ID= '+ route_table.id)
 
     # step 3: create 2 pub-subnet
 
@@ -217,47 +208,41 @@ def add_datacenter(data):
     # step 2: create NAT Gateway and allocate EIP
     # allocate IPV4 address for NAT gateway
     try:
-        print('Entering applying EIP')
-        eip = ec2.allocate_address(Domain='vpc')
-        print(eip['PublicIp'])
+        current_app.logger.info('Entering applying EIP')
+        eip = ec2.allocate_address(Domain='vpc',DryRun=DryRun)
+        current_app.logger.info(eip['PublicIp'])
         # create NAT gateway
         TagEasyunNATGateway= [{'ResourceType':'natgateway','Tags': TagEasyun}]
         
-        print('Entering applying NAT Gateway and it will take about 1 min, Be patient!!!')
+        current_app.logger.info('Entering applying NAT Gateway and it will take about 1 min, Be patient!!!')
 
         response = ec2.create_nat_gateway(
             AllocationId=eip['AllocationId'],
             SubnetId=natSubnetId,
             TagSpecifications=TagEasyunNATGateway,
-            ConnectivityType='public')
+            ConnectivityType='public',
+            DryRun=DryRun)
 
         nat_gateway_id = response['NatGateway']['NatGatewayId']
-        print(nat_gateway_id)
+        current_app.logger.info(nat_gateway_id)
         
         # wait until the NAT gateway is available
         waiter = ec2.get_waiter('nat_gateway_available')
         waiter.wait(NatGatewayIds=[nat_gateway_id])
     except Exception:
         response = Result(detail ={'Result' : 'Errors'}, message='Datacenter VPC creation failed, maximum EIP/NAT reached', status_code=3001,http_status_code=400)
-        print(response.err_resp())
+        current_app.logger.info(response.err_resp())
         response.err_resp()   
- 
-    # wait until the NAT gateway is available
-    # waiter = client1.get_waiter('nat_gateway_available')
-    # waiter.wait(nat_gateway_id)
-
-    
 
     # Step 5-1:  create security group easyun-sg-default
     # create security group allow SSH inbound rule through the VPC enable ssh/rdp/ping
-    # 
 
     TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
 
     for sg in sg_list:
-        print('Entering applying security group'+sg)
+        current_app.logger.info('Entering applying security group'+sg)
         secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,sg,sg_dict[sg],sg_ip_dict[sg])
-        print('secure_group1= '+secure_groupid)
+        current_app.logger.info('secure_group1= '+secure_groupid)
     
     # secure_group1 = ec2.create_security_group(GroupName=sg, Description=sg_dict[sg], VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
     # ec2.authorize_security_group_ingress(
@@ -271,23 +256,20 @@ def add_datacenter(data):
     # create key pairs
     TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
     
-    print('Entering applying key pairs')
+    current_app.logger.info('Entering applying key pairs')
 
     try:
-        new_keypair = vpc_resource.create_key_pair(KeyName=keypair_name,TagSpecifications=TagEasyunKeyPair)
-        # if not os.path.exists('keys'):
-        #     os.mkdir('keys')
+        new_keypair = vpc_resource.create_key_pair(KeyName=keypair_name,TagSpecifications=TagEasyunKeyPair,DryRun=DryRun)
         # keypair_name = 'key-easyun-user'
         with open('./'+keypair_filename, 'w') as file:
             file.write(new_keypair.key_material)
-            print(new_keypair)
     except Exception:
         response = Result(detail ={'Result' : 'Errors'}, message='Create key pairs failed due to already existed', status_code=3001,http_status_code=400)
-        print(response)
+        current_app.logger.info(response)
 
     # a.add_VPC_db(vpc,REGION)
-    print('create_vpc completion' + str(svc_list_resp))
-    print('create_vpc completion' + str(svc))
+    current_app.logger.info('create_vpc completion' + str(svc_list_resp))
+    current_app.logger.info('create_vpc completion' + str(svc))
     # svc = {
     #     'region_name': REGION,
     #     'vpc_id': 'easyrun'

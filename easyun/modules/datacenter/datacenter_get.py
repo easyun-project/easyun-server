@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @author:  pengchang
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
   @file:    datacenter_get.py
-  @desc:    The DataCenter Get module
+  @desc:    DataCenter Get module
 """
 
 import boto3
@@ -18,8 +16,36 @@ from datetime import date, datetime
 from . import bp, DC_NAME, DC_REGION, keypair_name, keypair_filename,TagEasyun
 from flask import jsonify,send_file, send_from_directory,make_response
 import os
-from  .datacenter_sdk import datacentersdk
+from  .datacenter_sdk import datacentersdk,app_log
 
+# from logging.handlers import RotatingFileHandler
+# import logging
+# from logging.handlers import RotatingFileHandler
+from flask import current_app
+
+
+
+# # logger = logging.getLogger('test')
+
+# logger = logging.getLogger()
+# formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
+# #formatter='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+# file_handler = RotatingFileHandler('logs/easyun_api1.log', maxBytes=10240, backupCount=10)
+# file_handler.setFormatter(formatter)
+# file_handler.setLevel(logging.DEBUG)
+
+# # logger = logging.getLogger('test')
+# # logger.setLevel(logging.DEBUG)
+# # #logger.setLevel(logging.DEBUG)
+# # formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
+# file_handler1 = logging.FileHandler('logs/easyun_api3.log')
+# file_handler1.setLevel(logging.INFO)
+# file_handler1.setFormatter(formatter)
+
+# # define RotatingFileHandler，max 7 files with 100K per file
+
+# logger.addHandler(file_handler1)
+# logger.addHandler(file_handler)
 
 NewDataCenter = {
     'region': 'us-east-1',
@@ -58,6 +84,7 @@ class DataCenterListOut(Schema):
     keypair = List(String)
     create_date = String()
     
+@app_log('download keypairs')
 @bp.get('/download/<filename>')
 @auth_required(auth_token)
 def download_keypair(filename):
@@ -77,6 +104,7 @@ def download_keypair(filename):
    return response
 
 
+@app_log('get all')
 @bp.get('/all')
 @auth_required(auth_token)
 @output(DataCenterListOut, description='Get DataCenter Region Info')
@@ -89,13 +117,11 @@ def get_datacenter_all():
 
     # vpcs = client1.describe_vpcs(Filters=[{'Name': 'tag:Flag','Values': [FLAG]}])
 
-#    datacenters = Datacenter.query.filter_by(id=2).first()
     datacenters:Datacenter  = Datacenter.query.filter_by(id=1).first()
     # datacenters:Datacenter  = Datacenter.query.get(1)
 
     # datacenters = Datacenter.query.first()
     # if len(datacenters) == 0:
-    # if (datacenters.count()  == 0):
     if (datacenters is None):
         response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
         print(response.err_resp())
@@ -105,6 +131,9 @@ def get_datacenter_all():
         region_name=datacenters.region
         create_date =datacenters.create_date
     
+        current_app.logger.debug("AAAA"+vpc_id)
+        current_app.logger.info("AAAA"+str(region_name))
+
     # print(vpc_id)
     # print(datacenters.id)
 
@@ -139,6 +168,7 @@ def get_datacenter_all():
     return response.make_resp()
 
 
+@app_log('testget')
 @bp.get('/testget')
 #@auth_required(auth_token)
 def testget():
@@ -158,8 +188,8 @@ def testget():
     except Exception:
             response = Result(detail ={'Result' : 'Errors'}, message='Create key pairs failed due to already existed', status_code=3001,http_status_code=400)
             print(response)
+            current_app.logger.debug(response)
     #    return send_from_directory(directory, filename, as_attachment=True)
     response = make_response(send_from_directory(directory, keypair_filename, as_attachment=True))
     response.headers["Content-Disposition"] = "attachment; filename={}".format(keypair_filename.encode().decode('latin-1'))
     return response
-

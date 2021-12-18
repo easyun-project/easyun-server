@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @author:  pengchang
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
   @file:    _init_.py
-  @desc:    The DataCenter Init module
+  @desc:    DataCenter Init module
 """
 
 from apiflask import APIBlueprint
@@ -31,6 +29,7 @@ TagEasyun= [{
 
 
 VERBOSE = 1
+DryRun=False
 
 secure_group1 = 'easyun-sg-default'
 secure_group2 = 'easyun-sg-webapp'

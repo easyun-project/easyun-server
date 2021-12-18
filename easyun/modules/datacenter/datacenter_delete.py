@@ -66,6 +66,7 @@ class VpcListOut(Schema):
 @bp.get('/dc_info/<vpc_id>')
 @auth_required(auth_token)
 #@input(VpcListIn)
+# @app_log('')
 @output(VpcListOut, description='Get Datacenter info')
 def get_vpc(vpc_id):
     '''获取当前Datacenter资源信息'''
