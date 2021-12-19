@@ -82,6 +82,7 @@ def get_svr(svr_id):
         instance_res['Monitoring'] = instance_res['Monitoring']['State']
         instance_res['VCpu'] = VCpu
         instance_res['Memory'] = Memory
+        instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile']['Arn'].split('/')[-1]
         instance_res['ImageName'] = images["Images"][0]["Name"]
         instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
         res = Result(detail = instance_res, status_code=200)
