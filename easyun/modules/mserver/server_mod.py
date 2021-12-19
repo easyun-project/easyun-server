@@ -127,15 +127,15 @@ def update_config(new):
     return response.make_resp()
 
 
-@bp.get('/instypes/<server_id>')
-@auth_required(auth_token)
-# @input()
-# @output()
-def get_ins_types(server_id):
-    '''查询指定云服务器的实例配置'''
-    RESOURCE = boto3.resource('ec2', region_name=REGION)
-    # 1.查询云服务器的架构 x86-64bit / arm-64bit
-    server = RESOURCE.Instance(server_id)
+# @bp.get('/instypes/<server_id>')
+# @auth_required(auth_token)
+# # @input()
+# # @output()
+# def get_ins_types(server_id):
+#     '''查询指定云服务器的实例配置'''
+#     RESOURCE = boto3.resource('ec2', region_name=REGION)
+#     # 1.查询云服务器的架构 x86-64bit / arm-64bit
+#     server = RESOURCE.Instance(server_id)
 
 
     
