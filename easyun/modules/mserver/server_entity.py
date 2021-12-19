@@ -25,9 +25,31 @@ class DetailOut(Schema):
     # ssubnet_id = String()
     # key_name = String()
     # category = String()
-    InstanceId = String()
-    PlatformDetails = String()
+    #缺少ipname，publicip,Terminal protection, IAM role
+    InstanceType = String()
+    VCpu = String()
+    Memory = String()
     PrivateIpAddress = String()
+
+
+    InstanceId = String()
+    LaunchTime = String()
+
+    
+    PrivateDnsName = String()
+    PublicDnsName = String()
+
+    PlatformDetails = String()
+    VirtualizationType = String()
+    UsageOperation = String()    
+    Monitoring = String()
+
+    ImageId = String()
+    ImageName = String()
+    ImagePath = String()
+    KeyName = String()
+    IamInstanceProfile = String()
+    
 
 
 @bp.get('/detail/<svr_id>')
@@ -43,10 +65,26 @@ def get_svr(svr_id):
             return obj.isoformat()
         raise TypeError ("Type %s not serializable" % type(obj))
     try:
-        response = CLIENT.describe_instances(InstanceIds=[svr_id])
-        print(response)
-        res = Result(detail = response['Reservations'][0]['Instances'][0],
-                status_code=3001)
+        instance = CLIENT.describe_instances(InstanceIds=[svr_id])
+        instance_res = [j for i in instance['Reservations'] for j in i['Instances']][0]
+
+        instance_type = CLIENT.describe_instance_types(InstanceTypes=[instance_res['InstanceType']])
+        VCpu = instance_type['InstanceTypes'][0]["VCpuInfo"]["DefaultVCpus"]
+        Memory = instance_type['InstanceTypes'][0]["MemoryInfo"]["SizeInMiB"]/1024
+
+        images = CLIENT.describe_images(ImageIds=[instance_res['ImageId']])
+
+        # print(images["Images"][0]["ImageLocation"])
+        # print(images["Images"][0]["Name"])
+        # print(instance_type)
+        # print(instance_res)
+        
+        instance_res['Monitoring'] = instance_res['Monitoring']['State']
+        instance_res['VCpu'] = VCpu
+        instance_res['Memory'] = Memory
+        instance_res['ImageName'] = images["Images"][0]["Name"]
+        instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
+        res = Result(detail = instance_res, status_code=3001)
         return res.make_resp()
     except Exception as e:
         response = Result(
