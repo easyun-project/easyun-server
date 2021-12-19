@@ -30,6 +30,7 @@ class DetailOut(Schema):
     VCpu = String()
     Memory = String()
     PrivateIpAddress = String()
+    PublicIpAddress = String()
 
 
     InstanceId = String()
@@ -50,6 +51,11 @@ class DetailOut(Schema):
     KeyName = String()
     IamInstanceProfile = String()
     ServerState = String()
+    Tenancy = String()
+    TerminalProtection = String()
+    BlockDeviceMappings = List(Dict())
+    NetworkInterfaces = List(Dict())
+    SecurityGroups = List(Dict())
     
 
 
@@ -67,14 +73,17 @@ def get_svr(svr_id):
         raise TypeError ("Type %s not serializable" % type(obj))
     try:
         instance = CLIENT.describe_instances(InstanceIds=[svr_id])
+
         instance_res = [j for i in instance['Reservations'] for j in i['Instances']][0]
+        ec2 = boto3.resource('ec2')
+        instance_res1 = ec2.Instance(instance_res['InstanceId'])
 
         instance_type = CLIENT.describe_instance_types(InstanceTypes=[instance_res['InstanceType']])
         VCpu = instance_type['InstanceTypes'][0]["VCpuInfo"]["DefaultVCpus"]
         Memory = instance_type['InstanceTypes'][0]["MemoryInfo"]["SizeInMiB"]/1024
 
         images = CLIENT.describe_images(ImageIds=[instance_res['ImageId']])
-
+        protection = CLIENT.describe_instance_attribute(InstanceId = instance_res['InstanceId'],Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
         # print(images["Images"][0]["ImageLocation"])
         # print(images["Images"][0]["Name"])
         # print(instance_type)
@@ -84,9 +93,14 @@ def get_svr(svr_id):
         instance_res['VCpu'] = VCpu
         instance_res['Memory'] = Memory
         instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile']['Arn'].split('/')[-1]
-        instance_res['ImageName'] = images["Images"][0]["Name"]
-        instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
+        instance_res['ImageName'] = images["Images"][0]["Name"].split('/')[-1]
+        # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
+        instance_res['ImagePath'] = '/'.join(images["Images"][0]["ImageLocation"].split('/')[1:])
         instance_res['ServerState'] = instance_res['State']['Name']
+        instance_res['PublicIpAddress'] = instance_res1.public_ip_address
+        instance_res['Tenancy'] = 'default'
+        instance_res['TerminalProtection'] = 'disabled' if protection else 'enabled'
+
         res = Result(detail = instance_res, status_code=200)
         return res.make_resp()
     except Exception as e:
