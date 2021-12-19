@@ -49,6 +49,7 @@ class DetailOut(Schema):
     ImagePath = String()
     KeyName = String()
     IamInstanceProfile = String()
+    ServerState = String()
     
 
 
@@ -85,6 +86,7 @@ def get_svr(svr_id):
         instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile']['Arn'].split('/')[-1]
         instance_res['ImageName'] = images["Images"][0]["Name"]
         instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
+        instance_res['ServerState'] = instance_res['State']['Name']
         res = Result(detail = instance_res, status_code=200)
         return res.make_resp()
     except Exception as e:
