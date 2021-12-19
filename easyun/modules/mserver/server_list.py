@@ -78,7 +78,7 @@ def list_all_svrs():
 
         response = Result(
             detail = list_resp,
-            status_code=3001
+            status_code=200
         )
 
         return response.make_resp()

@@ -31,7 +31,7 @@ class UpdateOut(Schema):
     svr_ids = List(String)
     new_name = List(String)
 
-@bp.post('/mod-name')
+@bp.post('/mod_name')
 # @auth_required(auth_token)
 @input(NewNameIn)
 # @output(UpdateOut)
@@ -52,7 +52,7 @@ def update_svr_name(NewNameIn):
             'Svr_Id' : server.id,
             'New_Name' : [tag['Value'] for tag in server.tags if tag['Key'] == 'Name'][0]
             } for server in servers],
-        status_code=3000
+        status_code=200
         )
     return response.make_resp()
 
@@ -72,7 +72,7 @@ def get_svr_name(server_id):
             'Svr_Id' : server_id,
             'Svr_Name' : svr_name[0]
         },
-        status_code=3000
+        status_code=200
         )
     return response.make_resp()
 
