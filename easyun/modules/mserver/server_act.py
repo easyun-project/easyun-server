@@ -47,7 +47,7 @@ def operate_svr(operate):
         else:
             operation_result = servers.restart()
         response = Result(
-            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=3001,
+            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=200,
         )
         return response.make_resp()
     except Exception:
@@ -89,7 +89,7 @@ def del_svr(operate):
         return response
 
         response = Result(
-            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=3001,
+            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=200,
         )
         return response.make_resp()
 

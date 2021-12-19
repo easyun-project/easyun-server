@@ -127,7 +127,7 @@ def add_server(newsvr):
                 'State' : server.state["Name"],
                 'PriIP' : server.private_ip_address
             } for server in servers],
-            status_code=3001
+            status_code=200
         )
         # server = [{'id':'3131442142'}]
         # response = Result(
