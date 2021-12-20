@@ -17,7 +17,7 @@ import boto3
 import os, time
 import json
 import logging
-from . import DC_NAME,TagEasyun,keypair_filename,keypair_name,DryRun
+from . import DC_NAME,TagEasyun,DryRun
 
 def app_log(name):
     def wrapper1(func):
@@ -34,29 +34,87 @@ class datacentersdk():
 
     @staticmethod
     @app_log("add_subnet")
-    def add_subnet(ec2,vpc,route_table,subnet):
+    def add_subnet(ec2,vpc,route_table,subnetName):
 
-        TagEasyunSubnet= [{'ResourceType':'subnet','Tags': TagEasyun}]
+        TagEasyunSubnet= [ 
+            {'ResourceType':'subnet', 
+              "Tags": [
+                {"Key": "Flag", "Value": "Easyun"},
+                {"Key": "Name", "Value": subnetName['name']}
+               ]
+            }
+        ]
 
-        subnet = ec2.create_subnet(CidrBlock=subnet, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet,DryRun=DryRun)
-        # associate the route table with the subnet
-        route_table.associate_with_subnet(SubnetId=subnet['Subnet']['SubnetId'],DryRun=DryRun)
-        print('Public subnet1= '+ subnet['Subnet']['SubnetId'])
-        return(subnet['Subnet']['SubnetId']) 
+        try:
+            subnetID = ec2.create_subnet(CidrBlock=subnetName["cidr"], VpcId=vpc.id,TagSpecifications=TagEasyunSubnet,DryRun=DryRun)
+            # associate the route table with the subnet
+            route_table.associate_with_subnet(SubnetId=subnetID['Subnet']['SubnetId'],DryRun=DryRun)
+            print('Public subnet1= '+ subnetID['Subnet']['SubnetId'])
+            return(subnetID['Subnet']['SubnetId']) 
+        except Exception:
+            response = Result(message='create_subnet failed', status_code=2002,http_status_code=400)
+            current_app.logger.error('create_subnet failed')
+            response.err_resp() 
+            return 0
+
     
     @staticmethod
     @app_log("add_VPC_security_group")
-    def add_VPC_security_group(ec2,vpc,groupname,description,IpPermissions):
+    def add_VPC_security_group(ec2,vpc,securitygroup):
 
-        TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
+        TagEasyunSecurityGroup= [ 
+            {'ResourceType':'security-group', 
+              "Tags": [
+                {"Key": "Flag", "Value": "Easyun"},
+                {"Key": "Name", "Value": securitygroup['name']}
+               ]
+            }
+        ]
         
-        secure_group = ec2.create_security_group(GroupName=groupname, Description=description, VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup,DryRun=DryRun)
-        
-        ec2.authorize_security_group_ingress(GroupId=secure_group['GroupId'],IpPermissions=IpPermissions,DryRun=DryRun)
-        
-        print('secure_group= '+secure_group['GroupId'])
+        IpPermissions=[]
+        if securitygroup["enableRDP"] == "true":
+           IpPermissions.append({
+                'IpProtocol': 'tcp',
+                'FromPort': 3389,
+                'ToPort': 3389,
+                'IpRanges': [{
+                    'CidrIp': '0.0.0.0/0'
+                }]
+            })
 
-        return(secure_group['GroupId'])
+        if securitygroup["enableSSH"] == "true":
+           IpPermissions.append({
+                'IpProtocol': 'tcp',
+                'FromPort': 22,
+                'ToPort': 22,
+                'IpRanges': [{
+                    'CidrIp': '0.0.0.0/0'
+                }]
+            })
+            
+        if securitygroup["enablePing"] == "true":
+           IpPermissions.append({
+                'IpProtocol': 'icmp',
+                'FromPort': -1,
+                'ToPort': -1,
+                'IpRanges': [{
+                    'CidrIp': '0.0.0.0/0'
+                }]
+            })
+        
+        try:
+            secure_group_res = ec2.create_security_group(GroupName=securitygroup['name'], Description=securitygroup['name'], VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup,DryRun=DryRun)
+            
+            ec2.authorize_security_group_ingress(GroupId=secure_group_res['GroupId'],IpPermissions=IpPermissions,DryRun=DryRun)
+            
+            print('secure_group= '+secure_group_res['GroupId'])
+
+            return(secure_group_res['GroupId'])
+        except Exception:
+            response = Result(message='create_security_group failed', status_code=2002,http_status_code=400)
+            current_app.logger.error('create_security_group failed')
+            response.err_resp() 
+            return 0
 
     @staticmethod
     @app_log("add_VPC_db")
@@ -138,29 +196,20 @@ class datacentersdk():
     @staticmethod
     @app_log("list_keypairs")
     def list_keypairs(ec2,vpc_id):
-        keypair_list = ec2.describe_key_pairs(
-            Filters=[
-                {
-                    'Name': 'tag:Flag', 'Values': [FLAG]
-                },             
-            ],
-        )
+        keypair_list = ec2.describe_key_pairs(Filters=[{'Name': 'tag:Flag', 'Values': [FLAG]}])
+        # keyname_list =[ keyname['KeyName'] for keyname in keypair_list['KeyPairs']]
+
+        # key = ec2.describe_key_pairs(Filters= [{ 'Name': 'tag:Flag', 'Values': ['Easyun']}])
+
+        keyname_list =[ {'filename': keyname['KeyName']+'.pem'} for keyname in keypair_list['KeyPairs']]
+
 
         response = []    
 
-        # for keypair in keypair_list['KeyPairs']:
-        #     kp_KeyName =  keypair['KeyName']
-        #     kp_KeyPairId =  keypair['KeyPairId']
-        #     kp_KeyFingerprint = keypair['KeyFingerprint']
-        #     kp_record = {'GroupID': kp_KeyName,
-        #             'GroupName': kp_KeyPairId,
-        #             'KeyFingerprint': kp_KeyFingerprint,
-        #             # 'IpPermissions': sg_IpPermissions
-        #     }
-        kp_record={'Keypair filename',keypair_filename}
-        response.append(kp_record)
+        # kp_record={'Keypair filename',keypair_filename}
+        response.append(keyname_list)
         
-        current_app.logger.info(response)
+        current_app.logger.info(keyname_list)
         return response
 
     @staticmethod
