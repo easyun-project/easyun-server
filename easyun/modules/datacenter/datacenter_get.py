@@ -13,7 +13,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account,Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
-from . import bp, DC_NAME, DC_REGION, keypair_name, keypair_filename,TagEasyun
+from . import bp, DC_NAME, DC_REGION, TagEasyun
 from flask import jsonify,send_file, send_from_directory,make_response
 import os
 from  .datacenter_sdk import datacentersdk,app_log
@@ -72,29 +72,26 @@ NewDataCenter = {
 }
 
     
-@app_log('download keypairs')
-@bp.get('/download/<filename>')
+@app_log('download keypair')
+@bp.get('/downloadkeypair/<keyname>')
 @auth_required(auth_token)
-def download_keypair(filename):
+def download_keypair(keyname):
    '''获取Easyun环境下keypair'''
-   directory = os.getcwd()  # 假设在当前目录
-   ec2 = boto3.client('ec2', region_name=DC_REGION)
-   vpc_resource = boto3.resource('ec2', region_name=DC_REGION)
-   TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
-   new_keypair = vpc_resource.create_key_pair(KeyName=filename,TagSpecifications=TagEasyunKeyPair)
+   directory = os.path.join(os.getcwd(),'keys')  # 假设在当前目录
+   
 # keypair_name = 'key-easyun-user'
-   with open('./'+keypair_filename, 'w') as file:
-       file.write(new_keypair.key_material)
-       print(new_keypair)
+#    with open('./'+filename, 'w') as file:
+#        file.write(new_keypair.key_material)
+#        print(new_keypair)
 #    return send_from_directory(directory, filename, as_attachment=True)
+   filename=keyname+'.pem'
    response = make_response(send_from_directory(directory, filename, as_attachment=True))
    response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
    return response
 
 
-@app_log('get all')
 @bp.get('/all')
-@auth_required(auth_token)
+#@auth_required(auth_token)
 @output(DataCenter2ListOut, description='Get DataCenter Region Info')
 def get_datacenter_all():
     '''获取Easyun环境下云数据中心信息'''
@@ -151,12 +148,11 @@ def get_datacenter_all():
         'create_date': create_date
     }
 
-    response = Result(detail=svc_resp, status_code=3001)
+    response = Result(detail=svc_resp, status_code=200)
 
     return response.make_resp()
 
 
-@app_log('testget')
 @bp.get('/testget')
 #@auth_required(auth_token)
 def testget():
@@ -165,6 +161,7 @@ def testget():
     ec2 = boto3.client('ec2', region_name=DC_REGION)
     vpc_resource = boto3.resource('ec2', region_name=DC_REGION)
     TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
+    keypair_filename="key_easyun_user"
     try:
         # if not os.path.exists('keys'):
         #     os.mkdir('keys')

@@ -23,6 +23,108 @@ class AddDatacenter(Schema):
     sgs3_flag = String(required=True)
     keypair = String(required=True)
 
+class DcParmIn(Schema):
+    region = String(required=True, validate=Length(0, 20),
+        example="us-east-1")     #VPC name
+    vpc_cidr = String(required=True, validate=Length(0, 20),
+        example="10.10.0.0/16")     #IP address range
+    priSubnet1 = List(
+        Dict(
+            example={
+                "az": "us-east-1a",
+                "cidr": "10.10.21.0/24",
+                "gateway": "easyun-igw",
+                "name": "Private subnet 1",
+                "routeTable": "easyun-route-nat"
+                }
+        ),
+        required=True
+    )
+    priSubnet2 = List(
+        Dict(
+            example={
+                "az": "us-east-1b",
+                "cidr": "10.10.22.0/24",
+                "gateway": "easyun-igw",
+                "name": "Private subnet 2",
+                "routeTable": "easyun-route-nat"
+                }
+        ),
+        required=True
+    )
+    pubSubnet1 = List(
+        Dict(
+            example={
+                "az": "us-east-1a",
+                "cidr": "10.10.1.0/24",
+                "gateway": "easyun-igw",
+                "name": "Public subnet 1",
+                "routeTable": "easyun-route-igw"
+                }
+        ),
+        required=True
+     )
+    pubSubnet2 = List(
+        Dict(
+            example={
+                "az": "us-east-1b",
+                "cidr": "10.10.2.0/24",
+                "gateway": "easyun-igw",
+                "name": "Public subnet 2",
+                "routeTable": "easyun-route-igw"
+                }
+        ),
+        required=True
+     )
+    pubSubnet2 = List(
+        Dict(
+            example={
+                "az": "us-east-1b",
+                "cidr": "10.10.2.0/24",
+                "gateway": "easyun-igw",
+                "name": "Public subnet 2",
+                "routeTable": "easyun-route-igw"
+                }
+        ),
+        required=True
+     )
+
+    securityGroup1 = List(
+        Dict(
+            example={   
+                    "enableRDP": "true",
+                    "enablePing": "true",
+                    "enableSSH": "true",
+                    "name": "easyun-sg-default"
+                      }
+        ),
+        required=True
+     )
+    securityGroup2 = List(
+        Dict(
+            example={   
+                    "enableRDP": "true",
+                    "enablePing": "true",
+                    "enableSSH": "true",
+                    "name": "easyun-sg-webapp"
+                      }
+        ),
+        required=True
+     )
+    securityGroup3 = List(
+        Dict(
+            example={   
+                    "enableRDP": "true",
+                    "enablePing": "true",
+                    "enableSSH": "true",
+                    "name": "easyun-sg-database"
+                      }
+        ),
+        required=True
+     )
+    keypair = String(required=True,
+        example="key_easyun_user")
+
 
 class DataCenterResultOut(Schema):
     region_name = String()
