@@ -9,8 +9,9 @@
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
-from flask import jsonify
+from flask import jsonify,current_app
 from datetime import date, datetime
+from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result, make_resp, error_resp, bad_request
@@ -18,10 +19,11 @@ from easyun import db
 import boto3
 import os, time
 import json
-from . import bp, REGION, FLAG, VERBOSE,IpPermissions1,IpPermissions2,IpPermissions3,secure_group1,secure_group2,secure_group3,TagEasyun
-from datacenter_sdk import datacentersdk
+from . import bp, DC_REGION, VERBOSE,TagEasyun
+from .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
+from .schemas import VpcListOut
 
 a = datacentersdk()
 # 云服务器参数定义
@@ -47,24 +49,10 @@ NewDataCenter = {
         ]
 }
 
-
-class VpcListIn(Schema):
-    vpc_id = String()
-
-
-class VpcListOut(Schema):
-    vpc_id = String()
-    pub_subnet1 = String() 
-    pub_subnet2 = String() 
-    private_subnet1 = String() 
-    private_subnet2 = String() 
-    sgs = String() 
-    keypair = String()
-
-
-@bp.get('/dc_info')
+@bp.get('/dc_info/<vpc_id>')
 @auth_required(auth_token)
-@input(VpcListIn)
+#@input(VpcListIn)
+# @app_log('')
 @output(VpcListOut, description='Get Datacenter info')
 def get_vpc(vpc_id):
     '''获取当前Datacenter资源信息'''
@@ -73,9 +61,9 @@ def get_vpc(vpc_id):
     # get securitygroup info
     # get keypair info
 
-    ec2 = boto3.resource('ec2', region_name=REGION)
-    vpcs = ec2.describer_vpcs( VpcIds=[
-        'VpcListIn',
+    ec2 = boto3.client('ec2', region_name=DC_REGION)
+    vpcs = ec2.describe_vpcs( VpcIds=[
+        vpc_id,
     ],
     Filters=[
         {'Name': 'tag:Flag','Values': [FLAG]}
@@ -83,14 +71,15 @@ def get_vpc(vpc_id):
     vpclist = {}
     print(json.dumps(vpcs, sort_keys=True, indent=4))
 
-    return jsonify(vpcs)
-    
-    return '' #datacenter id
+    response = Result(detail = vpcs, status_code=3001)
+    return response.make_resp()
 
+#    return jsonify(vpcs)
+    
 
 
 @bp.post('/cleanup')
-@auth_token.login_required
+@auth_required(auth_token)
 @input({})
 @output({}, 201, description='Remove the Datacenter')
 def remove_datacenter(this_dc):
@@ -105,16 +94,19 @@ def remove_datacenter(this_dc):
     # delete 3 x easyun-sg-xxx
     # delete 1 x key-easyun-user (默认keypair)
     try:
-        ec2 = boto3.resource('ec2', region_name=REGION)
-        vpc_id = ec2.describer_vpcs( VpcIds='vpc_id',
-    Filters=[
-        {'Name': 'tag:Flag','Values': [FLAG]}
-    ])
-      
+        ec2 = boto3.resource('ec2', region_name=DC_REGION)
+        vpc_id = ec2.describer_vpcs( VpcIds='vpc_id', Filters=[
+            {'Name': 'tag:Flag','Values': [FLAG]}
+            ])
     except  boto3.exceptions.Boto3Error as e:
-      print(e)
-      exit(1)
+        response = Result(message='No VPC available', status_code=2001,http_status_code=400)
+        current_app.logger.error('No VPC available')
+        response.err_resp()
+        return   
     else:
+       del_nat(ec2, vpc_id)
+       del_eip(ec2, vpc_id)
+
        del_igw(ec2, vpc_id)
        del_sub(ec2, vpc_id)
        del_rtb(ec2, vpc_id)
@@ -156,6 +148,38 @@ def get_default_vpcs(client):
         vpc_list.append(vpc['VpcId'])  
 
     return vpc_list
+
+def del_nat(ec2, vpcid):
+    """ Detach and delete the internet-gateway """
+    vpc_resource = ec2.Vpc(vpcid)
+    igws = vpc_resource.internet_gateways.all()
+    if igws:
+        for igw in igws:
+            try:
+                print("Detaching and Removing igw-id: ", igw.id) if (VERBOSE == 1) else ""
+                igw.detach_from_vpc(
+                VpcId=vpcid
+                )
+                igw.delete(# DryRun=True
+                )
+            except boto3.exceptions.Boto3Error as e:
+                print(e)
+
+def del_eip(ec2, vpcid):
+    """ Detach and delete the internet-gateway """
+    vpc_resource = ec2.Vpc(vpcid)
+    igws = vpc_resource.internet_gateways.all()
+    if igws:
+        for igw in igws:
+            try:
+                print("Detaching and Removing igw-id: ", igw.id) if (VERBOSE == 1) else ""
+                igw.detach_from_vpc(
+                VpcId=vpcid
+                )
+                igw.delete(# DryRun=True
+                )
+            except boto3.exceptions.Boto3Error as e:
+                print(e)
 
 def del_igw(ec2, vpcid):
     """ Detach and delete the internet-gateway """

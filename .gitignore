@@ -140,9 +140,8 @@ cython_debug/
 
 # client
 node_modules
-# .db
-# easyun/base.db
-
+*.db
+*.pem
 
 # PyCharm
 #  JetBrains specific template is maintainted in a separate JetBrains.gitignore that can
@@ -165,4 +164,3 @@ node_modules
 .vscode
 .idea
 .DS_Store
-

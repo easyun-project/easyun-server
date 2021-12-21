@@ -8,10 +8,11 @@ import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from datetime import date, datetime
-from . import bp, REGION, FLAG
+from . import bp, REGION
 from flask import jsonify
 
 
@@ -140,7 +141,6 @@ class InstypesIn(Schema):
 @bp.post('/ls_instypes')
 @auth_required(auth_token)
 @input(InstypesIn)
-# @output()
 def list_ins_types(InstypesIn):
     '''获取当前环境下可用的Instance Types列表'''    
     family = InstypesIn['family']
@@ -153,6 +153,7 @@ def list_ins_types(InstypesIn):
             {'Name': 'current-generation', 'Values': ['true']},
             ]
     else:
+        family = family +"."+"*"
         filters=[ 
             {'Name': 'processor-info.supported-architecture', 'Values': [arch]}, 
             {'Name': 'current-generation', 'Values': ['true']},
@@ -174,14 +175,24 @@ def list_ins_types(InstypesIn):
             )
     #         print(describe_result.keys())
             for i in describe_result['InstanceTypes']:
-                ec2_types.append(i['InstanceType'])
+                tmp = {
+                    "InstanceType": i['InstanceType'],
+                    "VCpu": i['VCpuInfo']['DefaultVCpus'],
+                    # "VCpu": "{} vCPU".format(i['VCpuInfo']['DefaultVCpus']),
+                    "Memory": i['MemoryInfo']['SizeInMiB']/1024,
+                    # "Memory": "{} GiB".format(i['MemoryInfo']['SizeInMiB']/1024),
+                    "Network": i['NetworkInfo']['NetworkPerformance'],
+                    "Price": "",
+                }
+                ec2_types.append(tmp)
             if 'NextToken' not in describe_result:
                 break
             describe_args['NextToken'] = describe_result['NextToken']
         # return instypes
+        # print(ec2_types)
         response = Result(
             detail = ec2_types,
-            status_code=3001
+            status_code=200
         )
         return response.make_resp()
 
