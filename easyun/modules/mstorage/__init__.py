@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
-import boto3
 from apiflask import APIBlueprint
 from easyun.common.models import Account, Datacenter
 
@@ -9,8 +8,10 @@ ver = '/api/v1.0'
 
 bp = APIBlueprint('存储管理', __name__, url_prefix = ver+'/storage') 
 
-CLIENT = boto3.client('cloudcontrol')
-
 TYPE = 'AWS::S3::Bucket'
 
 FLAG = "Easyun"
+
+REGION = "us-east-1"
+
+from . import bucket_add, bucket_list, bucket_delete
