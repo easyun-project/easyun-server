@@ -65,6 +65,6 @@ def add_bucket(newBucket):
         
     except Exception:
         response = Result(
-            message='bucket creation failed', status_code=4001,http_status_code=400
+            message='bucket create failed', status_code=4001,http_status_code=400
         )
         return response.err_resp()
