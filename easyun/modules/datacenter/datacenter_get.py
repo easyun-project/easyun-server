@@ -74,20 +74,25 @@ NewDataCenter = {
     
 @app_log('download keypair')
 @bp.get('/downloadkeypair/<keyname>')
-@auth_required(auth_token)
+# @auth_required(auth_token)
 def download_keypair(keyname):
    '''获取Easyun环境下keypair'''
-   directory = os.path.join(os.getcwd(),'keys')  # 假设在当前目录
+   path = os.path.join(os.getcwd(),'keys')  # 假设在当前目录
    
 # keypair_name = 'key-easyun-user'
-#    with open('./'+filename, 'w') as file:
-#        file.write(new_keypair.key_material)
-#        print(new_keypair)
-#    return send_from_directory(directory, filename, as_attachment=True)
-   filename=keyname+'.pem'
-   response = make_response(send_from_directory(directory, filename, as_attachment=True))
-   response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
-   return response
+
+   keypairfilename=keyname+'.pem'
+
+   if os.path.exists(os.path.join(path,keypairfilename)):
+   
+     with open(os.path.join('./keys/',keypairfilename)) as file:
+            response = make_response(send_from_directory(path, keypairfilename, as_attachment=True))
+            response.headers["Content-Disposition"] = "attachment; filename={}".format(keypairfilename.encode().decode('latin-1'))
+            return response
+   else:
+       response = Result( message='Keypair file doesn\'t exist', status_code=2001,http_status_code=400)
+       current_app.logger.info(response)
+       response.err_resp()  
 
 
 @bp.get('/all')
