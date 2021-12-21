@@ -18,7 +18,7 @@ from easyun import db, FLAG
 import boto3
 import os, time
 import json
-from . import bp, bp, DC_REGION, DC_NAME, VERBOSE,TagEasyun,sg_dict,sg_ip_dict,DryRun
+from . import bp, bp, DC_REGION, DC_NAME, VERBOSE,TagEasyun,DryRun
 from  .datacenter_sdk import datacentersdk,app_log
 
 # from . import vpc_act
@@ -239,7 +239,7 @@ def add_datacenter(data):
         response = Result(message='Datacenter VPC creation failed, maximum VPC reached', status_code=2001,http_status_code=400)
         current_app.logger.error('Datacenter VPC creation failed, maximum VPC reached')
         response.err_resp()   
- 
+        return
 
 
     # step 2: create Internet Gateway
@@ -429,7 +429,9 @@ def add_datacenter(data):
         # keypair = 'key-easyun-user'
         if not os.path.exists('keys'):
             os.mkdir('keys')
-        with open('./keys/'+keypair+'.pem', 'w') as file:
+        keypairfilename=keypair+'.pem'
+        # with open('./keys/'+keypairfilename, 'w') as file:
+        with open(os.path.join('./keys/',keypairfilename)) as file:
             file.write(new_keypair.key_material)
     except Exception:
         response = Result( message='Create key pairs failed due to already existed', status_code=2001,http_status_code=400)

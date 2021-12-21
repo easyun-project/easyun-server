@@ -9,7 +9,7 @@
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
-from flask import jsonify
+from flask import jsonify,current_app
 from datetime import date, datetime
 from easyun import FLAG
 from easyun.common.auth import auth_token
@@ -95,15 +95,18 @@ def remove_datacenter(this_dc):
     # delete 1 x key-easyun-user (默认keypair)
     try:
         ec2 = boto3.resource('ec2', region_name=DC_REGION)
-        vpc_id = ec2.describer_vpcs( VpcIds='vpc_id',
-    Filters=[
-        {'Name': 'tag:Flag','Values': [FLAG]}
-    ])
-      
+        vpc_id = ec2.describer_vpcs( VpcIds='vpc_id', Filters=[
+            {'Name': 'tag:Flag','Values': [FLAG]}
+            ])
     except  boto3.exceptions.Boto3Error as e:
-      print(e)
-      exit(1)
+        response = Result(message='No VPC available', status_code=2001,http_status_code=400)
+        current_app.logger.error('No VPC available')
+        response.err_resp()
+        return   
     else:
+       del_nat(ec2, vpc_id)
+       del_eip(ec2, vpc_id)
+
        del_igw(ec2, vpc_id)
        del_sub(ec2, vpc_id)
        del_rtb(ec2, vpc_id)
@@ -145,6 +148,38 @@ def get_default_vpcs(client):
         vpc_list.append(vpc['VpcId'])  
 
     return vpc_list
+
+def del_nat(ec2, vpcid):
+    """ Detach and delete the internet-gateway """
+    vpc_resource = ec2.Vpc(vpcid)
+    igws = vpc_resource.internet_gateways.all()
+    if igws:
+        for igw in igws:
+            try:
+                print("Detaching and Removing igw-id: ", igw.id) if (VERBOSE == 1) else ""
+                igw.detach_from_vpc(
+                VpcId=vpcid
+                )
+                igw.delete(# DryRun=True
+                )
+            except boto3.exceptions.Boto3Error as e:
+                print(e)
+
+def del_eip(ec2, vpcid):
+    """ Detach and delete the internet-gateway """
+    vpc_resource = ec2.Vpc(vpcid)
+    igws = vpc_resource.internet_gateways.all()
+    if igws:
+        for igw in igws:
+            try:
+                print("Detaching and Removing igw-id: ", igw.id) if (VERBOSE == 1) else ""
+                igw.detach_from_vpc(
+                VpcId=vpcid
+                )
+                igw.delete(# DryRun=True
+                )
+            except boto3.exceptions.Boto3Error as e:
+                print(e)
 
 def del_igw(ec2, vpcid):
     """ Detach and delete the internet-gateway """
