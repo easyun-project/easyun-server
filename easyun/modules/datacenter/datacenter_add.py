@@ -210,27 +210,14 @@ def add_datacenter(data):
     private_subnet_1 = data["priSubnet1"]
     private_subnet_2 = data["priSubnet2"]
     keypair = data["keypair"]
-    # sg_list= ['easyun-sg-default','easyun-sg-webapp','easyun-sg-database']
-
-    # sg_list=[]
-    # sg_list.append(data["securityGroup1"][0]["name"])
-    # sg_list.append(data["securityGroup2"][0]["name"])
-    # sg_list.append(data["securityGroup3"][0]["name"])
-
-    # if data['sgs1_flag'] == 'True':
-    #    sg_list.append('easyun-sg-default') 
 
     #a = datacentersdk()
-
-    # print('haha'+str(sg_list))
-    # logger.debug('haha'+str(sg_list))
 
     vpc_resource = boto3.resource('ec2', region_name=region)
     ec2 = boto3.client('ec2', region_name=region)
     # step 1: create VPC
     # TagEasyunVPC= [{'ResourceType':'vpc','Tags': TagEasyun}]
 
-    svc_list_resp = []
     # query account id from DB (only one account for both phase 1 and 2) ????
     
     TagEasyunVPC= [ 
@@ -250,17 +237,15 @@ def add_datacenter(data):
         'vpc_id': vpc.id,
         }
 
-        if datacentersdk.add_VPC_db(vpc.id,DC_REGION):
+        if datacentersdk.add_VPC_db(vpc.id,DC_REGION) == True:
             logger.info('db operation is ok') 
         else:
             logger.info('db operation failed') 
             response = Result(message='DB Insert failed', status_code=2001,http_status_code=400)
-            logger.info(response.err_resp())
             response.err_resp()   
 
 
-        svc_list_resp.append(svc)
-        logger.info('create_vpc1' + str(svc_list_resp))
+        logger.info('create_vpc1' + str(svc))
         # response = Result(detail = svc, status_code=3001)
         # return response.make_resp()
     except Exception as e:
@@ -318,8 +303,8 @@ def add_datacenter(data):
 
     # step 3: create 2 pub-subnet
 
-    datacentersdk.add_subnet(ec2,vpc,igw_route_table,data["pubSubnet1"][0])
-    datacentersdk.add_subnet(ec2,vpc,igw_route_table,data["pubSubnet2"][0])
+    datacentersdk.add_subnet(ec2,vpc,igw_route_table,data["pubSubnet1"])
+    datacentersdk.add_subnet(ec2,vpc,igw_route_table,data["pubSubnet2"])
 
 # Create a route table and a public route to NAT Gateway for private subnet
     TagEasyunRouteTable= [ 
@@ -344,21 +329,13 @@ def add_datacenter(data):
         return
 
     # create 2 private subnet
-    natSubnetId=datacentersdk.add_subnet(ec2,vpc,nat_route_table,data["priSubnet1"][0])
-
-    datacentersdk.add_subnet(ec2,vpc,nat_route_table,data["priSubnet2"][0])
-
-
-    # Create public Subnet1
-    # TagEasyunSubnet= [{'ResourceType':'subnet','Tags': TagEasyun}]
     
-    # pub_subnet1 = ec2.create_subnet(CidrBlock=public_subnet_1, VpcId=vpc.id,TagSpecifications=TagEasyunSubnet)
-    # print('Public subnet1= '+ pub_subnet1['Subnet']['SubnetId'])
+    natSubnetId=datacentersdk.add_subnet(ec2,vpc,nat_route_table,data["priSubnet1"])
 
-    # # associate the route table with the subnet
-    # route_table.associate_with_subnet(SubnetId=pub_subnet1['Subnet']['SubnetId'])
+    datacentersdk.add_subnet(ec2,vpc,nat_route_table,data["priSubnet2"])
 
-    # step 2: create NAT Gateway and allocate EIP
+
+  # step 2: create NAT Gateway and allocate EIP
     # allocate IPV4 address for NAT gateway
 
     TagEasyunEIP= [ 
@@ -375,9 +352,9 @@ def add_datacenter(data):
         logger.info('Entering applying EIP')
         eip = ec2.allocate_address(Domain='vpc',DryRun=DryRun)
         logger.info(eip['PublicIp'])
-    except Exception:
+    except Exception as e:
         response = Result(message='Datacenter allocate EIP failed', status_code=2001,http_status_code=400)
-        logger.error('Datacenter allocate EIP failed')
+        logger.error(e)
         response.err_resp()   
         return
 
@@ -411,7 +388,6 @@ def add_datacenter(data):
         response = Result(message='Datacenter NAT creation failed', status_code=2001,http_status_code=400)
         logger.error('Datacenter NAT creation failed')
         response.err_resp()   
-        return
 
     # Step 5-1:  create security group easyun-sg-default
     # create security group allow SSH inbound rule through the VPC enable ssh/rdp/ping
@@ -457,17 +433,17 @@ def add_datacenter(data):
         # keypair = 'key-easyun-user'
         if not os.path.exists('keys'):
             os.mkdir('keys')
+        
         keypairfilename=keypair+'.pem'
-        # with open('./keys/'+keypairfilename, 'w') as file:
+        
         with open(os.path.join('./keys/',keypairfilename)) as file:
             file.write(new_keypair.key_material)
-    except Exception:
+    except Exception as e:
         response = Result( message='Create key pairs failed due to already existed', status_code=2001,http_status_code=400)
-        logger.info(response)
+        logger.info(e)
         
 
     # a.add_VPC_db(vpc,REGION)
-    logger.info('create_vpc completion' + str(svc_list_resp))
     logger.info('create_vpc completion' + str(svc))
     # svc = {
     #     'region_name': REGION,
