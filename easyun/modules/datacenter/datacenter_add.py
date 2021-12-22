@@ -24,6 +24,35 @@ from  .datacenter_sdk import datacentersdk,app_log
 # from . import vpc_act
 from .schemas import DcParmIn, AddDatacenter, DataCenterResultOut
 
+# from logging.handlers import RotatingFileHandler
+import logging
+from logging.handlers import RotatingFileHandler
+from flask import current_app
+
+
+
+# logger = logging.getLogger('test')
+
+logger = logging.getLogger()
+formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
+#formatter='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+file_handler = RotatingFileHandler('logs/easyun_api1.log', maxBytes=10240, backupCount=10)
+file_handler.setFormatter(formatter)
+file_handler.setLevel(logging.DEBUG)
+
+# logger = logging.getLogger('test')
+# logger.setLevel(logging.DEBUG)
+# #logger.setLevel(logging.DEBUG)
+# formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
+file_handler1 = logging.FileHandler('logs/easyun_api3.log')
+file_handler1.setLevel(logging.INFO)
+file_handler1.setFormatter(formatter)
+
+# define RotatingFileHandler，max 7 files with 100K per file
+
+logger.addHandler(file_handler1)
+logger.addHandler(file_handler)
+
 a = datacentersdk()
 # 云服务器参数定义
 NewDataCenter = {
@@ -222,22 +251,22 @@ def add_datacenter(data):
         }
 
         if datacentersdk.add_VPC_db(vpc.id,DC_REGION):
-            current_app.logger.info('db operation is ok') 
+            logger.info('db operation is ok') 
         else:
-            current_app.logger.info('db operation failed') 
+            logger.info('db operation failed') 
             response = Result(message='DB Insert failed', status_code=2001,http_status_code=400)
-            current_app.logger.info(response.err_resp())
+            logger.info(response.err_resp())
             response.err_resp()   
 
 
         svc_list_resp.append(svc)
-        current_app.logger.info('create_vpc1' + str(svc_list_resp))
+        logger.info('create_vpc1' + str(svc_list_resp))
         # response = Result(detail = svc, status_code=3001)
         # print(response.make_resp())
         # return response.make_resp()
     except Exception:
         response = Result(message='Datacenter VPC creation failed, maximum VPC reached', status_code=2001,http_status_code=400)
-        current_app.logger.error('Datacenter VPC creation failed, maximum VPC reached')
+        logger.error('Datacenter VPC creation failed, maximum VPC reached')
         response.err_resp()   
         return
 
@@ -256,12 +285,13 @@ def add_datacenter(data):
     ]
     try:
         igw = ec2.create_internet_gateway(TagSpecifications=TagEasyunIG,DryRun=DryRun)
-        current_app.logger.info(f'Internet gateway created with: {json.dumps(igw, indent=4)}')
+        logger.info(f'Internet gateway created with: {json.dumps(igw, indent=4)}')
         vpc.attach_internet_gateway(InternetGatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun)
-        current_app.logger.info('Internet Gateway ID= '+ igw['InternetGateway']['InternetGatewayId'])
+        logger.info('Internet Gateway ID= '+ igw['InternetGateway']['InternetGatewayId'])
+        
     except Exception:
         response = Result(message='Datacenter internet-gateway creation failed, maximum  reached', status_code=2001,http_status_code=400)
-        current_app.logger.error('Datacenter internet-gateway creation failed, maximum  reached')
+        logger.error('Datacenter internet-gateway creation failed, maximum  reached')
         response.err_resp()  
         return
 
@@ -281,10 +311,10 @@ def add_datacenter(data):
             DestinationCidrBlock='0.0.0.0/0',
             GatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun
         )
-        current_app.logger.info('Route Table ID= '+ igw_route_table.id)
+        logger.info('Route Table ID= '+ igw_route_table.id)
     except Exception:
         response = Result(message='Datacenter igw_route_table creation failed, maximum  reached', status_code=2001,http_status_code=400)
-        current_app.logger.error('Datacenter igw_route_table creation failed, maximum  reached')
+        logger.error('Datacenter igw_route_table creation failed, maximum  reached')
         response.err_resp() 
         return
 
@@ -308,10 +338,10 @@ def add_datacenter(data):
             DestinationCidrBlock='0.0.0.0/0',
             GatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun
         )
-        current_app.logger.info('Route Table ID= '+ nat_route_table.id)
+        logger.info('Route Table ID= '+ nat_route_table.id)
     except Exception:
         response = Result(message='Datacenter nat_route_table creation failed', status_code=2001,http_status_code=400)
-        current_app.logger.error('Datacenter nat_route_table creation failed')
+        logger.error('Datacenter nat_route_table creation failed')
         response.err_resp() 
         return
 
@@ -344,12 +374,12 @@ def add_datacenter(data):
 
     try:
         # Allocate EIP
-        current_app.logger.info('Entering applying EIP')
+        logger.info('Entering applying EIP')
         eip = ec2.allocate_address(Domain='vpc',DryRun=DryRun)
-        current_app.logger.info(eip['PublicIp'])
+        logger.info(eip['PublicIp'])
     except Exception:
         response = Result(message='Datacenter allocate EIP failed', status_code=2001,http_status_code=400)
-        current_app.logger.error('Datacenter allocate EIP failed')
+        logger.error('Datacenter allocate EIP failed')
         response.err_resp()   
         return
 
@@ -364,7 +394,7 @@ def add_datacenter(data):
         # TagEasyunNATGateway= [{'ResourceType':'natgateway','Tags': TagEasyun}]
     
     try:    
-        current_app.logger.info('Entering applying NAT Gateway and it will take about 1 min, Be patient!!!')
+        logger.info('Entering applying NAT Gateway and it will take about 1 min, Be patient!!!')
 
         response = ec2.create_nat_gateway(
             AllocationId=eip['AllocationId'],
@@ -374,14 +404,14 @@ def add_datacenter(data):
             DryRun=DryRun)
 
         nat_gateway_id = response['NatGateway']['NatGatewayId']
-        current_app.logger.info(nat_gateway_id)
+        logger.info(nat_gateway_id)
         
         # wait until the NAT gateway is available
         waiter = ec2.get_waiter('nat_gateway_available')
         waiter.wait(NatGatewayIds=[nat_gateway_id])
     except Exception:
         response = Result(message='Datacenter NAT creation failed', status_code=2001,http_status_code=400)
-        current_app.logger.error('Datacenter NAT creation failed')
+        logger.error('Datacenter NAT creation failed')
         response.err_resp()   
         return
 
@@ -391,15 +421,15 @@ def add_datacenter(data):
     TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
 
 
-    current_app.logger.info('Entering applying security group'+data["securityGroup1"][0]['name'])
+    logger.info('Entering applying security group'+data["securityGroup1"][0]['name'])
     secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,data["securityGroup1"][0])
-    current_app.logger.info('secure_group1= '+secure_groupid)
+    logger.info('secure_group1= '+secure_groupid)
 
     secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,data["securityGroup2"][0])
-    current_app.logger.info('secure_group1= '+secure_groupid)
+    logger.info('secure_group1= '+secure_groupid)
 
     secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,data["securityGroup3"][0])
-    current_app.logger.info('secure_group1= '+secure_groupid)
+    logger.info('secure_group1= '+secure_groupid)
 
     # secure_group1 = ec2.create_security_group(GroupName=sg, Description=sg_dict[sg], VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
     # ec2.authorize_security_group_ingress(
@@ -422,7 +452,7 @@ def add_datacenter(data):
         }
     ]
     
-    current_app.logger.info('Entering applying key pairs')
+    logger.info('Entering applying key pairs')
 
     try:
         new_keypair = vpc_resource.create_key_pair(KeyName=keypair,TagSpecifications=TagEasyunKeyPair,DryRun=DryRun)
@@ -435,12 +465,12 @@ def add_datacenter(data):
             file.write(new_keypair.key_material)
     except Exception:
         response = Result( message='Create key pairs failed due to already existed', status_code=2001,http_status_code=400)
-        current_app.logger.info(response)
+        logger.info(response)
         
 
     # a.add_VPC_db(vpc,REGION)
-    current_app.logger.info('create_vpc completion' + str(svc_list_resp))
-    current_app.logger.info('create_vpc completion' + str(svc))
+    logger.info('create_vpc completion' + str(svc_list_resp))
+    logger.info('create_vpc completion' + str(svc))
     # svc = {
     #     'region_name': REGION,
     #     'vpc_id': 'easyrun'
