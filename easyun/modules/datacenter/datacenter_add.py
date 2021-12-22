@@ -38,7 +38,7 @@ formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lin
 #formatter='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 file_handler = RotatingFileHandler('logs/easyun_api1.log', maxBytes=10240, backupCount=10)
 file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 
 # logger = logging.getLogger('test')
 # logger.setLevel(logging.DEBUG)
@@ -212,10 +212,10 @@ def add_datacenter(data):
     keypair = data["keypair"]
     # sg_list= ['easyun-sg-default','easyun-sg-webapp','easyun-sg-database']
 
-    sg_list=[]
-    sg_list.append(data["securityGroup1"][0]["name"])
-    sg_list.append(data["securityGroup2"][0]["name"])
-    sg_list.append(data["securityGroup3"][0]["name"])
+    # sg_list=[]
+    # sg_list.append(data["securityGroup1"][0]["name"])
+    # sg_list.append(data["securityGroup2"][0]["name"])
+    # sg_list.append(data["securityGroup3"][0]["name"])
 
     # if data['sgs1_flag'] == 'True':
     #    sg_list.append('easyun-sg-default') 
@@ -244,7 +244,7 @@ def add_datacenter(data):
    
     try:
         vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC,DryRun=DryRun)
-        print('VPC ID= '+ vpc.id )
+        logger.info('VPC ID= '+ vpc.id )
         svc = {
         'region_name': DC_REGION,
         'vpc_id': vpc.id,
@@ -262,15 +262,13 @@ def add_datacenter(data):
         svc_list_resp.append(svc)
         logger.info('create_vpc1' + str(svc_list_resp))
         # response = Result(detail = svc, status_code=3001)
-        # print(response.make_resp())
         # return response.make_resp()
-    except Exception:
-        response = Result(message='Datacenter VPC creation failed, maximum VPC reached', status_code=2001,http_status_code=400)
+    except Exception as e:
+        # response = Result(message='Datacenter VPC creation failed, maximum VPC reached', status_code=2001,http_status_code=400)
+        response = Result(message=str(e), status_code=2001, http_status_code=400)
         logger.error('Datacenter VPC creation failed, maximum VPC reached')
         response.err_resp()   
-        return
-
-
+ 
     # step 2: create Internet Gateway
     # Create and Attach the Internet Gateway
     # TagEasyunIG= [{'ResourceType':'internet-gateway','Tags': TagEasyun}]
