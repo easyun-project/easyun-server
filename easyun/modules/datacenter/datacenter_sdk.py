@@ -49,7 +49,7 @@ class datacentersdk():
             subnetID = ec2.create_subnet(CidrBlock=subnetName[0]["cidr"], VpcId=vpc.id,TagSpecifications=TagEasyunSubnet,DryRun=DryRun)
             # associate the route table with the subnet
             route_table.associate_with_subnet(SubnetId=subnetID['Subnet']['SubnetId'],DryRun=DryRun)
-            current_app.logging.info('Public subnet1= '+ subnetID['Subnet']['SubnetId'])
+            current_app.logger.info('Public subnet1= '+ subnetID['Subnet']['SubnetId'])
             return(subnetID['Subnet']['SubnetId']) 
         except Exception as e:
             response = Result(message='create_subnet failed', status_code=2002,http_status_code=400)
@@ -106,7 +106,7 @@ class datacentersdk():
             
             ec2.authorize_security_group_ingress(GroupId=secure_group_res['GroupId'],IpPermissions=IpPermissions,DryRun=DryRun)
             
-            print('secure_group= '+secure_group_res['GroupId'])
+            current_app.logger.info('secure_group= '+secure_group_res['GroupId'])
 
             return(secure_group_res['GroupId'])
         except Exception:
