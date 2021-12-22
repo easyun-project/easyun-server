@@ -127,71 +127,7 @@ class DcResultOut(Schema):
 @input(DcParmIn)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_datacenter(data):
-    '''新增 Datacenter
-    curl -X 'POST' \
-  'http://127.0.0.1:6660/api/v1/datacenter/add_dc' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer cYOaaQ1Xj6Ejdap0tYcLLZrHWExs42Ll' \
-  -H 'Content-Type: application/json' \
-  -d ' {
-       "keypair": "key_easyun_user",
-      "priSubnet1": {
-        "az": "ap-northeast-1a",
-        "cidr": "10.10.21.0/24",
-        "gateway": "easyun-nat",
-        "name": "Private subnet 1",
-        "routeTable": "easyun-route-nat"
-      },
-      "priSubnet2": {
-        "az": "ap-northeast-1b",
-        "cidr": "10.10.22.0/24",
-        "gateway": "easyun-nat",
-        "name": "Private subnet 2",
-        "routeTable": "easyun-route-nat"
-      },
-      "pubSubnet1": {
-        "az": "ap-northeast-1a",
-        "cidr": "10.10.1.0/24",
-        "gateway": "easyun-igw",
-        "name": "Public subnet 1",
-        "routeTable": "easyun-route-igw"
-      },
-      "pubSubnet2": {
-        "az": "ap-northeast-1b",
-        "cidr": "10.10.2.0/24",
-        "gateway": "easyun-igw",
-        "name": "Public subnet 2",
-        "routeTable": "easyun-route-igw"
-      },
-      "region": "us-east-1",
-
-      "securityGroup1": {
-        "eanbleRDP": "true",
-        "enablePing": "true",
-        "enableSSH": "true",
-        "name": "easyun-sg-default"
-      },
-      "securityGroup2": {
-        "eanbleRDP": "true",
-        "enablePing": "true",
-        "enableSSH": "true",
-        "name": "easyun-sg-webapp"
-      },
-      "securityGroup3": {
-        "eanbleRDP": "true",
-        "enablePing": "true",
-        "enableSSH": "true",
-        "name": "easyun-sg-database"
-      },
-      "tagsEasyun": [
-        {
-          "Key": "Flag",
-          "Value": "Easyun"
-        }
-      ],
-      "vpc_cidr": "10.10.0.0/16"
-    }'
-    '''
+    '''新增 Datacenter'''
     # create easyun vpc
     # create 2 x pub-subnet
     # create 2 x pri-subnet
