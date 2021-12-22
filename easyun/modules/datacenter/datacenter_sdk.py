@@ -22,11 +22,11 @@ from . import DC_NAME,TagEasyun,DryRun
 def app_log(name):
     def wrapper1(func):
         def sub_wrapper1(*args,**kwargs):
-            print("entering into===>",func.__name__,name)
+            # print("entering into===>",func.__name__,name)
             current_app.logger.info("entering===>"+func.__name__)
-            return func(*args,**kwargs)
-            print("exiting from===>",func.__name__,name)
-            current_app.logger.info("exit from===>"+func.__name__,name)
+            res = func(*args,**kwargs)
+            current_app.logger.info("exit from===>"+func.__name__)
+            return res
         return sub_wrapper1    
     return wrapper1
 
@@ -40,22 +40,21 @@ class datacentersdk():
             {'ResourceType':'subnet', 
               "Tags": [
                 {"Key": "Flag", "Value": "Easyun"},
-                {"Key": "Name", "Value": subnetName['name']}
+                {"Key": "Name", "Value": subnetName[0]['name']}
                ]
             }
         ]
 
         try:
-            subnetID = ec2.create_subnet(CidrBlock=subnetName["cidr"], VpcId=vpc.id,TagSpecifications=TagEasyunSubnet,DryRun=DryRun)
+            subnetID = ec2.create_subnet(CidrBlock=subnetName[0]["cidr"], VpcId=vpc.id,TagSpecifications=TagEasyunSubnet,DryRun=DryRun)
             # associate the route table with the subnet
             route_table.associate_with_subnet(SubnetId=subnetID['Subnet']['SubnetId'],DryRun=DryRun)
-            print('Public subnet1= '+ subnetID['Subnet']['SubnetId'])
+            current_app.logging.info('Public subnet1= '+ subnetID['Subnet']['SubnetId'])
             return(subnetID['Subnet']['SubnetId']) 
-        except Exception:
+        except Exception as e:
             response = Result(message='create_subnet failed', status_code=2002,http_status_code=400)
-            current_app.logger.error('create_subnet failed')
+            current_app.logger.error(e)
             response.err_resp() 
-            return 0
 
     
     @staticmethod
@@ -114,23 +113,17 @@ class datacentersdk():
             response = Result(message='create_security_group failed', status_code=2002,http_status_code=400)
             current_app.logger.error('create_security_group failed')
             response.err_resp() 
-            return 0
 
     @staticmethod
     @app_log("add_VPC_db")
     def add_VPC_db(vpc_id,region):
         #dc = Datacenter(name='Easyun',cloud='AWS', account_id='666621994060', region=region,vpc_id='vpc-00bcc6b87f368643f',create_date=datetime.utcnow())
-                # print("11123")
-        # dc = Datacenter(id=1,name='Easyun',cloud='AWS', account_id='666621994060', region=REGION,vpc_id='vpc-00bcc6b87f368643f',create_date=datetime.utcnow())
-        # # query account id from DB (only one account for both phase 1 and 2) ????
+        # query account id from DB (only one account for both phase 1 and 2) ????
         # datacenter = Datacenter.query.filter(id=1).first()
-        # print(datacenter)
 
         datacenters = Datacenter.query.all()
-        print(datacenters)
 
         for datacenter in datacenters:
-            print(datacenter)
             db.session.delete(datacenter)
             db.session.commit()
 
@@ -141,7 +134,6 @@ class datacentersdk():
         # account:Account = Account.query.filter_by(id=1).first()
         if (account is None):
             response = Result(detail ={'Result' : 'Errors'}, message='No Account available, kindly create it first!', status_code=3001,http_status_code=400)
-            print(response.err_resp())
             response.err_resp() 
         else:
             account_id=account.account_id
@@ -149,12 +141,9 @@ class datacentersdk():
             datacenter = Datacenter(name='Easyun',cloud='AWS', account_id=account_id, region=region,vpc_id=vpc_id,create_date=now)
             # query account id from DB (only one account for both phase 1 and 2) ????
             #new_datacenter = Datacenter(name='Easyun',cloud='AWS', account='guest-1', region=region,vpc_id=vpc.id,credate=datetime.date())
-            #dc
-            #dc.from_dict(newuser, new_user=True)
             db.session.add(datacenter)
             db.session.commit()
             # datacenter = Datacenter.query.first()
-            # print(datacenter)
 
             return True
 
