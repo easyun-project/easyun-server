@@ -12,34 +12,33 @@ from easyun.common.result import Result, make_resp, error_resp, bad_request
 from . import TYPE, bp
 
 s3 = boto3.resource('s3')
-class deleteBucket(Schema):
+class Bucket(Schema):
     bucketName = String(
         required=True, 
         validate=Length(0, 30)
     )
 
 # 删除bucket
-@bp.post('/delete_bucket')
+@bp.post('/vaildate_bucket')
 @auth_required(auth_token)
-@input(deleteBucket)
-def delete_bucket(deleteBucket):
-    bucket = s3.Bucket(deleteBucket['bucketName'])
+@input(Bucket)
+def vaildate_bucket(Bucket):
+    bucket = s3.Bucket(Bucket['bucketName'])
     detail = ''
     try:
         if bucket.creation_date == None:
             detail = 'Bucket does not exist'
         else:
-            bucket.delete()
-            detail = 'Bucket delete success'
+            detail = 'Bucket already exists'
         response = Result(
             detail=[{
                 'result' : detail
             }],
-            status_code=4003
+            status_code=4004
         )
         return response.make_resp()
     except Exception:
         response = Result(
-            message='bucket delete failed', status_code=4003,http_status_code=400
+            message='Get bucket message failed', status_code=4004,http_status_code=400
         )
         return response.err_resp()
