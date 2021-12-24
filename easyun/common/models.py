@@ -131,17 +131,28 @@ class Datacenter(db.Model):
     Create a Account table
     """
     __tablename__ = 'datacenter'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(20), nullable=False,
-                     unique=True)    # Datacenter Name: Easyun
-    # Cloud Provider: AWS
-    cloud = db.Column(db.String(20), nullable=False)
-    account_id = db.Column(
-        db.String(30), nullable=False)           # Account ID
-    region = db.Column(db.String(120))          # Deployed Region
-    vpc_id = db.Column(db.String(120))           # VPC ID
-    # Datacenter Create date
-    create_date = db.Column(db.DateTime)
+    id = db.Column(
+        db.Integer, 
+        primary_key=True)
+    name = db.Column(                   # Datacenter name
+        db.String(20), 
+        nullable=False,
+        unique=True)
+    cloud = db.Column(                  # Cloud Provider: AWS
+        db.String(20), 
+        nullable=False)
+    account_id = db.Column(             # Account ID
+        db.String(30), 
+        nullable=False)
+    region = db.Column(                 # Deployed Region
+        db.String(120))          
+    vpc_id = db.Column(                 # VPC ID
+        db.String(120))    
+    create_date = db.Column(            # Create date
+        db.DateTime)
+    create_user = db.Column(            # Cteated by easyun user
+        db.String(30), 
+        nullable=True)
 
     def get_region(self):
         return (self.region)

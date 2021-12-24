@@ -76,7 +76,7 @@ def post_auth_token(user):
             'account_type': curr_account.aws_type,
             'role': curr_account.role,
             'deploy_region': curr_account.get_region()}, 
-            status_code=1001)    
+            status_code=200)    
         return resp.make_resp()
         # jsonify({'token': token})
     else:
@@ -89,12 +89,11 @@ def revoke_auth_token():
     '''注销当前用户 (撤销token)'''
     # Headers
     # Token Bearer Authorization
-    #     token    
     auth_token.current_user.revoke_token()
     db.session.commit()
     resp = Result({
             'description': 'Current user logout.'}, 
-            status_code=1001)    
+            status_code=200)    
     return resp.make_resp()
 
 
@@ -112,7 +111,7 @@ def change_passowrd(newpwd):
     db.session.commit()
     resp = Result({
             'description': 'Password changed.'}, 
-            status_code=1001)    
+            status_code=200)    
     return resp.make_resp()
 
 
@@ -151,7 +150,7 @@ def add_user(newuser):
 
     resp = Result(
         detail = new_user,
-        status_code=1001)
+        status_code=200)
 
     return resp.make_resp()
 

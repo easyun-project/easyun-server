@@ -1,0 +1,145 @@
+2021-12-25 01:28:10,965 - _internal.py - _log - 225 - MainThread - 14624 - INFO - 
+ -  * Restarting with stat
+2021-12-25 01:28:11,863 - __init__.py - create_app - 61 - MainThread - 26540 - INFO - 
+ - Easyun API Start
+2021-12-25 01:28:13,303 - log.py - info - 117 - MainThread - 26540 - INFO - 
+ - BEGIN (implicit)
+2021-12-25 01:28:13,306 - log.py - info - 117 - MainThread - 26540 - INFO - 
+ - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
+FROM account 
+WHERE account.cloud = ?
+ LIMIT ? OFFSET ?
+2021-12-25 01:28:13,308 - log.py - info - 117 - MainThread - 26540 - INFO - 
+ - [generated in 0.00142s] ('aws', 1, 0)
+2021-12-25 01:28:13,310 - log.py - info - 117 - MainThread - 26540 - INFO - 
+ - COMMIT
+2021-12-25 01:28:13,321 - _internal.py - _log - 225 - MainThread - 26540 - WARNING - 
+ -  * Debugger is active!
+2021-12-25 01:28:13,324 - _internal.py - _log - 225 - MainThread - 26540 - INFO - 
+ -  * Debugger PIN: 351-746-346
+2021-12-25 01:28:14,474 - _internal.py - _log - 225 - MainThread - 26540 - INFO - 
+ -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\datacenter\\datacenter_get.py', reloading
+2021-12-25 01:28:14,579 - _internal.py - _log - 225 - MainThread - 14624 - INFO - 
+ -  * Restarting with stat
+2021-12-25 01:28:15,446 - __init__.py - create_app - 61 - MainThread - 25272 - INFO - 
+ - Easyun API Start
+2021-12-25 01:28:16,778 - log.py - info - 117 - MainThread - 25272 - INFO - 
+ - BEGIN (implicit)
+2021-12-25 01:28:16,782 - log.py - info - 117 - MainThread - 25272 - INFO - 
+ - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
+FROM account 
+WHERE account.cloud = ?
+ LIMIT ? OFFSET ?
+2021-12-25 01:28:16,783 - log.py - info - 117 - MainThread - 25272 - INFO - 
+ - [generated in 0.00137s] ('aws', 1, 0)
+2021-12-25 01:28:16,785 - log.py - info - 117 - MainThread - 25272 - INFO - 
+ - COMMIT
+2021-12-25 01:28:16,799 - _internal.py - _log - 225 - MainThread - 25272 - WARNING - 
+ -  * Debugger is active!
+2021-12-25 01:28:16,803 - _internal.py - _log - 225 - MainThread - 25272 - INFO - 
+ -  * Debugger PIN: 351-746-346
+2021-12-25 01:28:24,483 - _internal.py - _log - 225 - Thread-1 - 9964 - WARNING - 
+ -  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+2021-12-25 01:28:24,484 - _internal.py - _log - 225 - Thread-1 - 9964 - INFO - 
+ -  * Running on http://10.119.15.149:6660/ (Press CTRL+C to quit)
+2021-12-25 01:28:24,658 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - BEGIN (implicit)
+2021-12-25 01:28:24,660 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - SELECT users.user_id AS users_user_id, users.username AS users_username, users.password_hash AS users_password_hash, users.email AS users_email, users.token AS users_token, users.token_expiration AS users_token_expiration 
+FROM users 
+WHERE users.token = ?
+ LIMIT ? OFFSET ?
+2021-12-25 01:28:24,662 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - [generated in 0.00175s] ('2npUzlbchG1WakCdUHPN8StzRTKEofuK', 1, 0)
+2021-12-25 01:28:24,665 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
+FROM account
+ LIMIT ? OFFSET ?
+2021-12-25 01:28:24,666 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - [generated in 0.00147s] (1, 0)
+2021-12-25 01:28:24,670 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - SELECT datacenter.id AS datacenter_id, datacenter.name AS datacenter_name, datacenter.cloud AS datacenter_cloud, datacenter.account_id AS datacenter_account_id, datacenter.region AS datacenter_region, datacenter.vpc_id AS datacenter_vpc_id, datacenter.create_date AS datacenter_create_date, datacenter.create_user AS datacenter_create_user 
+FROM datacenter 
+WHERE datacenter.account_id = ?
+2021-12-25 01:28:24,671 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - [generated in 0.00111s] ('565521294060',)
+2021-12-25 01:28:27,367 - log.py - info - 117 - Thread-2 - 23280 - INFO - 
+ - ROLLBACK
+2021-12-25 01:28:27,368 - _internal.py - _log - 225 - Thread-2 - 23280 - INFO - 
+ - 127.0.0.1 - - [25/Dec/2021 01:28:27] "GET /api/v1/datacenter/list HTTP/1.1" 200 -
+2021-12-25 01:30:03,611 - _internal.py - _log - 225 - MainThread - 25272 - INFO - 
+ -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\datacenter\\datacenter_get.py', reloading
+2021-12-25 01:30:03,737 - _internal.py - _log - 225 - MainThread - 14624 - INFO - 
+ -  * Restarting with stat
+2021-12-25 01:30:04,608 - __init__.py - create_app - 61 - MainThread - 6860 - INFO - 
+ - Easyun API Start
+2021-12-25 01:30:06,051 - log.py - info - 117 - MainThread - 6860 - INFO - 
+ - BEGIN (implicit)
+2021-12-25 01:30:06,054 - log.py - info - 117 - MainThread - 6860 - INFO - 
+ - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
+FROM account 
+WHERE account.cloud = ?
+ LIMIT ? OFFSET ?
+2021-12-25 01:30:06,055 - log.py - info - 117 - MainThread - 6860 - INFO - 
+ - [generated in 0.00162s] ('aws', 1, 0)
+2021-12-25 01:30:06,057 - log.py - info - 117 - MainThread - 6860 - INFO - 
+ - COMMIT
+2021-12-25 01:30:06,065 - _internal.py - _log - 225 - MainThread - 6860 - WARNING - 
+ -  * Debugger is active!
+2021-12-25 01:30:06,068 - _internal.py - _log - 225 - MainThread - 6860 - INFO - 
+ -  * Debugger PIN: 351-746-346
+2021-12-25 01:30:09,334 - _internal.py - _log - 225 - MainThread - 6860 - INFO - 
+ -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\datacenter\\datacenter_get.py', reloading
+2021-12-25 01:30:09,435 - _internal.py - _log - 225 - MainThread - 14624 - INFO - 
+ -  * Restarting with stat
+2021-12-25 01:30:10,306 - __init__.py - create_app - 61 - MainThread - 32684 - INFO - 
+ - Easyun API Start
+2021-12-25 01:30:11,627 - log.py - info - 117 - MainThread - 32684 - INFO - 
+ - BEGIN (implicit)
+2021-12-25 01:30:11,631 - log.py - info - 117 - MainThread - 32684 - INFO - 
+ - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
+FROM account 
+WHERE account.cloud = ?
+ LIMIT ? OFFSET ?
+2021-12-25 01:30:11,632 - log.py - info - 117 - MainThread - 32684 - INFO - 
+ - [generated in 0.00136s] ('aws', 1, 0)
+2021-12-25 01:30:11,634 - log.py - info - 117 - MainThread - 32684 - INFO - 
+ - COMMIT
+2021-12-25 01:30:11,642 - _internal.py - _log - 225 - MainThread - 32684 - WARNING - 
+ -  * Debugger is active!
+2021-12-25 01:30:11,645 - _internal.py - _log - 225 - MainThread - 32684 - INFO - 
+ -  * Debugger PIN: 351-746-346
+2021-12-25 01:30:17,214 - _internal.py - _log - 225 - Thread-1 - 4944 - WARNING - 
+ -  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+2021-12-25 01:30:17,214 - _internal.py - _log - 225 - Thread-1 - 4944 - INFO - 
+ -  * Running on http://10.119.15.149:6660/ (Press CTRL+C to quit)
+2021-12-25 01:31:14,048 - _internal.py - _log - 225 - MainThread - 32684 - INFO - 
+ -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\datacenter\\datacenter_delete.py', reloading
+2021-12-25 01:31:14,149 - _internal.py - _log - 225 - MainThread - 14624 - INFO - 
+ -  * Restarting with stat
+2021-12-25 01:31:15,096 - __init__.py - create_app - 61 - MainThread - 10844 - INFO - 
+ - Easyun API Start
+2021-12-25 01:31:16,530 - log.py - info - 117 - MainThread - 10844 - INFO - 
+ - BEGIN (implicit)
+2021-12-25 01:31:16,534 - log.py - info - 117 - MainThread - 10844 - INFO - 
+ - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
+FROM account 
+WHERE account.cloud = ?
+ LIMIT ? OFFSET ?
+2021-12-25 01:31:16,535 - log.py - info - 117 - MainThread - 10844 - INFO - 
+ - [generated in 0.00113s] ('aws', 1, 0)
+2021-12-25 01:31:16,536 - log.py - info - 117 - MainThread - 10844 - INFO - 
+ - COMMIT
+2021-12-25 01:31:16,544 - _internal.py - _log - 225 - MainThread - 10844 - WARNING - 
+ -  * Debugger is active!
+2021-12-25 01:31:16,547 - _internal.py - _log - 225 - MainThread - 10844 - INFO - 
+ -  * Debugger PIN: 351-746-346
+2021-12-25 01:31:27,700 - _internal.py - _log - 225 - Thread-1 - 15508 - WARNING - 
+ -  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+2021-12-25 01:31:27,701 - _internal.py - _log - 225 - Thread-1 - 15508 - INFO - 
+ -  * Running on http://10.119.15.149:6660/ (Press CTRL+C to quit)
+2021-12-25 01:34:25,583 - _internal.py - _log - 225 - MainThread - 10844 - INFO - 
+ -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\datacenter\\datacenter_get.py', reloading

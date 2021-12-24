@@ -27,7 +27,7 @@ class SvrListOut(Schema):
     category = String()
 
 
-@bp.get('/list_all')
+@bp.get('/list')
 @auth_required(auth_token)
 # @output(SvrListOut, description='Get Servers list')
 def list_all_svrs():

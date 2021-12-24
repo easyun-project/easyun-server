@@ -9,6 +9,7 @@
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from marshmallow.fields import Nested
 
 
 class AddDatacenter(Schema):
@@ -22,6 +23,7 @@ class AddDatacenter(Schema):
     sgs2_flag = String(required=True)
     sgs3_flag = String(required=True)
     keypair = String(required=True)
+
 
 class DcParmIn(Schema):
     region = String(required=True, validate=Length(0, 20),
@@ -149,7 +151,34 @@ class DataCenterListIn(Schema):
     vpc_id = String()
 
 
+
+
+class DCInfoOut(Schema):
+    dcName = String()
+    dcRegion = String()
+    rgName = String()			
+    vpcID = String()
+    vpcCidr = String()
+    dcUser = String()
+    dcAccount = String()
+
 class DataCenterListOut(Schema):
+    dcList = List(
+        Nested(DCInfoOut),
+        example = [
+            {
+                "dcName" : "Easyun",
+                "dcRegion" : "us-east-1",
+                # "rgName" : "US East (N. Virginia)",			
+                "vpcID" : "vpc-04b38448e58d715c2",
+                "vpcCidr" : "10.10.0.0/16",
+                "dcUser" : "admin",
+                "dcAccount" : "565521295678"
+            }
+        ]
+    )
+
+class ResourceListOut(Schema):
     """
     默认返回参数
     """
@@ -165,14 +194,3 @@ class DataCenterListOut(Schema):
     secure_group2 = String(data_key='secureGroup2')
     secure_group3 = String(data_key='secureGroup3')
     tag_spec = List(Dict, data_key='tagSpec')
-
-
-
-class DataCenter2ListOut(Schema):
-    region_name = String()
-    vpc_id = String()
-    azs = List(String)
-    subnets = List(String)
-    securitygroup = List(String)
-    keypair = List(String)
-    create_date = String()

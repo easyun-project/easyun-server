@@ -49,33 +49,6 @@ NewDataCenter = {
         ]
 }
 
-@bp.get('/dc_info/<vpc_id>')
-@auth_required(auth_token)
-#@input(VpcListIn)
-# @app_log('')
-@output(VpcListOut, description='Get Datacenter info')
-def get_vpc(vpc_id):
-    '''获取当前Datacenter资源信息'''
-    # get vpc info
-    # get subnet info
-    # get securitygroup info
-    # get keypair info
-
-    ec2 = boto3.client('ec2', region_name=DC_REGION)
-    vpcs = ec2.describe_vpcs( VpcIds=[
-        vpc_id,
-    ],
-    Filters=[
-        {'Name': 'tag:Flag','Values': [FLAG]}
-    ])
-    vpclist = {}
-    print(json.dumps(vpcs, sort_keys=True, indent=4))
-
-    response = Result(detail = vpcs, status_code=3001)
-    return response.make_resp()
-
-#    return jsonify(vpcs)
-    
 
 
 @bp.post('/cleanup')

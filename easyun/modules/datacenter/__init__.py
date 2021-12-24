@@ -118,4 +118,4 @@ sg_dict={'easyun-sg-default' : 'Secure Group For Easyun Default',
 
 
 
-from . import datacenter_add, datacenter_param, datacenter_get, datacenter_sdk, datacenter_delete 
+from . import datacenter_add, datacenter_param, datacenter_get, datacenter_sdk, datacenter_delete, datacenter_create

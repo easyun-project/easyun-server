@@ -94,18 +94,18 @@ def list_Images(ImagesIn):
             resp.append(image) 
 
         response = Result(
-        detail = resp,
-        # detail=[{
-        #         'ami_id':id, 
-        #         'name':ec2.Image(id).name,
-        #         'platform':ec2.Image(id).platform,
-        #         'platform_details':ec2.Image(id).platform_details,
-        #         'description':ec2.Image(id).description,
-        #         'root_device_name':ec2.Image(id).root_device_name,
-        #         'root_device_type':ec2.Image(id).root_device_type
-        #         } for id in ids
-        #         ],
-        status_code=3001
+            detail = resp,
+            # detail=[{
+            #         'ami_id':id, 
+            #         'name':ec2.Image(id).name,
+            #         'platform':ec2.Image(id).platform,
+            #         'platform_details':ec2.Image(id).platform_details,
+            #         'description':ec2.Image(id).description,
+            #         'root_device_name':ec2.Image(id).root_device_name,
+            #         'root_device_type':ec2.Image(id).root_device_type
+            #         } for id in ids
+            #         ],
+            status_code=200
         )
         return response.make_resp()
             

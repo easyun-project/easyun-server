@@ -10,13 +10,14 @@ from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun import FLAG
 from easyun.common.auth import auth_token
-from easyun.common.models import Account,Datacenter
+from easyun.common.models import Account, Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from datetime import date, datetime
 from . import bp, DC_NAME, DC_REGION, TagEasyun
 from flask import jsonify,send_file, send_from_directory,make_response
 import os
-from  .datacenter_sdk import datacentersdk,app_log
+from .datacenter_sdk import datacentersdk,app_log
+from .schemas import ResourceListOut, DataCenterListOut, DCInfoOut, VpcListOut
 
 # from logging.handlers import RotatingFileHandler
 # import logging
@@ -46,32 +47,9 @@ from flask import current_app
 
 # logger.addHandler(file_handler1)
 # logger.addHandler(file_handler)
-from .schemas import DataCenter2ListOut
 
-NewDataCenter = {
-    'region': 'us-east-1',
-    'vpc_cidr' : '10.10.0.0/16',
-    'avaibility_zone' : 'us-east-1a',
-    'pub_subnet1' : '10.10.1.0/24',
-    'pub_subnet2' : '10.10.2.0/24',
-    'pri_subnet1' : '10.10.3.0/24',
-    'pri_subnet2' : '10.10.4.0/24',
-    'key' : "key_easyun_dev",
-    'secure_group1' : 'easyun-sg-default',
-    'secure_group2' : 'easyun-sg-webapp',
-    'secure_group3' : 'easyun-sg-database',
-    'tag_spec' : [
-        {
-        "ResourceType":"vpc",
-        "Tags": [
-                {"Key": "Flag", "Value": FLAG},
-                {"Key": "Name", "Value": DC_NAME}
-            ]
-        }
-        ]
-}
 
-    
+   
 @app_log('download keypair')
 @bp.get('/downloadkeypair/<keyname>')
 # @auth_required(auth_token)
@@ -92,14 +70,88 @@ def download_keypair(keyname):
    else:
        response = Result( message='Keypair file doesn\'t exist', status_code=2001,http_status_code=400)
        current_app.logger.info(response)
-       response.err_resp()  
+       response.err_resp() 
 
 
-@bp.get('/all')
+@bp.get('/list')
+@auth_required(auth_token)
+# @output(DataCenterListOut, description='Get DataCenter List')
+def list_all_datacenter():
+    '''获取Easyun管理的数据中心列表'''
+    try:
+        curr_account:Account = Account.query.first()
+        dcs = Datacenter.query.filter_by(account_id = curr_account.account_id)
+        dcList = [] 
+        for dc in dcs:
+            resource_ec2 = boto3.resource('ec2', region_name= dc.region)
+            vpc = resource_ec2.Vpc(dc.vpc_id)
+            dcItem = {
+                'dcName' : dc.name,
+                'dcRegion' : dc.region,
+                'vpcID' : dc.vpc_id,
+                'vpcCidr' : vpc.cidr_block,
+                'dcUser' : dc.create_user,
+                'dcAccount' : dc.name
+            }
+            dcList.append(dcItem)
+        
+        resp = Result(
+            detail = dcList,
+            status_code=200
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        response = Result(
+            message= ex, status_code=2001,http_status_code=400
+        )
+        response.err_resp()
+
+
+
+@bp.get('/<dc_name>/info')
+@auth_required(auth_token)
+# @app_log('')
+@output(DCInfoOut, description='Get Datacenter Metadata')
+def get_datacenter_info(dc_name):
+    '''获取当前数据中心基础信息'''
+    try:
+        dc = Datacenter.query.filter_by(name = dc_name).first()
+        resource_ec2 = boto3.resource('ec2', region_name= dc.region)
+        vpc = resource_ec2.Vpc(dc.vpc_id)
+        dcItem = {
+            'dcName' : dc.name,
+            'dcRegion' : dc.region,
+            'vpcID' : dc.vpc_id,
+            'vpcCidr' : vpc.cidr_block,
+            'dcUser' : dc.create_user,
+            'dcAccount' : dc.name
+        }
+        
+        resp = Result(
+            detail = dcItem,
+            status_code=200
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        response = Result(
+            message= ex, status_code=2002,http_status_code=400
+        )
+        response.err_resp()
+    
+
+
+@bp.get('/<dc_name>')
 #@auth_required(auth_token)
-@output(DataCenter2ListOut, description='Get DataCenter Region Info')
-def get_datacenter_all():
-    '''获取Easyun环境下云数据中心信息'''
+@output(ResourceListOut, description='Get DataCenter Resources')
+def get_resources(dc_name):
+    '''获取当前数据中心资源信息'''
+    # get vpc info
+    # get subnet info
+    # get securitygroup info
+    # get keypair info
+
     RESOURCE = boto3.resource('ec2', region_name=DC_REGION)
     ec2 = boto3.client('ec2', region_name=DC_REGION)
 
@@ -126,7 +178,6 @@ def get_datacenter_all():
 
     # print(vpc_id)
     # print(datacenters.id)
-
 
     # regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
 
