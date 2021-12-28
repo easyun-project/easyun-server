@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from . import TYPE, bp, FLAG
 
-Tag = [{'Key':'Flag','Value':FLAG}]
+Tag = [{'Key':'FLAG','Value':FLAG}]
 class newBucket(Schema):
     bucketName = String(
         required=True, 
