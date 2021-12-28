@@ -10,8 +10,8 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from . import bp
-from .models import AMI_Win, AMI_Lnx
-import random
+from .ec2_attrs import AMI_Win, AMI_Lnx, Instance_Types, Instance_OS
+import ast, random
 
 
 class ImagesIn(Schema):
@@ -61,7 +61,6 @@ def list_images(parm):
     #         Owners=['amazon'],
             Filters = filters
         )
-        images = result['Images']
 
         resp = Result(
             detail=[
@@ -76,7 +75,7 @@ def list_images(parm):
                     'root_device_name': img['RootDeviceName'],
                     'root_device_type': img['RootDeviceType'],
                     'root_device_disk': img['BlockDeviceMappings'][0]['Ebs']
-                } for img in images
+                } for img in result['Images']
             ],
             status_code=200
         )
@@ -89,15 +88,10 @@ def list_images(parm):
         response.make_resp()
 
 
-# 此处有待优化处理
-Instance_Family = [
-    'all',          #所有实例类型
-    't2', 't3', 't3a', 'm4', 'm5', 'm5a', 'm6', 'm6a', 't4g', 'm6g', 'a1',          #通用计算 
-    'c4', 'c5', 'c5a', 'c6i', 'c6g', 'c7g',         #计算优化
-    'r4', 'r5', 'r5a', 'r5b', 'r5n', 'r5dn', 'r6i', 'x1', 'z1d', 'x2idn', 'x2iedn', 'x2iezn', 'R6g','X2g',          #内存优化型
-    'p2', 'p3', 'p4', 'dl1', 'inf1', 'g3', 'g4dn', 'g4ad', 'g5', 'g5g', 'f1', 'vt1',            #加速计算型
-    'd2', 'd3', 'd3en', 'i3', 'i3en', 'i4i', 'Is4gen', 'Im4gn', 'h1'                #内存优化型 
-]
+# 定义 insFamily 有效取值范围
+Instance_Family = ['all']
+for i in Instance_Types:
+    Instance_Family.extend(i['insFamily'])
 
 class InstypesIn(Schema):
     # datacenter basic parm
@@ -111,21 +105,33 @@ class InstypesIn(Schema):
     insFamily = String( 
         required=True, 
         validate=OneOf(Instance_Family),
-        example="all"
+        example="c4"
+    )
+    imgCode = String(
+        required=False, 
+        example="linux"        
     )
 
 @bp.post('/ls_instypes')
 @auth_required(auth_token)
 @input(InstypesIn)
 def list_ins_types(parm):
-    '''获取可用的Instance Types列表'''    
+    '''获取可用的Instance Types及价格列表'''    
     family = parm['insFamily']
     arch = parm['insArch']
-    # 获取价格部分功能待实现
-    # 返回随机数便于前端测试排序
-    def list_price():
-        price = random.randint(1,10)
-        return price
+    imgCode = parm['imgCode']
+    # 跟进 Image code 匹配 OS
+    if imgCode in ['amzn2', 'ubuntu', 'debian', 'linux']:
+        insOS = 'Linux'
+    elif imgCode == 'rhel':
+        insOS = 'RHEL'
+    elif imgCode == 'sles':
+        insOS = 'SUSE' 
+    elif imgCode == 'windows':
+        insOS = 'Windows'
+    else: 
+        insOS = 'NA'    
+
 
     if family == 'all':
         filters=[
@@ -164,7 +170,7 @@ def list_ins_types(parm):
                     "Memory": i['MemoryInfo']['SizeInMiB']/1024,
                     # "Memory": "{} GiB".format(i['MemoryInfo']['SizeInMiB']/1024),
                     "Network": i['NetworkInfo']['NetworkPerformance'],                    
-                    "Price": list_price(),
+                    "Price": ec2_monthly_cost(parm['dcRegion'],i['InstanceType'], insOS),
                 }
                 ins_types.append(tmp)
             if 'NextToken' not in result:
@@ -182,4 +188,51 @@ def list_ins_types(parm):
         response = Result(
             message= ex, status_code=3020
         )
-        response.make_resp()
+        return response.make_resp()
+
+# 获取实例价格功能实现
+def ec2_pricelist(region, instype, os, soft='NA', option='OnDemand',tenancy='Shared'):
+    '''获取EC2的价格列表(单位时间Hrs)'''
+    client_price = boto3.client('pricing')
+    try:
+        result = client_price.get_products(
+            ServiceCode='AmazonEC2',
+            Filters=[
+                {'Type': 'TERM_MATCH', 'Field': 'ServiceCode','Value': 'AmazonEC2'},
+                {'Type': 'TERM_MATCH', 'Field': 'locationType','Value': 'AWS Region'},
+                {'Type': 'TERM_MATCH', 'Field': 'capacitystatus','Value': 'UnusedCapacityReservation'},             
+                {'Type': 'TERM_MATCH', 'Field': 'RegionCode','Value': region},
+                {'Type': 'TERM_MATCH', 'Field': 'marketoption','Value': option},
+                {'Type': 'TERM_MATCH', 'Field': 'tenancy','Value': tenancy},
+                {'Type': 'TERM_MATCH', 'Field': 'instanceType','Value': instype},
+                {'Type': 'TERM_MATCH', 'Field': 'operatingSystem','Value': os},
+                {'Type': 'TERM_MATCH', 'Field': 'preInstalledSw','Value': soft},
+            ],
+        )
+        prod = ast.literal_eval(result['PriceList'][0])
+        price1 = prod['terms'][option]  
+        key1 = list(price1.keys())[0]
+        price2 = price1[key1]['priceDimensions']
+        key2 = list(price2.keys())[0]
+        price3 = price2[key2]
+        return price3
+    except Exception as ex:
+        return ex
+
+def ec2_monthly_cost(region, instype, os):
+    if os == 'NA':
+        return None
+    try:
+        pricelist = ec2_pricelist(region, instype, os)
+        unit = pricelist.get('unit')
+        currency = list(pricelist['pricePerUnit'].keys())[0]
+        unitePrice = pricelist['pricePerUnit'].get(currency)
+        if unit == 'Hrs':
+            monthPrice = float(unitePrice)*730
+        return {
+            'value': monthPrice,
+            'currency' : currency
+        }
+
+    except Exception as ex:
+        return ex
