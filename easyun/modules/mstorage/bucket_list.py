@@ -30,9 +30,14 @@ def get_bucket_Region(bucketName):
 @auth_required(auth_token)
 def listBucket():
     try:
-        get_buckets = client.list_buckets()
-        buckets = get_buckets['Buckets']
+        CLIENT = boto3.client('resourcegroupstaggingapi') 
+        response = CLIENT.get_resources(TagFilters=[{'Key': 'Flag','Values':['Easyun']}],ResourceTypeFilters=['s3']) 
+        buckets = response['ResourceTagMappingList']
+        bucketsName = []
         for bucket in buckets:
+            name = bucket['ResourceARN']
+            bucketsName.append({'Name' : name[13:]})
+        for bucket in bucketsName:
             name = bucket['Name']
             # 获取存储桶所在的region
             bucketRegion = get_bucket_Region(name)
@@ -53,7 +58,7 @@ def listBucket():
             bucket.update(bucketDetial)
         response = Result(
             detail=[{
-                'bucketList' : buckets 
+                'bucketList' : bucketsName 
             }],
             status_code=4002
         )
