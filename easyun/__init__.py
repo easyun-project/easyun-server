@@ -70,16 +70,14 @@ def create_app(run_env=None):
 def register_blueprints(app: APIFlask):
     """Register Flask blueprints."""
     from .common import auth
-    from .modules import mserver
-    from .modules import datacenter
-    from .modules import account
-    from .modules import mstorage
+    from .modules import mserver, mstorage, datacenter, account, dashboard
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(mserver.bp)
     app.register_blueprint(datacenter.bp)
     app.register_blueprint(account.bp)
     app.register_blueprint(mstorage.bp)
+    app.register_blueprint(dashboard.bp)
     return None
 
 
