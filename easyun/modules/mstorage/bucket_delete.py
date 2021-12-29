@@ -9,7 +9,7 @@ from marshmallow import schema
 from werkzeug.wrappers import response
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from . import TYPE, bp
+from . import bp
 
 class deleteBucket(Schema):
     bucketName = String(
@@ -23,15 +23,14 @@ class deleteBucket(Schema):
 @input(deleteBucket)
 def delete_bucket(deleteBucket):
     bucketName = deleteBucket['bucketName']
-    CLIENT = boto3.client('cloudcontrol')
+    CLIENT = boto3.client('s3')
     try:
-        result = CLIENT.delete_resource(
-            TypeName = TYPE,
-            Identifier = bucketName
+        result = CLIENT.delete_bucket(
+            Bucket = bucketName
         )
         response = Result(
             detail=[{
-                'bucketName' : result['ProgressEvent']['Identifier']
+                'message' : 'bucket delete succee'
             }],
             status_code=4003
         )
