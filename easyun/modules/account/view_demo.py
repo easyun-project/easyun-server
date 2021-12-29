@@ -81,8 +81,6 @@ def account_info():
         return resp.make_resp()
 
 
-
-
 class KeypairIn(Schema):
     keyName = String()
 
@@ -98,4 +96,17 @@ def add_key(data):
             'pemUrl' : 'http://127.0.0.1:6660/download/'+data['keyName']
         }
     )
-    return resp.make_resp()    
+    return resp.make_resp()
+    
+
+@bp.delete("/del_key")
+@auth_required(auth_token)
+@output(KeypairIn)
+def del_key(data):
+    '''删除Keypair'''
+    resp = Result(
+        detail={
+            'keyName' : data['keyName'],
+        }
+    )
+    return resp.make_resp()
