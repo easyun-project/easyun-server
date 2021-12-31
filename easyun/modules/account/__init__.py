@@ -9,4 +9,4 @@ ver = '/api/v1'
 
 bp = APIBlueprint('账号管理', __name__, url_prefix = ver+'/account') 
 
-from . import view_demo
+from . import view_mock

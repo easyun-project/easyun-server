@@ -109,7 +109,7 @@ def list_all_datacenter():
 
 
 
-@bp.get('/<dc_name>/info')
+@bp.get('/<dc_name>')
 @auth_required(auth_token)
 # @app_log('')
 @output(DCInfoOut, description='Get Datacenter Metadata')
@@ -142,11 +142,11 @@ def get_datacenter_info(dc_name):
     
 
 
-@bp.get('/<dc_name>')
+@bp.get('/all/<dc_name>')
 #@auth_required(auth_token)
 @output(ResourceListOut, description='Get DataCenter Resources')
 def get_resources(dc_name):
-    '''获取当前数据中心资源信息'''
+    '''获取当前数据中心全部资源信息'''
     # get vpc info
     # get subnet info
     # get securitygroup info
