@@ -30,7 +30,7 @@ class ImagesIn(Schema):
     )
 
 # @bp.get('/<arch>/<platform>')
-@bp.post('/ls_images')
+@bp.post('/images')
 @auth_required(auth_token)
 @input(ImagesIn)
 # @output()
@@ -112,7 +112,7 @@ class InstypesIn(Schema):
         example="linux"        
     )
 
-@bp.post('/ls_instypes')
+@bp.post('/instypes')
 @auth_required(auth_token)
 @input(InstypesIn)
 def list_ins_types(parm):
@@ -190,7 +190,7 @@ def list_ins_types(parm):
         )
         return response.make_resp()
 
-# 获取实例价格功能实现
+# 获取实例价格功能实现部分
 def ec2_pricelist(region, instype, os, soft='NA', option='OnDemand',tenancy='Shared'):
     '''获取EC2的价格列表(单位时间Hrs)'''
     client_price = boto3.client('pricing')
