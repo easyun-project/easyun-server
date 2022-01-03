@@ -17,7 +17,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 # from .common.result import BaseResponseSchema
 from .celery import FlaskCelery
-from easyun.config import BaseConfig
+from config import Config
 
 # define api version
 ver = '/api/v1.0'
@@ -31,8 +31,8 @@ cors = CORS()
 migrate = Migrate()
 celery = FlaskCelery(
         __name__,
-        backend=BaseConfig.CELERY_RESULT_BACKEND,
-        broker=BaseConfig.CELERY_BROKER_URL
+        backend=Config.CELERY_RESULT_BACKEND,
+        broker=Config.CELERY_BROKER_URL
     )
 
 
@@ -68,7 +68,7 @@ def create_app(run_env=None):
         app.logger.info('Easyun API Start')
 
     # 初始化云环境基础信息
-    # set_cloud_env(app)
+    set_cloud_env(app)
 
     return app
 
