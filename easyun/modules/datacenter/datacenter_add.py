@@ -9,17 +9,19 @@
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
-from flask import current_app,jsonify
+from celery.result import AsyncResult
+from flask import current_app, jsonify, request
 from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun import db, FLAG
+from easyun import db, FLAG, celery
 import boto3
 import os, time
 import json
 from . import bp, bp, DC_REGION, DC_NAME, VERBOSE,TagEasyun,DryRun
 from  .datacenter_sdk import datacentersdk,app_log
+from .tasks import add_datacenter_task
 
 # from . import vpc_act
 from .schemas import DcParmIn, AddDatacenter, DataCenterResultOut
@@ -388,3 +390,25 @@ def add_datacenter(data):
     response = Result(detail = svc, status_code=200)
     return response.make_resp()
 
+@bp.post('/add-dc-async')
+#@auth_required(auth_token)
+@input(DcParmIn)
+def add_datacenter_async(data):
+    res = add_datacenter_task.apply_async(args=[data, ])
+    return Result(detail=res.id, status_code=2001).make_resp()
+
+@bp.get('/add-dc-ret')
+def get_result():
+    celery_id = request.args.get('id')
+    res = AsyncResult(celery_id, app=celery)
+    if res.ready():
+        ret = res.result
+        return Result(
+            detail=ret.get('msg'),
+            status_code=ret.get('code')
+        ).make_resp()
+    else:
+        return Result(
+            detail='处理中。。。',
+            status_code=2000
+        ).make_resp()

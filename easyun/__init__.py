@@ -16,6 +16,8 @@ from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
 # from .common.result import BaseResponseSchema
+from .celery import FlaskCelery
+from easyun.config import BaseConfig
 
 # define api version
 ver = '/api/v1.0'
@@ -27,6 +29,11 @@ FLAG = "Easyun"
 db = SQLAlchemy()
 cors = CORS()
 migrate = Migrate()
+celery = FlaskCelery(
+        __name__,
+        backend=BaseConfig.CELERY_RESULT_BACKEND,
+        broker=BaseConfig.CELERY_BROKER_URL
+    )
 
 
 class BaseResponseSchema(Schema):
@@ -61,7 +68,7 @@ def create_app(run_env=None):
         app.logger.info('Easyun API Start')
 
     # 初始化云环境基础信息
-    set_cloud_env(app)
+    # set_cloud_env(app)
 
     return app
 
@@ -103,6 +110,7 @@ def register_extensions(app: APIFlask):
     """
     db.init_app(app)
     cors.init_app(app)
+    celery.init_app(app)
 
     with app.app_context():
         #先建表避免account 数据写入失败
