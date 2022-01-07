@@ -3,9 +3,10 @@ import os
 import base64
 from datetime import datetime, timedelta
 from typing import Dict
+from sqlalchemy.sql.expression import true
 from werkzeug.security import check_password_hash, generate_password_hash
 from easyun import db
-
+import sqlalchemy as sa
 
 def universal_update_dict(obj, d: Dict):
     """批量更新数据库
@@ -148,3 +149,10 @@ class Datacenter(db.Model):
 
     def update_dict(self, items: Dict):
         universal_update_dict(self, items)
+
+class KeyPairs(db.Model):
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.String(20))
+    material = sa.Column(sa.String(2048), nullable=False)
+    extension = sa.Column(sa.String(10), default='pem')
+    

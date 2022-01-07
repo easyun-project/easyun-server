@@ -9,6 +9,7 @@
 from apiflask import Schema
 from apiflask.fields import String
 
+
 class CreateSSHKeySchema(Schema):
     key_name = String(example="easyun-dev-key")
 
