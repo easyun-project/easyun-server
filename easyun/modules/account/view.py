@@ -39,7 +39,7 @@ REGION = 'us-east-1'
 @bp.route("/ssh-keys")
 class SSHKeys(MethodView):
 
-    # decorators = [auth_required(auth_token)]
+    decorators = [auth_required(auth_token)]
 
     @output(SSHKeysOutputSchema(many=True))
     def get(self):
@@ -87,6 +87,8 @@ class SSHKeys(MethodView):
 
 @bp.route("/ssh-keys/<int:id>")
 class KeyPairsController(MethodView):
+    
+    decorators = [auth_required(auth_token)]
 
     def get(self, id:int):
         key_pair_obj: KeyPairs = KeyPairs.query.get(id)
