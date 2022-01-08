@@ -7,7 +7,7 @@
 '''
 
 from apiflask import Schema
-from apiflask.fields import String
+from apiflask.fields import String, Integer
 
 
 class CreateSSHKeySchema(Schema):
@@ -19,5 +19,6 @@ class AWSInfoOutSchema(Schema):
     role = String()
 
 class SSHKeysOutputSchema(Schema):
-    key_name = String()
-    pem_url = String()
+    id = Integer()
+    region = String()
+    name = String(data_key='key_name')
