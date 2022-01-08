@@ -18,6 +18,11 @@ Easyun api docs:
 * Swagger docs path： /api/docs
 * redoc path： /api/redoc'
     '''
+
+    # celery for async
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+
     # openapi.servers
     SERVERS = [
         {

@@ -5,7 +5,7 @@
 '''
 import boto3
 from apiflask import Schema, input, output, auth_required
-from apiflask.fields import Integer, String, List, Dict
+from apiflask.fields import Integer, String, List, Dict, Boolean
 from apiflask.validators import Length, OneOf
 from flask import jsonify
 from marshmallow.utils import pprint
@@ -119,6 +119,7 @@ def update_config(new):
     '''修改指定云服务器实例配置'''
     try: 
         RESOURCE = boto3.resource('ec2', region_name=REGION)
+        ####有的实例是没有subnet_id的
         servers = RESOURCE.instances.filter(
             InstanceIds=new["svr_ids"]
         )
@@ -144,6 +145,177 @@ def update_config(new):
             message=str(e), status_code=3001, http_status_code=400
         )
         response.err_resp()
+
+class NewDiskIn(Schema):
+    InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
+    Encrypted = Boolean(required=True, example = False)
+    Iops = Integer(example=3000)  
+    # Iops = Integer(required=True, example=3000)  
+    Size = Integer(required=True, example=10)
+    VolumeType = String(required=True, example='gp3')
+    Throughput = Integer( example=500)
+    # Throughput = Integer(required=True, example=500)
+    Tag = String(required=True, example='disk_test')
+    Device = String(required=True, example='/dev/sdg')
+
+@bp.post('/disk/add')
+# @auth_required(auth_token)
+@input(NewDiskIn)
+# @output()
+def add_disk(NewDiskIn):
+    '''增加磁盘'''
+    try:
+        CLIENT = boto3.client('ec2', region_name=REGION)
+        RESOURCE = boto3.resource('ec2', region_name=REGION)
+        server =RESOURCE.Instance(NewDiskIn["InstanceId"])
+        TagSpecifications = [
+        {
+        "ResourceType":"volume",
+        "Tags": [
+                {"Key": "Flag", "Value": "Easyun"},
+                {"Key": "Name", "Value": NewDiskIn['Tag']}
+            ]
+        }
+        ]
+        iops = 'Iops' in NewDiskIn.keys()
+        throughput = 'Throughput' in NewDiskIn.keys()
+        print(iops,throughput)
+        if iops and not throughput:
+            volume = CLIENT.create_volume(
+                AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
+                Encrypted= NewDiskIn['Encrypted'],
+                Iops=NewDiskIn['Iops'],
+                Size=NewDiskIn['Size'],
+                VolumeType=NewDiskIn['VolumeType'],
+                TagSpecifications=TagSpecifications,
+            )
+        elif not iops and throughput:
+            volume = CLIENT.create_volume(
+                AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
+                Encrypted= NewDiskIn['Encrypted'],
+                Size=NewDiskIn['Size'],
+                VolumeType=NewDiskIn['VolumeType'],
+                TagSpecifications=TagSpecifications,
+                Throughput=NewDiskIn['Throughput'],
+            )
+        else:
+            volume = CLIENT.create_volume(
+                AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
+                Encrypted= NewDiskIn['Encrypted'],
+                Iops=NewDiskIn['Iops'],
+                Size=NewDiskIn['Size'],
+                VolumeType=NewDiskIn['VolumeType'],
+                TagSpecifications=TagSpecifications,
+                Throughput=NewDiskIn['Throughput'],
+            )
+        # print(dir(volume))
+        # volume1 = RESOURCE.Volume(volume['VolumeId'])
+        # waiter = CLIENT.get_waiter('volume_available')
+        # waiter.wait(
+        #     VolumeIds=[
+        #         volume1.id,
+        #     ]
+        # )
+        # volume1.attach_to_instance(
+        #     Device=NewDiskIn["Device"],
+        #     InstanceId=NewDiskIn["InstanceId"]
+        # )
+        from time import sleep 
+        while True:
+            volume1 = RESOURCE.Volume(volume['VolumeId'])
+            print(volume1.state)
+            if volume1.state == 'available':
+                
+                volume1.attach_to_instance(
+                    Device=NewDiskIn["Device"],
+                    InstanceId=NewDiskIn["InstanceId"]
+                )
+                break
+            sleep(0.5)
+            
+        response = Result(
+            detail={'VolumeId':volume1.volume_id,
+            "State" : volume1.state,
+            },
+            status_code=200
+            )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+class DeleteDiskIn(Schema):
+    InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
+    Device = String(required=True, example='/dev/sdg')
+
+@bp.post('/disk/delete')
+# @auth_required(auth_token)
+@input(DeleteDiskIn)
+# @output()
+def delete_disk(DeleteDiskIn):
+    '''删除磁盘'''
+    try:
+        CLIENT = boto3.client('ec2', region_name=REGION)
+        RESOURCE = boto3.resource('ec2', region_name=REGION)
+        server =RESOURCE.Instance(DeleteDiskIn["InstanceId"])
+        disks = CLIENT.describe_instances(InstanceIds=[DeleteDiskIn["InstanceId"]])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
+        vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == DeleteDiskIn["Device"]]
+        print(vid)
+        # print(dir(volume))
+        if len(vid)==0:
+            raise ValueError('invalid device')
+        volume = RESOURCE.Volume(vid[0])
+
+        volume.detach_from_instance(
+            Device=DeleteDiskIn["Device"],
+            InstanceId=DeleteDiskIn["InstanceId"]
+        )
+        # waiter = CLIENT.get_waiter('volume_available')
+        # waiter.wait(
+        #     VolumeIds=[
+        #         volume.id,
+        #     ]
+        # )
+        from time import sleep 
+        while True:
+            volume1 = RESOURCE.Volume(volume.volume_id)
+            print(volume1.state)
+            if volume1.state == 'available':
+                # volume1.delete()
+                break
+            sleep(0.5)
+        
+        response = Result(
+            detail={'msg':'delete {} success'.format(DeleteDiskIn["Device"])},
+            status_code=200
+            )   
+        # response = Result(
+        #     detail={'VolumeId':volume1.volume_id,
+        #     "State" : volume1.state,
+        #     },
+        #     status_code=200
+        #     )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
 
 # @bp.get('/instypes/<server_id>')
 # @auth_required(auth_token)

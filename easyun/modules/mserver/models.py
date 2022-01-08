@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""server models."""
+'''
+@Description: server models
+@LastEditors: aleck
+'''
 
 import math
 from easyun import db

@@ -4,7 +4,7 @@
 @LastEditors: 
 '''
 import os
-from easyun import create_app
+from easyun import create_app, celery
 
 # run_env = os.environ.get('FLASK_ENV')
 # app = create_app(run_env) 

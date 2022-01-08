@@ -5,8 +5,9 @@ from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
 
 # define api version
+
 ver = '/api/v1/account'
 
-bp = APIBlueprint('账号管理', __name__, url_prefix = ver) 
+bp = APIBlueprint('账号管理', __name__, url_prefix = ver+'/account') 
 
-from . import view
+from . import view_mock

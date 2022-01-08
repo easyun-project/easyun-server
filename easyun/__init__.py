@@ -16,6 +16,8 @@ from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
 # from .common.result import BaseResponseSchema
+from .celery import FlaskCelery
+from config import Config
 
 # define api version
 ver = '/api/v1.0'
@@ -27,6 +29,11 @@ FLAG = "Easyun"
 db = SQLAlchemy()
 cors = CORS()
 migrate = Migrate()
+celery = FlaskCelery(
+        __name__,
+        backend=Config.CELERY_RESULT_BACKEND,
+        broker=Config.CELERY_BROKER_URL
+    )
 
 
 class BaseResponseSchema(Schema):
@@ -70,16 +77,14 @@ def create_app(run_env=None):
 def register_blueprints(app: APIFlask):
     """Register Flask blueprints."""
     from .common import auth
-    from .modules import mserver
-    from .modules import datacenter
-    from .modules import account
-    from .modules import mstorage
+    from .modules import mserver, mstorage, datacenter, account, dashboard
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(mserver.bp)
     app.register_blueprint(datacenter.bp)
     app.register_blueprint(account.bp)
     app.register_blueprint(mstorage.bp)
+    app.register_blueprint(dashboard.bp)
     return None
 
 
@@ -105,6 +110,7 @@ def register_extensions(app: APIFlask):
     """
     db.init_app(app)
     cors.init_app(app)
+    celery.init_app(app)
 
     with app.app_context():
         #先建表避免account 数据写入失败

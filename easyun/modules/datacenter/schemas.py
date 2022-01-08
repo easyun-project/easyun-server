@@ -9,6 +9,7 @@
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from marshmallow.fields import Nested
 
 
 class AddDatacenter(Schema):
@@ -23,116 +24,83 @@ class AddDatacenter(Schema):
     sgs3_flag = String(required=True)
     keypair = String(required=True)
 
-class DcParmIn(Schema):
-    region = String(required=True, validate=Length(0, 20),
-        example="us-east-1")     #VPC name
-    vpc_cidr = String(required=True, validate=Length(0, 20),
-        example="10.10.0.0/16")     #IP address range
-    priSubnet1 = List(
-        Dict(
-            example={
-                "az": "us-east-1a",
-                "cidr": "10.10.21.0/24",
-                "gateway": "easyun-igw",
-                "name": "Private subnet 1",
-                "routeTable": "easyun-route-nat"
-                }
-        ),
-        required=True
-    )
-    priSubnet2 = List(
-        Dict(
-            example={
-                "az": "us-east-1b",
-                "cidr": "10.10.22.0/24",
-                "gateway": "easyun-igw",
-                "name": "Private subnet 2",
-                "routeTable": "easyun-route-nat"
-                }
-        ),
-        required=True
-    )
-    pubSubnet1 = List(
-        Dict(
-            example={
+
+class DcParmSubnetSchema(Schema):
+    """
+    DcParm嵌套Schema
+    {
                 "az": "us-east-1a",
                 "cidr": "10.10.1.0/24",
                 "gateway": "easyun-igw",
                 "name": "Public subnet 1",
                 "routeTable": "easyun-route-igw"
                 }
-        ),
-        required=True
-     )
-    pubSubnet2 = List(
-        Dict(
-            example={
-                "az": "us-east-1b",
-                "cidr": "10.10.2.0/24",
-                "gateway": "easyun-igw",
-                "name": "Public subnet 2",
-                "routeTable": "easyun-route-igw"
-                }
-        ),
-        required=True
-     )
-    pubSubnet2 = List(
-        Dict(
-            example={
-                "az": "us-east-1b",
-                "cidr": "10.10.2.0/24",
-                "gateway": "easyun-igw",
-                "name": "Public subnet 2",
-                "routeTable": "easyun-route-igw"
-                }
-        ),
-        required=True
-     )
+    """
+    az = String()
+    cidr = String()
+    gateway = String()
+    name = String()
+    route_table = String(data_key='routeTable')
 
-    securityGroup1 = List(
-        Dict(
-            example={   
+
+class DcParmPsecurityGroupSchema(Schema):
+    """
+    DcParm嵌套Schema
+    {
                     "enableRDP": "true",
                     "enablePing": "true",
                     "enableSSH": "true",
                     "name": "easyun-sg-default"
                       }
-        ),
+    """
+    enable_RDP = String(data_key='enableRDP')
+    enable_Ping = String(data_key='enablePing')
+    enable_SSH = String(data_key='enableSSH')
+    name = String()
+
+
+class DcParmIn(Schema):
+    region = String(required=True, validate=Length(0, 20), example="us-east-1")     #VPC name
+    vpc_cidr = String(required=True, validate=Length(0, 20), example="10.10.0.0/16")     #IP address range
+    priSubnet1 = List(
+        Nested(DcParmSubnetSchema()),
+        required=True
+    )
+    priSubnet2 = List(
+        Nested(DcParmSubnetSchema()),
+        required=True
+    )
+    pubSubnet1 = List(
+        Nested(DcParmSubnetSchema()),
+        required=True
+     )
+    pubSubnet2 = List(
+        Nested(DcParmSubnetSchema()),
+        required=True
+     )
+
+    securityGroup1 = List(
+        Nested(DcParmPsecurityGroupSchema()),
         required=True
      )
     securityGroup2 = List(
-        Dict(
-            example={   
-                    "enableRDP": "true",
-                    "enablePing": "true",
-                    "enableSSH": "true",
-                    "name": "easyun-sg-webapp"
-                      }
-        ),
+        Nested(DcParmPsecurityGroupSchema()),
         required=True
      )
     securityGroup3 = List(
-        Dict(
-            example={   
-                    "enableRDP": "true",
-                    "enablePing": "true",
-                    "enableSSH": "true",
-                    "name": "easyun-sg-database"
-                      }
-        ),
+        Nested(DcParmPsecurityGroupSchema()),
         required=True
      )
-    keypair = String(required=True,
-        example="key_easyun_user")
+    keypair = String(required=True, example="key_easyun_user")
 
 
 class DataCenterResultOut(Schema):
-    region_name = String()
-    vpc_id = String()
+    region_name = String(data_key='regionName')
+    vpc_id = String(data_key='vpcId')
 
 
 class VpcListIn(Schema):
-    vpc_id = String()
+    vpc_id = String(data_key='vpcId')
 
 
 class VpcListOut(Schema):
@@ -149,7 +117,32 @@ class DataCenterListIn(Schema):
     vpc_id = String()
 
 
+class DCInfoOut(Schema):
+    dcName = String()
+    dcRegion = String()
+    rgName = String()			
+    vpcID = String()
+    vpcCidr = String()
+    dcUser = String()
+    dcAccount = String()
+
 class DataCenterListOut(Schema):
+    dcList = List(
+        Nested(DCInfoOut),
+        example = [
+            {
+                "dcName" : "Easyun",
+                "dcRegion" : "us-east-1",
+                # "rgName" : "US East (N. Virginia)",			
+                "vpcID" : "vpc-04b38448e58d715c2",
+                "vpcCidr" : "10.10.0.0/16",
+                "dcUser" : "admin",
+                "dcAccount" : "565521295678"
+            }
+        ]
+    )
+
+class ResourceListOut(Schema):
     """
     默认返回参数
     """
@@ -165,14 +158,3 @@ class DataCenterListOut(Schema):
     secure_group2 = String(data_key='secureGroup2')
     secure_group3 = String(data_key='secureGroup3')
     tag_spec = List(Dict, data_key='tagSpec')
-
-
-
-class DataCenter2ListOut(Schema):
-    region_name = String()
-    vpc_id = String()
-    azs = List(String)
-    subnets = List(String)
-    securitygroup = List(String)
-    keypair = List(String)
-    create_date = String()
