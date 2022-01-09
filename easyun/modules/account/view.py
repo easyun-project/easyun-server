@@ -15,7 +15,7 @@ from . import bp
 from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyPairs
-from .schema import SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
+from .schema import FreeTierInputSchema, SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
 # 导入boto错误类型
 from botocore.exceptions import ClientError
 
@@ -36,7 +36,7 @@ def aws_info():
 REGION = 'us-east-1'
 
 
-@bp.route("/ssh-keys")
+@bp.route("/ssh_keys")
 class SSHKeys(MethodView):
 
     decorators = [auth_required(auth_token)]
@@ -85,7 +85,7 @@ class SSHKeys(MethodView):
             result.err_resp()
 
 
-@bp.route("/ssh-keys/<int:id>")
+@bp.route("/ssh_keys/<int:id>")
 class KeyPairsController(MethodView):
     
     decorators = [auth_required(auth_token)]
@@ -124,9 +124,21 @@ class KeyPairsController(MethodView):
 #     db.session.commit()
 #     return "ok"
 
-# @bp.delete('/dev')
-# def dev_del():
-#     client = boto3.client('ec2', region_name=REGION)
-#     resp = client.delete_key_pair(KeyName='easyun-dev-key')
-#     result = Result(detail=resp)
-#     return result.make_resp()
+@bp.delete('/dev')
+def dev_del():
+    client = boto3.client('ec2', region_name=REGION)
+    resp = client.delete_key_pair(KeyName='easyun-dev-key')
+    result = Result(detail=resp)
+    return result.make_resp()
+
+@bp.route("/free_tier")
+class FreeTier(MethodView):
+    def get(self):
+        return "ok"
+
+    @input(FreeTierInputSchema)
+    def post(self, data:dict):
+        print(data)
+        # account:Account = Account.query.
+        result = Result(detail=data)
+        return result.make_resp()
