@@ -11,6 +11,7 @@ from apiflask.fields import String, Integer
 
 
 class CreateSSHKeySchema(Schema):
+    region = String(example="us-east-1")
     key_name = String(example="easyun-dev-key")
 
 class AWSInfoOutSchema(Schema):
