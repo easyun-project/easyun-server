@@ -13,4 +13,4 @@ ver = '/api/v1'
 
 bp = APIBlueprint('监控面板', __name__, url_prefix = ver+'/dashboard') 
 
-from . import view, view_demo
+from . import view, dc_inventory, view_mock 
