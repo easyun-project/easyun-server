@@ -6,7 +6,7 @@ from apiflask.validators import Length, OneOf
 
 # define api version
 
-ver = '/api/v1/account'
+ver = '/api/v1'
 
 bp = APIBlueprint('账号管理', __name__, url_prefix = ver+'/account') 
 
