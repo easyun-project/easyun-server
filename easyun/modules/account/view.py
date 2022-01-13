@@ -3,6 +3,7 @@
 from io import BytesIO
 from typing import List
 import boto3
+from datetime import date, timedelta
 from flask import send_file
 from flask.views import MethodView
 from apiflask import auth_required, Schema
@@ -15,7 +16,7 @@ from . import bp
 from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyPairs
-from .schema import FreeTierInputSchema, SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
+from .schema import FreeTierInputSchema, FreeTierOutputSchema, SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
 # 导入boto错误类型
 from botocore.exceptions import ClientError
 
@@ -113,6 +114,46 @@ class KeyPairsController(MethodView):
             pass
 
 
+@bp.route("/free_tier")
+class FreeTier(MethodView):
+    
+    decorators = [auth_required(auth_token)]
+
+    @output(FreeTierOutputSchema)
+    def get(self):
+        account:Account = self.get_account()
+        remainder = self.calculate_remainder(self.get_expiry_date(account.active_date))
+        result = Result(detail={"remainder": remainder.days})
+        return result.make_resp()
+
+    @input(FreeTierInputSchema)
+    @output(FreeTierOutputSchema)
+    def put(self, data:dict):
+        try:
+            active_date:date = data.get('active_date', date.today())
+            # 更新账号激活日期, MVP阶段只有一个account，后面阶段改进
+            account:Account = self.get_account()
+            account.active_date = active_date
+            db.session.commit()
+            # 计算剩余日期
+            remainder = self.calculate_remainder(self.get_expiry_date(active_date))
+            result = Result(detail={"remainder": remainder.days})
+            return result.make_resp()
+        except Exception as e:
+            result = Result(message=str(e))
+            result.err_resp()
+
+    def get_account(self, id:int=1) -> Account:
+        return Account.query.get(id)
+
+    def calculate_remainder(self, end:date) -> timedelta:
+        return end - date.today()
+
+    def get_expiry_date(self, active_date:date) -> date:
+        return active_date + timedelta(365)
+
+
+
 # @bp.post('/dev')
 # @input({"key": String(), "value": String(validate=Length(0, 2048))})
 # def dev(data):
@@ -124,21 +165,9 @@ class KeyPairsController(MethodView):
 #     db.session.commit()
 #     return "ok"
 
-@bp.delete('/dev')
-def dev_del():
-    client = boto3.client('ec2', region_name=REGION)
-    resp = client.delete_key_pair(KeyName='easyun-dev-key')
-    result = Result(detail=resp)
-    return result.make_resp()
-
-@bp.route("/free_tier")
-class FreeTier(MethodView):
-    def get(self):
-        return "ok"
-
-    @input(FreeTierInputSchema)
-    def post(self, data:dict):
-        print(data)
-        # account:Account = Account.query.
-        result = Result(detail=data)
-        return result.make_resp()
+# @bp.delete('/dev')
+# def dev_del():
+#     client = boto3.client('ec2', region_name=REGION)
+#     resp = client.delete_key_pair(KeyName='easyun-dev-key')
+#     result = Result(detail=resp)
+#     return result.make_resp()
