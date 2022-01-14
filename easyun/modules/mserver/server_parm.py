@@ -124,7 +124,7 @@ def get_ins_family(dcname,arch):
                 tmp = {
                     'insType': insType,
                     'insFamily': insFamily,
-                    'insCatg': get_familyDes(insFamily)
+                    'familyDes': get_familyDes(insFamily)
                 }
                 instypeList.append(tmp)
             if 'NextToken' not in result:
