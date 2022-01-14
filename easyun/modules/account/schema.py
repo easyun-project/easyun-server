@@ -7,7 +7,7 @@
 '''
 
 from apiflask import Schema
-from apiflask.fields import String, Integer
+from apiflask.fields import String, Integer, Date, Boolean
 
 
 class CreateSSHKeySchema(Schema):
@@ -23,3 +23,10 @@ class SSHKeysOutputSchema(Schema):
     id = Integer()
     region = String()
     name = String(data_key='key_name')
+
+class FreeTierInputSchema(Schema):
+    # remind = Boolean(example=False)
+    active_date = Date()
+
+class FreeTierOutputSchema(Schema):
+    remainder = Integer()

@@ -3,6 +3,7 @@
 from io import BytesIO
 from typing import List
 import boto3
+from datetime import date, timedelta
 from flask import send_file
 from flask.views import MethodView
 from apiflask import auth_required, Schema
@@ -15,7 +16,7 @@ from . import bp
 from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyPairs
-from .schema import SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
+from .schema import FreeTierInputSchema, FreeTierOutputSchema, SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
 # 导入boto错误类型
 from botocore.exceptions import ClientError
 
@@ -36,7 +37,7 @@ def aws_info():
 REGION = 'us-east-1'
 
 
-@bp.route("/ssh-keys")
+@bp.route("/ssh_keys")
 class SSHKeys(MethodView):
 
     decorators = [auth_required(auth_token)]
@@ -85,7 +86,7 @@ class SSHKeys(MethodView):
             result.err_resp()
 
 
-@bp.route("/ssh-keys/<int:id>")
+@bp.route("/ssh_keys/<int:id>")
 class KeyPairsController(MethodView):
     
     decorators = [auth_required(auth_token)]
@@ -111,6 +112,46 @@ class KeyPairsController(MethodView):
         except Exception as e:
             print(e, type(e))
             pass
+
+
+@bp.route("/free_tier")
+class FreeTier(MethodView):
+    
+    decorators = [auth_required(auth_token)]
+
+    @output(FreeTierOutputSchema)
+    def get(self):
+        account:Account = self.get_account()
+        remainder = self.calculate_remainder(self.get_expiry_date(account.active_date))
+        result = Result(detail={"remainder": remainder.days})
+        return result.make_resp()
+
+    @input(FreeTierInputSchema)
+    @output(FreeTierOutputSchema)
+    def put(self, data:dict):
+        try:
+            active_date:date = data.get('active_date', date.today())
+            # 更新账号激活日期, MVP阶段只有一个account，后面阶段改进
+            account:Account = self.get_account()
+            account.active_date = active_date
+            db.session.commit()
+            # 计算剩余日期
+            remainder = self.calculate_remainder(self.get_expiry_date(active_date))
+            result = Result(detail={"remainder": remainder.days})
+            return result.make_resp()
+        except Exception as e:
+            result = Result(message=str(e))
+            result.err_resp()
+
+    def get_account(self, id:int=1) -> Account:
+        return Account.query.get(id)
+
+    def calculate_remainder(self, end:date) -> timedelta:
+        return end - date.today()
+
+    def get_expiry_date(self, active_date:date) -> date:
+        return active_date + timedelta(365)
+
 
 
 # @bp.post('/dev')
