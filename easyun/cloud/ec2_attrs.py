@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: server models
-@LastEditors: aleck
-'''
+"""
+  @module:  ec2 attributes
+  @desc:    Define basic attributes of AWS EC2 in this file.  
+  @auth:    aleck
+"""
 
 import boto3
 
@@ -140,7 +141,7 @@ Instance_Family = [
             {'familyName':'m6a', 'familyDes':'通用实例-AMD', 'insArch':'x86_64'},
             {'familyName':'t4g', 'familyDes':'突增实例-ARM', 'insArch':'arm64'},
             {'familyName':'m6g', 'familyDes':'通用实例-ARM', 'insArch':'arm64'},
-            {'familyName':'m6gd', 'familyDes':'通用实例-ARM', 'insArch':'arm64'},            
+            {'familyName':'m6gd', 'familyDes':'通用实例-ARM', 'insArch':'arm64'},
             {'familyName':'a1', 'familyDes':'突增实例', 'insArch':'arm64'}
         ]
     },
@@ -233,7 +234,9 @@ def get_familyDes(parm):
 
 
 '''支持的Instance OS列表'''
-client_price = boto3.client('pricing')
+# AWS Price API only support us-east-1, ap-south-1
+priceRegion = 'us-east-1'
+client_price = boto3.client('pricing', region_name= priceRegion )
 response = client_price.get_attribute_values(
     ServiceCode='AmazonEC2',
     AttributeName='operatingSystem'

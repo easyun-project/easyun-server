@@ -67,8 +67,8 @@ def create_app(run_env=None):
     if run_env != 'test':
         app.logger.info('Easyun API Start')
 
-    # 初始化云环境基础信息
-    set_cloud_env(app)
+    # 初始化AWS云环境账号基础信息
+    register_aws_account(app)
 
     return app
 
@@ -123,32 +123,26 @@ def register_extensions(app: APIFlask):
             migrate.init_app(app, db, compare_type=True)
 
 
-def set_cloud_env(app: APIFlask):
-    """设置云环境基础信息"""
+def register_aws_account(app: APIFlask):
+    """注册后端服务器部署的云账号信息"""
     from easyun.common.models import Account
-    client_sts = boto3.client('sts')
-    # 获取 account_id
-    account_id = client_sts.get_caller_identity().get('Account')
-    # 获取 iam_role
-    role = client_sts.get_caller_identity().get('Arn').split('/')[1]
-    # 获取 deployed region
-    # 目前该方法需要 aws configure 配置默认region后才能取到值
-    this_region = boto3.session.Session().region_name
-    # 判断 account_type
-    gcr_regions = ['cn-north-1', 'cn-northwest-1']
-    if this_region in gcr_regions:
-        aws_type = 'GCR'
-    else:
-        aws_type = 'Global'
-
+    from easyun.cloud.basic import get_deploy_env
+    # 获取 AWS云环境信息
+    awsEnv = get_deploy_env('aws')
     # 数据写入 database
     with app.app_context():
         exist_account:Account = Account.query.filter_by(cloud='aws').first()
         if exist_account:
-            exist_account.update_aws(account_id=account_id, role=role, deploy_region=this_region,aws_type=aws_type)
+            exist_account.update_dict(awsEnv)
         else:
-            this_account = Account(cloud='aws', account_id=account_id, role=role, deploy_region=this_region,aws_type=aws_type)
-            db.session.add(this_account)
+            aws_account = Account(
+                cloud='aws', 
+                account_id = awsEnv.get('account_id'), 
+                role = awsEnv.get('role'),  
+                deploy_region = awsEnv.get('deploy_region'), 
+                aws_type = awsEnv.get('aws_type'), 
+                )
+            db.session.add(aws_account)
         db.session.commit()
 
 

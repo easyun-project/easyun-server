@@ -8,6 +8,7 @@
 
 import boto3
 from apiflask import Schema, input, output, auth_required
+from flask import request
 from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.result import Result
@@ -27,14 +28,17 @@ inventoryTable = {
 
 deploy_region = "us-east-1"
 
-@bp.get("/inventory/<dcName>/stblock")
+@bp.get("/inventory/<resource>")
 @auth_required(auth_token)
 # @output(SummaryOut)
-def get_invty_stblock(dcName):
+def get_invty_stblock(resource):
     '''获取 block storage 资源明细'''
+    # 获取查询
+    dcName = request.args.get('dc', 'Easyun')
     try:
         resource_ddb = boto3.resource('dynamodb', region_name= deploy_region)    
         table = resource_ddb.Table('easyun-inventory-block')
+        
         diskInvty = table.get_item(
             Key={'dcName': dcName}
         )['Item']['diskInventory']

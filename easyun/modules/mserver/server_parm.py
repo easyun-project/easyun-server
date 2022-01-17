@@ -11,7 +11,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
 from . import bp
-from .ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes, Instance_OS
+from easyun.cloud.ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes, Instance_OS
 import ast, random, json
 
 

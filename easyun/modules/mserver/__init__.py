@@ -12,6 +12,7 @@ ver = '/api/v1'
 bp = APIBlueprint('服务器管理', __name__, url_prefix = ver+'/server') 
 
 REGION = 'us-east-1'
+thisDC = 'Easyun2'
 VPC = 'vpc-057f0e3d715c24147'
 
 

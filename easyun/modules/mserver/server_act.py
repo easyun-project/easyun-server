@@ -37,8 +37,8 @@ def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
     print(operate)
     try:
-        RESOURCE = boto3.resource('ec2', region_name=REGION)
-        servers = RESOURCE.instances.filter(
+        resource_ec2 = boto3.resource('ec2')
+        servers = resource_ec2.instances.filter(
             InstanceIds=operate["svr_ids"]
             )
         print(servers)
@@ -49,55 +49,63 @@ def operate_svr(operate):
             operation_result = servers.stop()
         else:
             operation_result = servers.restart()
-        response = Result(
+        resp = Result(
             detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=200,
         )
-        return response.make_resp()
+        return resp.make_resp()
     except Exception:
-        response = Result(
-            message='{} server failed'.format(operate["action"]), status_code=3004,http_status_code=400
+        resp = Result(
+            message='{} server failed'.format(operate["action"]), 
+            status_code=3004,
+            http_status_code=400
         )
-        response.err_resp()
+        resp.err_resp()
 
 
 
 class DeleteIn(Schema):
-    svr_ids = List(         #云服务器ID
+    svrIds = List(         #云服务器ID
         String(),
-        required=True
+        required=True,
+        example=["i-0710xxxxxxxxxxxxx"]
     )
-    action = String(
-        required=True, 
-        validate=OneOf(['delete'])  #Operation TYPE
-        )   
-
 
 @bp.delete('/')
 @auth_required(auth_token)
 @input(DeleteIn)
-@output(OperateOut)
-def del_svr(operate):
-    '''删除指定云服务器'''
+def delete_svr(parm):
+    '''删除(Terminate)云服务器'''
     try:
-        RESOURCE = boto3.resource('ec2', region_name=REGION)   
-        servers = RESOURCE.instances.filter(
-            InstanceIds=operate["svr_ids"],
-            Filters=[
-            {'Name': 'tag:Flag','Values': [FLAG]}
-            ]
+        resource_ec2 = boto3.resource('ec2')
+        servers = resource_ec2.instances.filter(
+            InstanceIds=parm["svrIds"],
+            # Filters=[
+            # {'Name': 'tag:Flag','Values': [FLAG]}
+            # ]            
         )
+        deleteList = []
         for server in servers:
-            response = server.terminate()
+            termResp = server.terminate()
             # server.wait_until_terminated()
-        return response
+            termInst = termResp.get('TerminatingInstances')[0]
+            tmp = {
+                'svrId':termInst.get('InstanceId'),
+                'currState':termInst['CurrentState'].get('Name'),
+                'preState':termInst['PreviousState'].get('Name')
+            }
+            deleteList.append(tmp)
 
-        response = Result(
-            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=200,
+
+        resp = Result(
+            detail=deleteList,
+            status_code=200,
         )
-        return response.make_resp()
+        return resp.make_resp()
 
     except Exception:
-        response = Result(
-            message='{} server failed'.format(operate["action"]), status_code=3004, http_status_code=400
+        resp = Result(
+            message='Delete server failed', 
+            status_code=3004, 
+            http_status_code=400
         )
-        response.err_resp()
+        return resp.err_resp()

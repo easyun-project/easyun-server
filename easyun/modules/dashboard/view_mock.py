@@ -14,7 +14,7 @@ from easyun.common.models import Account
 @auth_required(auth_token)
 # @output(SummaryOut)
 def dc_summary():
-    '''获取 数据中心 Summary信息'''
+    '''获取 数据中心 Summary信息[Mock]'''
     dcSummary = [
       {
         "az": "us-east-1a",
@@ -64,7 +64,7 @@ def dc_summary():
 @auth_required(auth_token)
 # @output(SummaryOut)
 def health_summary():
-    '''获取 健康状态 Summary信息'''    
+    '''获取 健康状态 Summary信息[Mock]'''    
     healthSumary = {
         "alarms": {
             "ia": "1",
@@ -90,7 +90,7 @@ def health_summary():
 @auth_required(auth_token)
 # @output(SummaryOut)
 def graph_summary():
-    '''获取 IaaS资源 Summary信息''' 
+    '''获取 IaaS资源 Summary信息[Mock]''' 
     graphSummary = {
         "server":{
             "sum": 19,
@@ -146,7 +146,7 @@ def graph_summary():
 @auth_required(auth_token)
 # @output(SummaryOut)
 def view_list():
-    '''获取 IaaS资源 list明细清单'''
+    '''获取 IaaS资源 list明细清单[Mock]'''
     serverList = [
         {
         "ebs": 8,

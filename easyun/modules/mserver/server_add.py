@@ -18,7 +18,6 @@ from . import bp, REGION
 class SvrParmIn(Schema):
     # datacenter basic parm
     dcName = String(required=True, example="Easyun")
-    dcRegion = String(required=True, example="us-east-1")
     # parameters for server
     tagName = String(                          #云服务器名称
         required=True, 
@@ -52,11 +51,14 @@ class SvrParmIn(Schema):
 # @output(NewSvrSchema)
 def add_server(parm):
     '''新建云服务器'''
-    try:
-        dcTag = {"Key": "Flag", "Value": parm['dcName']}
-        nameTag = {"Key": "Name", "Value": parm['tagName']}
+    flagTag = {"Key": "Flag", "Value": parm['dcName']}
+    nameTag = {"Key": "Name", "Value": parm['tagName']}
 
-        resource_ec2 = boto3.resource('ec2', region_name=parm['dcRegion'])
+    try:
+        thisDC = Datacenter.query.filter_by(name = parm['dcName']).first()
+        dcRegion = thisDC.get_region()
+
+        resource_ec2 = boto3.resource('ec2', region_name = dcRegion)
         servers = resource_ec2.create_instances(
             MaxCount = parm['svrNumber'],
             MinCount = parm['svrNumber'],
@@ -70,28 +72,29 @@ def add_server(parm):
             TagSpecifications = [
                 {
                 "ResourceType":"instance",
-                "Tags": [dcTag, nameTag]
+                "Tags": [flagTag, nameTag]
                 }
             ] 
         )
-            
+        svrList = [
+            {
+                'svrId' : server.id,
+                'insTpye' : server.instance_type,
+                'creastTime' : server.launch_time.isoformat(),                
+                'svrState' : server.state["Name"],
+                'priIp' : server.private_ip_address
+            } for server in servers]
+
         resp = Result(
-            # detail = servers,
-            detail=[{
-                'SvrId' : server.id,
-                'InsTpye' : server.instance_type,
-                'CreateTime' : server.launch_time.isoformat(),                
-                'State' : server.state["Name"],
-                'PriIP' : server.private_ip_address
-            } for server in servers],
+            detail = svrList,
             status_code=200
         )
-
         return resp.make_resp()
+        
     except Exception as ex:
         response = Result(
             detail=ex,
             message='server creation failed', 
             status_code=3001
         )
-        response.make_resp()
+        return response.err_resp()

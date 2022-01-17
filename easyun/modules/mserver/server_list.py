@@ -10,9 +10,10 @@ from apiflask.validators import Length, OneOf
 from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
+from easyun.common.models import Datacenter
 from datetime import date, datetime
 from . import bp, REGION, VPC
-from flask import jsonify
+from flask import request, jsonify
 
 class SvrListOut(Schema):
     ins_id = String()
@@ -26,29 +27,29 @@ class SvrListOut(Schema):
     key_name = String()
     category = String()
 
+class SvrListIn(Schema):
+    dc = String()
 
-@bp.get('/')
+@bp.get('/list')
 @auth_required(auth_token)
+@input(SvrListIn, location='query')
 # @output(SvrListOut, description='Get Servers list')
-def list_all_svrs():
+def list_svrs(parm):
     '''获取Easyun数据中心云服务器列表'''
-    # 动态获取 vpc_id
-    # client_ec2 = boto3.client('ec2', region_name = this_region)
-    # vpcs = client_ec2.describe_vpcs(
-    #     Filters=[
-    #         {'Name': 'tag:Flag','Values': ['Easyun'],},
-    #     ]
-    # )
-    # vpc_id = [vpc['VpcId'] for vpc in vpcs['Vpcs']][0] 
+    # dcName = request.args.get('dc', 'Easyun')  #获取查询参数 ?dc=xxx ,默认值‘Easyun’
+    # thisDC = Datacenter(name = dcName)
+    thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
+    dcRegion = thisDC.get_region()
+    dcVpc = thisDC.get_vpc()
+
+    # 设置 boto3 接口默认 region_name
+    boto3.setup_default_session(region_name = dcRegion )
 
     try:
-        # this_dc = Datacenter.query.filter_by(name='Easyun').first()
-        # this_dc = Datacenter.query.first()
+        resource_ec2 = boto3.resource('ec2')
+        vpc = resource_ec2.Vpc(dcVpc)
 
-        resource_ec2 = boto3.resource('ec2', region_name=REGION)
-        vpc = resource_ec2.Vpc(VPC)
-                
-        list_resp = []
+        svrList = []
         # vpc.instances.all() 返回 EC2.Instance 对象
         for s in vpc.instances.all():
             #获取tag:Name
@@ -63,28 +64,29 @@ def list_all_svrs():
             ins_type = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
             ram_m = ins_type['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
             svr = {
-                'svr_id' : s.id,
-                'svr_name' : name,
-                'svr_state' : s.state["Name"],
-                'ins_type' : s.instance_type,
-                'vcpu' : s.cpu_options['CoreCount'],
-                'ram' : ram_m/1024,
-                'ebs' : ebs_size, 
-                'os' : resource_ec2.Image(s.image_id).platform_details,               
-                'rg_az' : resource_ec2.Subnet(s.subnet_id).availability_zone,
-                'pub_ip' : s.public_ip_address
+                'svrId' : s.id,
+                'svrName' : name,
+                'svrState' : s.state["Name"],
+                'insType' : s.instance_type,
+                'vpuNumb' : s.cpu_options['CoreCount'],
+                'ramSize' : ram_m/1024,
+                'ebsSize' : ebs_size, 
+                'osName' : resource_ec2.Image(s.image_id).platform_details,               
+                'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,
+                'pubIp' : s.public_ip_address
             }
-            list_resp.append(svr)
+            svrList.append(svr)
 
-        response = Result(
-            detail = list_resp,
+        resp = Result(
+            detail = svrList,
             status_code=200
         )
-
-        return response.make_resp()
+        return resp.make_resp()
 
     except Exception:
-        response = Result(
-            message='list servers failed', status_code=3001,http_status_code=400
+        resp = Result(
+            message='list servers failed', 
+            status_code=3001,
+            http_status_code=400
         )
-        response.err_resp()
+        return resp.err_resp()

@@ -160,6 +160,9 @@ class Datacenter(db.Model):
     def get_region(self):
         return (self.region)
 
+    def get_vpc(self):
+        return (self.vpc_id)
+
     def update_dict(self, items: Dict):
         universal_update_dict(self, items)
 
