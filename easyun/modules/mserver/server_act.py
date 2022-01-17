@@ -35,11 +35,14 @@ class OperateOut(Schema):
 @output(OperateOut, description='Operation finished !')
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
+    print(operate)
     try:
         RESOURCE = boto3.resource('ec2', region_name=REGION)
         servers = RESOURCE.instances.filter(
             InstanceIds=operate["svr_ids"]
             )
+        print(servers)
+        servers.stop()
         if operate["action"] == 'start':
             operation_result = servers.start()
         elif operate["action"] == 'stop':
@@ -69,7 +72,7 @@ class DeleteIn(Schema):
         )   
 
 
-@bp.delete('/delete/')
+@bp.delete('/')
 @auth_required(auth_token)
 @input(DeleteIn)
 @output(OperateOut)

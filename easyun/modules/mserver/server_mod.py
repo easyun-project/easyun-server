@@ -146,6 +146,44 @@ def update_config(new):
         )
         response.err_resp()
 
+class DiskOut(Schema):
+   id = String()
+   state = String()
+   create_time = String()
+   tags = String()
+    
+@bp.get('/disk')
+@auth_required(auth_token)
+@output(DiskOut)
+def get_disk():
+    '''获取available状态磁盘'''
+    try:
+        RESOURCE = boto3.resource('ec2', region_name=REGION)
+        res = []
+        for volume in RESOURCE.volumes.all():
+            if volume.tags and [i for i in volume.tags if 'Easyun' in i['Value']]:
+                print(volume.id,volume.state,volume.create_time,volume.tags)
+                if volume.state=='available':
+                    # print(volume.id,volume.state,volume.create_time,volume.tags)
+                    res.append((volume.id,volume.state,volume.create_time,volume.tags))
+        # print(res)
+        response = Result(
+            detail=res,
+            status_code=200
+            )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
 class NewDiskIn(Schema):
     InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
     Encrypted = Boolean(required=True, example = False)
@@ -158,8 +196,8 @@ class NewDiskIn(Schema):
     Tag = String(required=True, example='disk_test')
     Device = String(required=True, example='/dev/sdg')
 
-@bp.post('/disk/add')
-# @auth_required(auth_token)
+@bp.post('/disk')
+@auth_required(auth_token)
 @input(NewDiskIn)
 # @output()
 def add_disk(NewDiskIn):
@@ -256,12 +294,73 @@ class DeleteDiskIn(Schema):
     InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
     Device = String(required=True, example='/dev/sdg')
 
-@bp.post('/disk/delete')
-# @auth_required(auth_token)
+@bp.delete('/disk')
+@auth_required(auth_token)
 @input(DeleteDiskIn)
 # @output()
 def delete_disk(DeleteDiskIn):
     '''删除磁盘'''
+    try:
+        CLIENT = boto3.client('ec2', region_name=REGION)
+        RESOURCE = boto3.resource('ec2', region_name=REGION)
+        server =RESOURCE.Instance(DeleteDiskIn["InstanceId"])
+        disks = CLIENT.describe_instances(InstanceIds=[DeleteDiskIn["InstanceId"]])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
+        vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == DeleteDiskIn["Device"]]
+        print(vid)
+        # print(dir(volume))
+        if len(vid)==0:
+            raise ValueError('invalid device')
+        volume = RESOURCE.Volume(vid[0])
+
+        volume.detach_from_instance(
+            Device=DeleteDiskIn["Device"],
+            InstanceId=DeleteDiskIn["InstanceId"]
+        )
+        # waiter = CLIENT.get_waiter('volume_available')
+        # waiter.wait(
+        #     VolumeIds=[
+        #         volume.id,
+        #     ]
+        # )
+        from time import sleep 
+        while True:
+            volume1 = RESOURCE.Volume(volume.volume_id)
+            print(volume1.state)
+            if volume1.state == 'available':
+                volume1.delete()
+                break
+            sleep(0.5)
+        
+        response = Result(
+            detail={'msg':'delete {} success'.format(DeleteDiskIn["Device"])},
+            status_code=200
+            )   
+        # response = Result(
+        #     detail={'VolumeId':volume1.volume_id,
+        #     "State" : volume1.state,
+        #     },
+        #     status_code=200
+        #     )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+
+@bp.post('/disk/detach')
+@auth_required(auth_token)
+@input(DeleteDiskIn)
+# @output()
+def detach_disk(DeleteDiskIn):
+    '''detach磁盘'''
     try:
         CLIENT = boto3.client('ec2', region_name=REGION)
         RESOURCE = boto3.resource('ec2', region_name=REGION)

@@ -46,7 +46,7 @@ class SvrParmIn(Schema):
     )
 
 
-@bp.post('/add')
+@bp.post('/')
 @auth_required(auth_token)
 @input(SvrParmIn)
 # @output(NewSvrSchema)
@@ -58,8 +58,8 @@ def add_server(parm):
 
         resource_ec2 = boto3.resource('ec2', region_name=parm['dcRegion'])
         servers = resource_ec2.create_instances(
-            MaxCount = parm['Number'],
-            MinCount = parm['Number'],
+            MaxCount = parm['svrNumber'],
+            MinCount = parm['svrNumber'],
             ImageId = parm['ImageId'],
             InstanceType = parm['InstanceType'],
             SubnetId = parm['SubnetId'],
@@ -80,7 +80,7 @@ def add_server(parm):
             detail=[{
                 'SvrId' : server.id,
                 'InsTpye' : server.instance_type,
-                'CreateTime' : server.launch_time,                
+                'CreateTime' : server.launch_time.isoformat(),                
                 'State' : server.state["Name"],
                 'PriIP' : server.private_ip_address
             } for server in servers],
