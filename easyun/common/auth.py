@@ -102,7 +102,7 @@ class NewPassword(Schema):
         required=True, validate=Length(0, 20),
         example="password")
 
-@bp.put('/change_pwd')
+@bp.put('/password')
 @auth_required(auth_token)
 @input(NewPassword)
 def change_passowrd(newpwd):

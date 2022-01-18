@@ -11,7 +11,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
 from . import bp
-from easyun.cloud.ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes, Instance_OS
+from easyun.cloud.ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes
 import ast, random, json
 
 
@@ -253,9 +253,9 @@ def list_ins_types(parm):
 def ec2_pricelist(region, instype, os, soft='NA', option='OnDemand',tenancy='Shared'):
     '''获取EC2的价格列表(单位时间Hrs)'''
     # AWS Price API only support us-east-1, ap-south-1
-    priceRegion = 'us-east-1'
-    client_price = boto3.client('pricing', region_name= priceRegion )
+    priceRegion = 'us-east-1'    
     try:
+        client_price = boto3.client('pricing', region_name= priceRegion )
         result = client_price.get_products(
             ServiceCode='AmazonEC2',
             Filters=[

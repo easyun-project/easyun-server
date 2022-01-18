@@ -236,10 +236,13 @@ def get_familyDes(parm):
 '''支持的Instance OS列表'''
 # AWS Price API only support us-east-1, ap-south-1
 priceRegion = 'us-east-1'
-client_price = boto3.client('pricing', region_name= priceRegion )
-response = client_price.get_attribute_values(
-    ServiceCode='AmazonEC2',
-    AttributeName='operatingSystem'
-)
-os_values = response['AttributeValues']
-Instance_OS = [os['Value'] for os in os_values]
+try:
+    client_price = boto3.client('pricing', region_name= priceRegion )
+    response = client_price.get_attribute_values(
+        ServiceCode='AmazonEC2',
+        AttributeName='operatingSystem'
+    )
+    os_values = response['AttributeValues']
+    Instance_OS = [os['Value'] for os in os_values]
+except Exception:
+    pass

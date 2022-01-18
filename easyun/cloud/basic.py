@@ -9,13 +9,18 @@ from ec2_metadata import ec2_metadata
 
 
 def get_deploy_env(cloud):
-    """获取后端服务器部署的云环境基础信息"""
+    """获取后端服务器云环境基础信息"""
     if cloud == 'aws': 
         # 通过 sts接口获取 account_id
-        client_sts = boto3.client('sts')
-        account_id = client_sts.get_caller_identity().get('Account')
-        # 通过 sts接口获取 iam_role
-        role = client_sts.get_caller_identity().get('Arn').split('/')[1]
+        try:
+            client_sts = boto3.client('sts')
+            account_id = client_sts.get_caller_identity().get('Account')
+            # 通过 sts接口获取 iam_role
+            role = client_sts.get_caller_identity().get('Arn').split('/')[1]
+        except Exception:
+            # 确保获取失败程序继续运行，下次重新获取
+            account_id = 'missing'
+            role = 'missing'
 
         # 获取 deploy region  
         try:
@@ -39,7 +44,7 @@ def get_deploy_env(cloud):
     return {
         'account_id': account_id,
         'role': role,
-       'deploy_region': deploy_region,        
+        'deploy_region': deploy_region,  
         'aws_type' : aws_type
     }
 

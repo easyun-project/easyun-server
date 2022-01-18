@@ -76,13 +76,13 @@ def list_disks(dcName):
 # 在lambda_handle() 调用以上方法   
 def lambda_handler(event, context):
     resource_ddb = boto3.resource('dynamodb')
-    table = resource_ddb.Table('easyun-inventory-block')    
+    table = resource_ddb.Table('easyun-inventory-stblock')    
     dcList = get_dcList()
     for dc in dcList:
         diskInvt = list_disks(dc)
         diskItem={
             'dcName': dc,
-            'diskInventory': diskInvt
+            'dcInventory': diskInvt
         }
         table.put_item(Item = diskItem)    
 
