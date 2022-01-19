@@ -15,6 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
+
 # from .common.result import BaseResponseSchema
 from .celery import FlaskCelery
 from config import Config
@@ -54,6 +55,11 @@ def create_app(run_env=None):
     # defaults to "data"
     app.config['BASE_RESPONSE_DATA_KEY'] = 'detail'
 
+    # 注册Demo内容
+    # 将自定义Converter添加到url_map中
+    from easyun.modules.demo.converter import  RegConverter
+    app.url_map.converters["re"] = RegConverter
+
     # 初始化扩展
     register_extensions(app=app)
 
@@ -70,6 +76,8 @@ def create_app(run_env=None):
     # 初始化AWS云环境账号基础信息
     register_aws_account(app)
 
+    
+
     return app
 
 
@@ -77,7 +85,7 @@ def create_app(run_env=None):
 def register_blueprints(app: APIFlask):
     """Register Flask blueprints."""
     from .common import auth
-    from .modules import mserver, mstorage, datacenter, account, dashboard
+    from .modules import mserver, mstorage, datacenter, account, dashboard, demo
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(mserver.bp)
@@ -85,6 +93,7 @@ def register_blueprints(app: APIFlask):
     app.register_blueprint(account.bp)
     app.register_blueprint(mstorage.bp)
     app.register_blueprint(dashboard.bp)
+    app.register_blueprint(demo.bp)
     return None
 
 
