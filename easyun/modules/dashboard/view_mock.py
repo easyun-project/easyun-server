@@ -122,7 +122,7 @@ def graph_summary(parm):
         {
             "type":"server",
             'data':{
-                "total": 19,
+                "sumNum": 19,
                 "runNum": 15,
                 "stopNum": 4,
                 "vcpuNum": 76,
@@ -132,7 +132,7 @@ def graph_summary(parm):
         {
             "type":"database",
             "data":{
-                "total": 7,
+                "sumNum": 7,
                 "mysqlNmb": 3,
                 "mariaNum": 2,
                 "postgreNum": 1,
@@ -143,7 +143,7 @@ def graph_summary(parm):
         {
             "type":"network",
             "data":{
-                "total": 4,
+                "sumNum": 4,
                 "pubNum": 2,
                 "priNum": 2,
                 "igwNum": 1,
@@ -154,29 +154,31 @@ def graph_summary(parm):
         {
             "type":"st_object",
             "data":{
-                "total": 6,
-                "objSize": "17 GiB",
-                "objNum": "502 K",
-                "bktPub": 1,
-                "bktEncry": 5
+                "sumNum": 6,
+                "objSize": 17,
+                "objNum": 502013,
+                "pubNum": 1,
+                "encNum": 5
             }
         },
         {
             "type":"st_block",
             "data":{
-                "total": 20.52,
-                "avaSize": "12.5 TiB",
-                "useSize": "8.02 TiB"
+                "sumNum": 12,
+                "blcSize": 20.52,
+                "useNum": 10,
+                "avaNum": 2,
+                "encNum": 3
             }
         },
         {
             "type":"st_file",
             "data":{
-                "total": 3,
+                "sumNum": 3,
                 "efsNum": 1,
-                "efsSize": "827.7 MiB",
+                "efsSize": 827.7,
                 "fsxNum": 2,
-                "fsxSize": "3.27 GiB"
+                "fsxSize": 3.27
             }
         }
     ]
@@ -196,11 +198,11 @@ serverList = {
     "data":[
         {
             "svrId": "i-09aa9e2c83d840ab1",
-            "ebs": 8,
-            "ins_type": "t4g.nano",
-            "os": "Linux/UNIX",
-            "pub_ip": '',
-            "ram": 0.5,
+            "ebsSize": 8,
+            "insType": "t4g.nano",
+            "svrOs": "Linux/UNIX",
+            "pubIp": '',
+            "ramSize": 0.5,
             "rg_az": "us-east-1a",                
             "svr_name": "easyun-test-devbk",
             "svr_state": "stopped",
@@ -237,24 +239,24 @@ st_objectList = {
     "type":"st_object",
     "data":[
         {
-        "Name": "bktexample17",
-        "bucketRegion": "us-east-1",
-        "bucketStatus": "Objects can be public"
+        "bktName": "bktexample17",
+        "bktRegion": "us-east-1",
+        "bktStatus": "Objects can be public"
         },
         {
-        "Name": "easyun-api-test-13",
-        "bucketRegion": "us-east-1",
-        "bucketStatus": "Objects can be public"
+        "bktName": "easyun-api-test-13",
+        "bktRegion": "us-east-1",
+        "bktStatus": "Objects can be public"
         },
         {
-        "Name": "easyun-api-test-11",
-        "bucketRegion": "us-east-1",
-        "bucketStatus": "Objects can be public"
+        "bktName": "easyun-api-test-11",
+        "bktRegion": "us-east-1",
+        "bktStatus": "Objects can be public"
         },
         {
-        "Name": "easyun-api-test-12",
-        "bucketRegion": "us-east-1",
-        "bucketStatus": "Objects can be public"
+        "bktName": "easyun-api-test-12",
+        "bktRegion": "us-east-1",
+        "bktStatus": "Objects can be public"
         }
     ]
 }
