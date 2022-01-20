@@ -108,17 +108,3 @@ def get_svr(svr_id):
             message=str(e), status_code=3001, http_status_code=400
         )
         response.err_resp()  
-
-
-@bp.get('/instypes/<svr_id>')
-# @auth_required(auth_token)
-# @input()
-# @output()
-def get_types(svr_id):
-    '''获取指定云服务器支持的Instance Types列表'''
-
-    # 1.查询云服务器的架构 x86-64bit / arm-64bit
-
-    # 2.查询相同架构下的Instance Types
-
-    return ''

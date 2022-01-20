@@ -4,60 +4,90 @@
 @LastEditors: aleck
 '''
 import boto3
+import ast, random, json
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from . import bp
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
-from . import bp
 from easyun.cloud.ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes
-import ast, random, json
 
 
-class ImagesIn(Schema):
+class QueryDC(Schema):
     # datacenter basic parm
-    dcRegion = String(required=True, example="us-east-1")
-    # parameters for image
-    imgArch = String(
+    dc = String(
         required=True, 
-        validate=OneOf(['x86_64', 'arm64']),  #The image architecture ( x86_64 | arm64 )
-        example="x86_64"
-    )
-    imgPlatform = String(
-        required=True, 
-        validate=OneOf(['windows', 'linux']),  #The OS platform ( Windows | Linux )
-        example="linux"
+        validate=Length(0, 60),
+        # validate=OneOf(DC_LIST),        
+        example='Easyun'
     )
 
-# @bp.get('/<arch>/<platform>')
-@bp.post('/images')
+# class ImageIn(Schema):
+    # parameters for image
+    # imgArch = String(
+    #     required=True, 
+    #     validate=OneOf(['x86_64', 'arm64']),  #The image architecture ( x86_64 | arm64 )
+    #     example="x86_64"
+    # )
+    # imgOS = String(
+    #     required=True, 
+    #     validate=OneOf(['windows', 'linux']),  #The OS platform ( Windows | Linux )
+    #     example="linux"
+    # )
+
+@bp.get('/param/image/<imgOS>/<imgArch>')
 @auth_required(auth_token)
-@input(ImagesIn)
+@input(QueryDC, location='query')
 # @output()
-def list_images(parm):
+def list_images(imgOS, imgArch, parm):
     '''获取可用的AMI列表(包含 System Disk信息)'''
-    if parm['imgPlatform'] == 'windows':
+
+    if imgOS == 'windows':
         ami_list = AMI_Win
+        # 从image name中截取有意义字段
         def split_name(imgName):
             pass
-
-    elif parm['imgPlatform'] == 'linux':
+    elif imgOS == 'linux':
         ami_list = AMI_Lnx
         def split_name(imgName):
             pass
+    else:
+        resp = Result(
+            detail='Unknown image architecture. The valure must be one of: windows, linux.',
+            message='Validation error',
+            status_code=3011,
+            http_status_code=400
+        )        
+        return resp.err_resp()
+
+    if imgArch not in ['x86_64', 'arm64']:
+        resp = Result(
+            detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
+            message='Validation error',
+            status_code=3011,
+            http_status_code=400
+        )
+        return resp.err_resp()
 
     filters = [
         {'Name': 'state','Values': ['available']},
         {'Name': 'image-type','Values': ['machine']},
         # {'Name': 'platform','Values': ['windows']}, # for Windows only        
         {'Name': 'virtualization-type', 'Values': ['hvm']},
-        {'Name': 'architecture','Values': [parm['imgArch']]},
+        {'Name': 'architecture','Values': [imgArch]},
         {'Name': 'name','Values': [ami['amiName'] for ami in ami_list]},
     ]
 
     try:
-        client_ec2 = boto3.client('ec2', region_name=parm['dcRegion'])
+        thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
+        dcRegion = thisDC.get_region()
+
+        # 设置 boto3 接口默认 region_name
+        boto3.setup_default_session(region_name = dcRegion )  
+
+        client_ec2 = boto3.client('ec2')
         result = client_ec2.describe_images(
     #         Owners=['amazon'],
             Filters = filters
@@ -71,10 +101,12 @@ def list_images(parm):
                 'imgVersion' : [ami['imgVersion'] for ami in ami_list if ami['amiName']==img['Name']][0],
                 'imgCode': [ami['imgCode'] for ami in ami_list if ami['amiName']==img['Name']][0],
                 'imgDescription': img['Description'],
-                # disk parameters        
-                'root_device_name': img['RootDeviceName'],
-                'root_device_type': img['RootDeviceType'],
-                'root_device_disk': img['BlockDeviceMappings'][0]['Ebs']
+                # root disk parameters
+                'rootDevice' : {
+                    'devicePath': img['RootDeviceName'],
+                    'deviceType': img['RootDeviceType'],
+                    'deviceDisk': img['BlockDeviceMappings'][0].get('Ebs')                    
+                }
             } for img in result['Images']
         ]
         resp = Result(
@@ -91,25 +123,30 @@ def list_images(parm):
         return response.make_resp()
 
 
-
-
-@bp.get('/<dcname>/<arch>/insfamily')
+@bp.get('/param/insfamily/<insArch>')
 @auth_required(auth_token)
-def get_ins_family(dcname,arch):
+@input(QueryDC, location='query')
+def get_ins_family(insArch, parm):
     '''获取可用的Instance Family列表'''
+    if insArch not in ['x86_64', 'arm64']:
+        resp = Result(
+            detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
+            message='Validation error',
+            status_code=3012,
+            http_status_code=400
+        )
+        return resp.err_resp()
+        
     filters=[
-        {'Name': 'processor-info.supported-architecture', 'Values': [arch]}, 
+        {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
         {'Name': 'current-generation', 'Values': ['true']},
-    ]    
+    ]
     try:
         # this_dc = Datacenter(name=dcname)
-        this_dc = Datacenter.query.filter_by(name=dcname).first()
-        dcRegion = this_dc.get_region()
-        client_ec2 = boto3.client('ec2', region_name=dcRegion)
-        # instypes = client_ec2.describe_instance_types(
-        #     #InstanceTypes=['t2.micro']
-        #     Filters = filters,
-        # )  
+        thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
+        dcRegion = thisDC.get_region()
+        client_ec2 = boto3.client('ec2', region_name = dcRegion)
+        # 基于NextToken判断获取完整 instance types 列表
         desc_args = {}
         instypeList = []
         while True:
@@ -152,33 +189,44 @@ for i in Instance_Family:
     familyList = [f['familyName'] for f in i['insFamily']]
     InsFamily_All.extend(familyList)
 
-class InstypesIn(Schema):
+class QueryInst(Schema):
     # datacenter basic parm
-    dcRegion = String(required=True, example="us-east-1")
-    insArch = String(
-        required=True, 
-        validate=OneOf(['x86_64', 'arm64']),  #The CPU architecture ( x86_64 | arm64 )
-        example="x86_64"
-    )
-    insFamily = String( 
+    family = String( 
         required=True, 
         validate=OneOf(InsFamily_All),
-        example="c4"
+        example="m5"
     )
-    imgCode = String(
-        required=False, 
-        example="linux"        
-    )
+    dc = String(
+        required=True, 
+        validate=Length(0, 30),
+        # validate=OneOf(DC_LIST),  
+        example='Easyun'
+    )    
+    # insArch = String(
+    #     required=True, 
+    #     validate=OneOf(['x86_64', 'arm64']),  #The CPU architecture ( x86_64 | arm64 )
+    #     example="x86_64"
+    # )    
+    # imgCode = String(
+    #     required=False, 
+    #     example="linux"        
+    # )
 
-@bp.post('/instypes')
+@bp.get('/param/instype/<imgCode>/<insArch>')
 @auth_required(auth_token)
-@input(InstypesIn)
-def list_ins_types(parm):
-    '''获取可用的Instance Types列表(含月度成本)'''    
-    family = parm['insFamily']
-    arch = parm['insArch']
-    imgCode = parm['imgCode']
-    # 跟进 Image code 匹配 OS
+@input(QueryInst, location='query')
+def list_ins_types(imgCode, insArch, parm):
+    '''获取可用的Instance Types列表(含月度成本)'''
+    if insArch not in ['x86_64', 'arm64']:
+        resp = Result(
+            detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
+            message='Validation error',
+            status_code=3013,
+            http_status_code=400
+        )
+        return resp.err_resp()
+
+    # 根据 Image code 匹配 OS
     if imgCode in ['amzn2', 'ubuntu', 'debian', 'linux']:
         insOS = 'Linux'
     elif imgCode == 'rhel':
@@ -188,30 +236,33 @@ def list_ins_types(parm):
     elif imgCode == 'windows':
         insOS = 'Windows'
     else: 
-        insOS = 'NA'    
+        insOS = 'NA'
 
-
-    if family == 'all':
+    insFamily = parm['family']
+    if insFamily == 'all':
         filters=[
 #             {'Name': 'hypervisor', 'Values': ['nitro']},
 #             {'Name': 'free-tier-eligible', 'Values': ['true']}, 
-            {'Name': 'processor-info.supported-architecture', 'Values': [arch]}, 
+            {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
             {'Name': 'current-generation', 'Values': ['true']},
             ]
     else:
-        family = family+"."+"*"
+        insFamily = insFamily+"."+"*"
         filters=[ 
-            {'Name': 'processor-info.supported-architecture', 'Values': [arch]}, 
+            {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
             {'Name': 'current-generation', 'Values': ['true']},
-            {'Name': 'instance-type', 'Values': [family+'*']}
+            {'Name': 'instance-type', 'Values': [insFamily+'*']}
             ]
     
     try:
-        client_ec2 = boto3.client('ec2', region_name=parm['dcRegion'])
+        thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
+        dcRegion = thisDC.get_region()
+        client_ec2 = boto3.client('ec2', region_name = dcRegion)     
         # instypes = client_ec2.describe_instance_types(
         #     #InstanceTypes=['t2.micro']
         #     Filters = filters,
-        # )  
+        # ) 
+        # 基于NextToken判断获取完整 instance types 列表
         describe_args = {}
         instypeList = []
         while True:
@@ -222,13 +273,13 @@ def list_ins_types(parm):
     #         print(describe_result.keys())
             for i in result['InstanceTypes']:
                 tmp = {
-                    "InstanceType": i['InstanceType'],
-                    "VCpu": i['VCpuInfo']['DefaultVCpus'],
+                    "insType": i['InstanceType'],
+                    "vcpuNum": i['VCpuInfo']['DefaultVCpus'],
                     # "VCpu": "{} vCPU".format(i['VCpuInfo']['DefaultVCpus']),
-                    "Memory": i['MemoryInfo']['SizeInMiB']/1024,
+                    "memSize": i['MemoryInfo']['SizeInMiB']/1024,
                     # "Memory": "{} GiB".format(i['MemoryInfo']['SizeInMiB']/1024),
-                    "Network": i['NetworkInfo']['NetworkPerformance'],                    
-                    "Price": ec2_monthly_cost(parm['dcRegion'],i['InstanceType'], insOS),
+                    "netSpeed": i['NetworkInfo']['NetworkPerformance'],                    
+                    "monthPrice": ec2_monthly_cost(dcRegion,i['InstanceType'], insOS),
                 }
                 instypeList.append(tmp)
             if 'NextToken' not in result:
@@ -300,3 +351,15 @@ def ec2_monthly_cost(region, instype, os):
 
     except Exception as ex:
         return ex
+
+
+@bp.get('/param/instype/<svrID>')
+@auth_required(auth_token)
+def get_ins_types(svrID):
+    '''获取指定云服务器支持的Instance Types列表'''
+
+    # 1.查询云服务器的架构 x86-64bit / arm-64bit
+
+    # 2.查询相同架构下的Instance Types
+
+    return ''
