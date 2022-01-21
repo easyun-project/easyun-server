@@ -1,152 +1,22 @@
-2022-01-11 21:45:25,265 - _internal.py - _log - 225 - MainThread - 19500 - INFO - 
- -  * Restarting with stat
-2022-01-11 23:31:24,723 - __init__.py - create_app - 68 - MainThread - 19200 - INFO - 
- - Easyun API Start
-2022-01-11 23:31:24,723 - __init__.py - create_app - 68 - MainThread - 19200 - INFO - 
- - Easyun API Start
-2022-01-11 23:31:26,100 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:31:26,100 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:31:26,104 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
-FROM account 
-WHERE account.cloud = ?
- LIMIT ? OFFSET ?
-2022-01-11 23:31:26,104 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
-FROM account 
-WHERE account.cloud = ?
- LIMIT ? OFFSET ?
-2022-01-11 23:31:26,114 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - [generated in 0.01051s] ('aws', 1, 0)
-2022-01-11 23:31:26,114 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - [generated in 0.01051s] ('aws', 1, 0)
-2022-01-11 23:31:26,116 - log.py - info - 117 - MainThread - 19200 - INFO - 
+2022-01-20 06:33:43,904 - log.py - info - 117 - MainThread - 281473120452624 - INFO - 
+ - [generated in 0.00084s] ('aws', 1, 0)
+2022-01-20 06:33:43,906 - log.py - info - 117 - MainThread - 281473120452624 - INFO - 
  - COMMIT
-2022-01-11 23:31:26,116 - log.py - info - 117 - MainThread - 19200 - INFO - 
- - COMMIT
-2022-01-11 23:31:26,132 - _internal.py - _log - 225 - MainThread - 19200 - INFO - 
- -  * Restarting with stat
-2022-01-11 23:31:26,132 - _internal.py - _log - 225 - MainThread - 19200 - INFO - 
- -  * Restarting with stat
-2022-01-11 23:31:28,416 - __init__.py - create_app - 68 - MainThread - 8260 - INFO - 
- - Easyun API Start
-2022-01-11 23:31:28,416 - __init__.py - create_app - 68 - MainThread - 8260 - INFO - 
- - Easyun API Start
-2022-01-11 23:31:29,662 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:31:29,662 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:31:29,665 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
-FROM account 
-WHERE account.cloud = ?
- LIMIT ? OFFSET ?
-2022-01-11 23:31:29,665 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
-FROM account 
-WHERE account.cloud = ?
- LIMIT ? OFFSET ?
-2022-01-11 23:31:29,666 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - [generated in 0.00158s] ('aws', 1, 0)
-2022-01-11 23:31:29,666 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - [generated in 0.00158s] ('aws', 1, 0)
-2022-01-11 23:31:29,668 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - COMMIT
-2022-01-11 23:31:29,668 - log.py - info - 117 - MainThread - 8260 - INFO - 
- - COMMIT
-2022-01-11 23:31:29,678 - _internal.py - _log - 225 - MainThread - 8260 - WARNING - 
+2022-01-20 06:33:43,912 - _internal.py - _log - 225 - MainThread - 281473120452624 - WARNING - 
  -  * Debugger is active!
-2022-01-11 23:31:29,678 - _internal.py - _log - 225 - MainThread - 8260 - WARNING - 
- -  * Debugger is active!
-2022-01-11 23:31:29,681 - _internal.py - _log - 225 - MainThread - 8260 - INFO - 
- -  * Debugger PIN: 351-746-346
-2022-01-11 23:31:29,681 - _internal.py - _log - 225 - MainThread - 8260 - INFO - 
- -  * Debugger PIN: 351-746-346
-2022-01-11 23:31:40,891 - _internal.py - _log - 225 - Thread-1 - 12768 - WARNING - 
- -  * Running on all addresses.
-   WARNING: This is a development server. Do not use it in a production deployment.
-2022-01-11 23:31:40,891 - _internal.py - _log - 225 - Thread-1 - 12768 - WARNING - 
- -  * Running on all addresses.
-   WARNING: This is a development server. Do not use it in a production deployment.
-2022-01-11 23:31:40,891 - _internal.py - _log - 225 - Thread-1 - 12768 - INFO - 
- -  * Running on http://10.85.15.109:6660/ (Press CTRL+C to quit)
-2022-01-11 23:31:40,891 - _internal.py - _log - 225 - Thread-1 - 12768 - INFO - 
- -  * Running on http://10.85.15.109:6660/ (Press CTRL+C to quit)
-2022-01-11 23:34:34,889 - _internal.py - _log - 225 - MainThread - 8260 - INFO - 
- -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\dashboard\\dc_inventory.py', reloading
-2022-01-11 23:34:34,889 - _internal.py - _log - 225 - MainThread - 8260 - INFO - 
- -  * Detected change in 'D:\\LabZone\\Coding\\Easyun-project\\easyun-server\\easyun\\modules\\dashboard\\dc_inventory.py', reloading
-2022-01-11 23:34:35,011 - _internal.py - _log - 225 - MainThread - 19200 - INFO - 
- -  * Restarting with stat
-2022-01-11 23:34:35,011 - _internal.py - _log - 225 - MainThread - 19200 - INFO - 
- -  * Restarting with stat
-2022-01-11 23:34:37,168 - __init__.py - create_app - 68 - MainThread - 18284 - INFO - 
- - Easyun API Start
-2022-01-11 23:34:37,168 - __init__.py - create_app - 68 - MainThread - 18284 - INFO - 
- - Easyun API Start
-2022-01-11 23:34:38,425 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:34:38,425 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:34:38,438 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
-FROM account 
-WHERE account.cloud = ?
- LIMIT ? OFFSET ?
-2022-01-11 23:34:38,438 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - SELECT account.id AS account_id_1, account.cloud AS account_cloud, account.account_id AS account_account_id, account.role AS account_role, account.deploy_region AS account_deploy_region, account.aws_type AS account_aws_type, account.active_date AS account_active_date, account.remind AS account_remind 
-FROM account 
-WHERE account.cloud = ?
- LIMIT ? OFFSET ?
-2022-01-11 23:34:38,439 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - [generated in 0.00165s] ('aws', 1, 0)
-2022-01-11 23:34:38,439 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - [generated in 0.00165s] ('aws', 1, 0)
-2022-01-11 23:34:38,441 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - COMMIT
-2022-01-11 23:34:38,441 - log.py - info - 117 - MainThread - 18284 - INFO - 
- - COMMIT
-2022-01-11 23:34:38,452 - _internal.py - _log - 225 - MainThread - 18284 - WARNING - 
- -  * Debugger is active!
-2022-01-11 23:34:38,452 - _internal.py - _log - 225 - MainThread - 18284 - WARNING - 
- -  * Debugger is active!
-2022-01-11 23:34:38,455 - _internal.py - _log - 225 - MainThread - 18284 - INFO - 
- -  * Debugger PIN: 351-746-346
-2022-01-11 23:34:38,455 - _internal.py - _log - 225 - MainThread - 18284 - INFO - 
- -  * Debugger PIN: 351-746-346
-2022-01-11 23:34:49,671 - _internal.py - _log - 225 - Thread-1 - 25036 - WARNING - 
- -  * Running on all addresses.
-   WARNING: This is a development server. Do not use it in a production deployment.
-2022-01-11 23:34:49,671 - _internal.py - _log - 225 - Thread-1 - 25036 - WARNING - 
- -  * Running on all addresses.
-   WARNING: This is a development server. Do not use it in a production deployment.
-2022-01-11 23:34:49,671 - _internal.py - _log - 225 - Thread-1 - 25036 - INFO - 
- -  * Running on http://10.85.15.109:6660/ (Press CTRL+C to quit)
-2022-01-11 23:34:49,671 - _internal.py - _log - 225 - Thread-1 - 25036 - INFO - 
- -  * Running on http://10.85.15.109:6660/ (Press CTRL+C to quit)
-2022-01-11 23:34:49,788 - _internal.py - _log - 225 - Thread-2 - 21964 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:34:49] "GET /api/docs HTTP/1.1" 200 -
-2022-01-11 23:34:49,788 - _internal.py - _log - 225 - Thread-2 - 21964 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:34:49] "GET /api/docs HTTP/1.1" 200 -
-2022-01-11 23:34:50,802 - _internal.py - _log - 225 - Thread-3 - 19592 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:34:50] "GET /openapi.json HTTP/1.1" 200 -
-2022-01-11 23:34:50,802 - _internal.py - _log - 225 - Thread-3 - 19592 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:34:50] "GET /openapi.json HTTP/1.1" 200 -
-2022-01-11 23:35:15,117 - _internal.py - _log - 225 - Thread-4 - 23388 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:35:15] "GET /api/docs HTTP/1.1" 200 -
-2022-01-11 23:35:15,117 - _internal.py - _log - 225 - Thread-4 - 23388 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:35:15] "GET /api/docs HTTP/1.1" 200 -
-2022-01-11 23:35:15,472 - _internal.py - _log - 225 - Thread-5 - 3020 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:35:15] "GET /openapi.json HTTP/1.1" 200 -
-2022-01-11 23:35:15,472 - _internal.py - _log - 225 - Thread-5 - 3020 - INFO - 
- - 127.0.0.1 - - [11/Jan/2022 23:35:15] "GET /openapi.json HTTP/1.1" 200 -
-2022-01-11 23:35:21,645 - log.py - info - 117 - Thread-6 - 15124 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:35:21,645 - log.py - info - 117 - Thread-6 - 15124 - INFO - 
- - BEGIN (implicit)
-2022-01-11 23:35:21,686 - log.py - info - 117 - Thread-6 - 15124 - INFO - 
- - [generated in 0.03621s] ('admin', 1, 0)
-2022-01-11 23:35:21,686 - log.py - info - 117 - Thread-6 - 15124 - INFO - 
- - [generated in 0.03621s] ('admin', 1, 0)
+2022-01-20 06:33:43,912 - _internal.py - _log - 225 - MainThread - 281473120452624 - INFO - 
+ -  * Debugger PIN: 708-175-347
+2022-01-20 06:33:46,232 - _internal.py - _log - 225 - Thread-2 - 281472926032368 - INFO - 
+ - 127.0.0.1 - - [20/Jan/2022 06:33:46] "OPTIONS /api/v1.0/storage/EBS/Volume HTTP/1.1" 200 -
+2022-01-20 06:33:47,491 - _internal.py - _log - 225 - Thread-3 - 281472926032368 - INFO - 
+ - 127.0.0.1 - - [20/Jan/2022 06:33:47] "[31m[1mPOST /api/v1.0/storage/EBS/Volume HTTP/1.1[0m" 400 -
+2022-01-20 06:34:09,394 - _internal.py - _log - 225 - Thread-4 - 281472926032368 - INFO - 
+ - 127.0.0.1 - - [20/Jan/2022 06:34:09] "OPTIONS /api/v1.0/storage/EBS/Volume HTTP/1.1" 200 -
+2022-01-20 06:34:10,547 - _internal.py - _log - 225 - Thread-5 - 281472926032368 - INFO - 
+ - 127.0.0.1 - - [20/Jan/2022 06:34:10] "[31m[1mPOST /api/v1.0/storage/EBS/Volume HTTP/1.1[0m" 400 -
+2022-01-20 06:34:16,935 - _internal.py - _log - 225 - Thread-6 - 281472926032368 - INFO - 
+ - 127.0.0.1 - - [20/Jan/2022 06:34:16] "OPTIONS /api/v1.0/storage/EBS/Volume HTTP/1.1" 200 -
+2022-01-20 06:34:18,086 - _internal.py - _log - 225 - Thread-7 - 281472926032368 - INFO - 
+ - 127.0.0.1 - - [20/Jan/2022 06:34:18] "[31m[1mPOST /api/v1.0/storage/EBS/Volume HTTP/1.1[0m" 400 -
+2022-01-20 06:35:08,995 - _internal.py - _log - 225 - MainThread - 281473120452624 - INFO - 
+ -  * Detected change in '/home/ec2-user/luqx/easyun-server/easyun/modules/mstorage/ebsView.py', reloading

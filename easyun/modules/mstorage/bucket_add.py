@@ -20,7 +20,7 @@ class newBucket(Schema):
     region = String(required=True)
     
 # 新增bucket
-@bp.post('/add_bucket')
+@bp.post('/bucket')
 @auth_required(auth_token)
 @input(newBucket)
 def add_bucket(newBucket):

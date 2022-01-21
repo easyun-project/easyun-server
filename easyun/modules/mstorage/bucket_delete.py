@@ -18,7 +18,7 @@ class deleteBucket(Schema):
     )
 
 # 删除bucket
-@bp.post('/delete_bucket')
+@bp.delete('/bucket')
 @auth_required(auth_token)
 @input(deleteBucket)
 def delete_bucket(deleteBucket):
