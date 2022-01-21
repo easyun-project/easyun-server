@@ -18,7 +18,7 @@ class Bucket(Schema):
         validate=Length(0, 30)
     )
 
-# 删除bucket
+# 验证bucket
 @bp.post('/vaildate_bucket')
 @auth_required(auth_token)
 @input(Bucket)
