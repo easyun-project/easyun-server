@@ -114,8 +114,19 @@ class VpcListOut(Schema):
 
 
 class DataCenterListIn(Schema):
-    vpc_id = String()
+    dcName = String()
 
+class DataCenterListsIn(Schema):
+    dcName = String()
+    type = String()
+
+
+class DataCenterEIPIn(Schema):
+    dcName = String()
+    eip_id = String()
+
+class DataCenterNewEIPIn(Schema):
+    dcName = String()
 
 class DCInfoOut(Schema):
     dcName = String()
@@ -125,6 +136,14 @@ class DCInfoOut(Schema):
     vpcCidr = String()
     dcUser = String()
     dcAccount = String()
+
+class DataCenterSubnetIn(Schema):
+    dcName = String()
+    subnetID = String()
+
+class DataCenterSubnetInsert(Schema):
+    dcName = String()
+    subnetCDIR = String() 
 
 class DataCenterListOut(Schema):
     dcList = List(

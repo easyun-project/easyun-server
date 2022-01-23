@@ -17,7 +17,7 @@ from . import bp, DC_NAME, DC_REGION, TagEasyun
 from flask import jsonify,send_file, send_from_directory,make_response
 import os
 from .datacenter_sdk import datacentersdk,app_log
-from .schemas import ResourceListOut, DataCenterListOut, DCInfoOut, VpcListOut
+from .schemas import ResourceListOut, DataCenterListOut, DCInfoOut, VpcListOut,DataCenterListIn
 
 # from logging.handlers import RotatingFileHandler
 # import logging
@@ -48,35 +48,143 @@ from flask import current_app
 # logger.addHandler(file_handler1)
 # logger.addHandler(file_handler)
 
+@bp.get('/quota')
+#@auth_required(auth_token)
+@input(DataCenterListIn, location='query')
+# @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
+def list_dcquota(param):
+    '''获取数据中心资源配额 [mock]'''
+    dcName=param.get('dcName')
+    
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+
+    if (thisDC is None):
+            response = Result(message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
+            response.err_resp() 
+  
+    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+
+    resource_ec2 = boto3.resource('ec2', region_name= thisDC.region)
+    vpc = resource_ec2.Vpc(thisDC.vpc_id)
+    noVPCUsed = len(list(resource_ec2.vpcs.all()))
+    noSecurityGroupUsed = len(list(resource_ec2.security_groups.all()))
+    noSubnetsUsed = len(list(resource_ec2.subnets.all()))
+    noEIPUsed = len(list(resource_ec2.vpc_addresses.all()))
+    noIGUsed = len(list(resource_ec2.internet_gateways.all()))
+    noNetworkInterfaceUsed = len(list(resource_ec2.network_interfaces.all()))
+
+
+    vpcUsageLimit = []
+    limitVPC = {
+            'vpc limit' : 5,
+            'EIP limit' : 5,
+            'NAT limit' : 5,
+            'Internet Gateway Limit': 10,
+            'Network Interface Limit': 10,
+            'Security Group Limit' : 5,
+            'Subnet Limit': 200
+            }
+
+    usageVPC = {
+            'vpc number used' : noVPCUsed,
+            'EIP used' : noEIPUsed,
+            'NAT used' : 5,
+            'Internet Gateway used': noIGUsed,
+            'Network Interface used': noNetworkInterfaceUsed,
+            'Security Group used' : noSecurityGroupUsed,
+            'Subnet Used': noSubnetsUsed
+            }
+    vpcUsageLimit.append(limitVPC)
+    vpcUsageLimit.append(usageVPC)
+
+        
+    resp = Result(
+        detail = vpcUsageLimit,
+        status_code=200
+    )
+    return resp.make_resp()
+
+    # dcUsageList = [
+    #     {
+    #         "vpcname": "vip1",
+    #         'vpcId': 'vpc-0a818f9a74c0657ad',
+    #         'EIP usage': '3/5 is being used',
+    #         'Subnet usage': '3/5 is being used'
+    #     },
+    #     {
+    #         "vpcname": "vip2",
+    #         'vpcId': 'vpc-0a818f9a74c0657ad',
+    #         'EIP usage': '3/5 is being used',
+    #         'Subnet usage': '3/5 is being used'
+    #     }
+    # ]
+
+    # resp = Result(
+    #     detail = dcUsageList,
+    #     status_code=200
+    # )
+    # return resp.make_resp()
 
    
-@app_log('download keypair')
-@bp.get('/downloadkeypair/<keyname>')
-# @auth_required(auth_token)
-def download_keypair(keyname):
-   '''获取Easyun环境下keypair'''
-   path = os.path.join(os.getcwd(),'keys')  # 假设在当前目录
+# @app_log('download keypair')
+# @bp.get('/downloadkeypair/<keyname>')
+# # @auth_required(auth_token)
+# def download_keypair(keyname):
+#    '''获取Easyun环境下keypair'''
+#    path = os.path.join(os.getcwd(),'keys')  # 假设在当前目录
    
-# keypair_name = 'key-easyun-user'
+# # keypair_name = 'key-easyun-user'
 
-   keypairfilename=keyname+'.pem'
+#    keypairfilename=keyname+'.pem'
 
-   if os.path.exists(os.path.join(path,keypairfilename)):
+#    if os.path.exists(os.path.join(path,keypairfilename)):
    
-     with open(os.path.join('./keys/',keypairfilename)) as file:
-            response = make_response(send_from_directory(path, keypairfilename, as_attachment=True))
-            response.headers["Content-Disposition"] = "attachment; filename={}".format(keypairfilename.encode().decode('latin-1'))
-            return response
-   else:
-       response = Result( message='Keypair file doesn\'t exist', status_code=2001,http_status_code=400)
-       current_app.logger.info(response)
-       response.err_resp() 
+#      with open(os.path.join('./keys/',keypairfilename)) as file:
+#             response = make_response(send_from_directory(path, keypairfilename, as_attachment=True))
+#             response.headers["Content-Disposition"] = "attachment; filename={}".format(keypairfilename.encode().decode('latin-1'))
+#             return response
+#    else:
+#        response = Result( message='Keypair file doesn\'t exist', status_code=2001,http_status_code=400)
+#        current_app.logger.info(response)
+#        response.err_resp() 
 
 
 @bp.get('/list')
-@auth_required(auth_token)
+# @auth_required(auth_token)
 # @output(DataCenterListOut, description='Get DataCenter List')
 def list_all_datacenter():
+    '''获取Easyun管理的数据中心列表---已经废除，请使用/'''
+    try:
+        curr_account:Account = Account.query.first()
+        dcs = Datacenter.query.filter_by(account_id = curr_account.account_id)
+        dcList = [] 
+        for dc in dcs:
+            resource_ec2 = boto3.resource('ec2', region_name= dc.region)
+            vpc = resource_ec2.Vpc(dc.vpc_id)
+            dcItem = {
+                'dcName' : dc.name,
+                'dcRegion' : dc.region,
+                'vpcID' : dc.vpc_id,
+                # 'vpcCidr' : vpc.cidr_block,
+                'dcUser' : dc.create_user
+            }
+            dcList.append(dcItem)
+        
+        resp = Result(
+            detail = dcList,
+            status_code=200
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        response = Result(message="get datacebter list failed", status_code=2001,http_status_code=400)
+        response.err_resp()
+
+
+@bp.get('/')
+# @auth_required(auth_token)
+# @output(DataCenterListOut, description='Get DataCenter List')
+def list_all_datacenters():
     '''获取Easyun管理的数据中心列表'''
     try:
         curr_account:Account = Account.query.first()
@@ -89,9 +197,8 @@ def list_all_datacenter():
                 'dcName' : dc.name,
                 'dcRegion' : dc.region,
                 'vpcID' : dc.vpc_id,
-                'vpcCidr' : vpc.cidr_block,
-                'dcUser' : dc.create_user,
-                'dcAccount' : dc.name
+                # 'vpcCidr' : vpc.cidr_block,
+                'dcUser' : dc.create_user
             }
             dcList.append(dcItem)
         
@@ -102,9 +209,7 @@ def list_all_datacenter():
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(
-            message= ex, status_code=2001,http_status_code=400
-        )
+        response = Result(message="get datacebter list failed", status_code=2001,http_status_code=400)
         response.err_resp()
 
 
@@ -176,9 +281,6 @@ def get_resources(dc_name):
         current_app.logger.debug("AAAA"+vpc_id)
         current_app.logger.info("AAAA"+str(region_name))
 
-    # print(vpc_id)
-    # print(datacenters.id)
-
     # regions = ec2.describe_regions(Filters=[{'Name': 'region-name','Values': [REGION]}])
 
     az_list = ec2.describe_availability_zones(Filters=[{'Name': 'group-name','Values': [DC_REGION]}])
@@ -209,28 +311,3 @@ def get_resources(dc_name):
     return response.make_resp()
 
 
-@bp.get('/testget')
-#@auth_required(auth_token)
-def testget():
-    '''数据中心测试专用'''
-    directory = os.getcwd()  # 假设在当前目录
-    ec2 = boto3.client('ec2', region_name=DC_REGION)
-    vpc_resource = boto3.resource('ec2', region_name=DC_REGION)
-    TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
-    keypair_filename="key_easyun_user"
-    try:
-        # if not os.path.exists('keys'):
-        #     os.mkdir('keys')
-        new_keypair = vpc_resource.create_key_pair(KeyName=keypair_filename,TagSpecifications=TagEasyunKeyPair)
-        # keypair_name = 'key-easyun-user'
-        with open('./'+keypair_filename, 'w') as file:
-            file.write(new_keypair.key_material)
-            print(new_keypair)
-    except Exception:
-            response = Result(detail ={'Result' : 'Errors'}, message='Create key pairs failed due to already existed', status_code=3001,http_status_code=400)
-            print(response)
-            current_app.logger.debug(response)
-    #    return send_from_directory(directory, filename, as_attachment=True)
-    response = make_response(send_from_directory(directory, keypair_filename, as_attachment=True))
-    response.headers["Content-Disposition"] = "attachment; filename={}".format(keypair_filename.encode().decode('latin-1'))
-    return response
