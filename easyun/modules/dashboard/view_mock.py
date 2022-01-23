@@ -73,42 +73,42 @@ def summary_dc(parm):
     return resp.make_resp()   
 
 
-@bp.get("/summary/health")
-@auth_required(auth_token)
-@input(QueryIn, location='query')
-def summary_health(parm):
-    '''获取 健康状态 Summary信息[Mock]'''
-    dcName = parm['dc'] 
-    summaryList = {
-        "alarms": {
-            "iaNum": 1,
-            "isNum": 3,
-            "okNum": 2
-        },
-        "dashboards": [
-            {
-                'title' : 'Easyun Overview',
-                'url': 'http://www.aws-cloudwatch.com/xxxx'
-            },
-            {
-                'title' : 'EC2 Dashboard',
-                'url': 'http://www.aws-cloudwatch.com/xxxx'
-            },
-            {         
-                'title' : 'RDS Dashobard',
-                'url': 'http://www.aws-cloudwatch.com/xxxx'
-            },
-            {
-                'title' : 'Storage',
-                'url': 'http://www.aws-cloudwatch.com/xxxx'
-            }
-        ]
-    }
-
-    resp = Result(
-        detail = summaryList
-        )
-    return resp.make_resp()
+# @bp.get("/summary/health")
+# @auth_required(auth_token)
+# @input(QueryIn, location='query')
+# def summary_health(parm):
+#     '''获取 健康状态 Summary信息[Mock]'''
+#     dcName = parm['dc']
+#     summaryList = {
+#         "alarms": {
+#             "iaNum": 1,
+#             "isNum": 3,
+#             "okNum": 2
+#         },
+#         "dashboards": [
+#             {
+#                 'title' : 'Easyun Overview',
+#                 'url': 'http://www.aws-cloudwatch.com/xxxx'
+#             },
+#             {
+#                 'title' : 'EC2 Dashboard',
+#                 'url': 'http://www.aws-cloudwatch.com/xxxx'
+#             },
+#             {
+#                 'title' : 'RDS Dashobard',
+#                 'url': 'http://www.aws-cloudwatch.com/xxxx'
+#             },
+#             {
+#                 'title' : 'Storage',
+#                 'url': 'http://www.aws-cloudwatch.com/xxxx'
+#             }
+#         ]
+#     }
+#
+#     resp = Result(
+#         detail = summaryList
+#         )
+#     return resp.make_resp()
 
 
 @bp.get("/summary/resource")
