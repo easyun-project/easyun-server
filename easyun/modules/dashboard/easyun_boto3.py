@@ -5,7 +5,7 @@ class EasyunBoto3:
     def __init__(self, type, region=boto3.session.Session().region_name):
         self._type = type
         self._region = region
-        self._client = boto3.client(type, region=region)
+        self._client = boto3.client(type, region_name=region)
 
     def get_alarms(self):
         alarms = {
