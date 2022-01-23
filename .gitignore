@@ -165,3 +165,5 @@ node_modules
 .idea
 .DS_Store
 easyun/base.db
+logs/easyun_api1.log.*
+

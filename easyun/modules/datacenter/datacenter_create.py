@@ -67,7 +67,7 @@ class securityGroup(Schema):
 
 
 # 定义api传入参数格式
-class DcParmIn(Schema):
+class DcParmIn1(Schema):
     dcName = String(required=True, validate=Length(0, 60),
         example="Easyun")     #VPC name
     dcRegion = String(required=True, validate=Length(0, 20),
@@ -153,7 +153,7 @@ class DcResultOut(Schema):
 
 @bp.post('/create')
 @auth_required(auth_token)
-@input(DcParmIn)
+@input(DcParmIn1)
 @output(DcResultOut)
 # @doc(tag='【仅限测试用】', operation_id='create_dc')
 def create_dc(data):
@@ -166,6 +166,13 @@ def create_dc(data):
     
     resource_ec2 = boto3.resource('ec2', region_name = dcRgeion)
     client_ec2 = boto3.client('ec2', region_name = dcRgeion)
+
+    # Step 0:  Check DC existed or not, if DC existed, need reject
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+    if (thisDC is not None):
+        response = Result(message='Datacenter already existed', status_code=2001,http_status_code=400)
+        response.err_resp()   
+
 
     # Step 1: create easyun vpc, including:
     # 1* main route table
@@ -539,23 +546,24 @@ def create_dc(data):
         resp.err_resp()
 
 
-    # step 9: create key pairs
+    # step 9 removed and added into account part
+    # step 9: create key pairs   
     # 9-1: generate a new key
-    try:
-        nameTag = {"Key": "Name", "Value": data['keyPair']}
-        key = resource_ec2.create_key_pair(
-            DryRun=DryRun,
-            KeyName=nameTag['Value'],
-            TagSpecifications = [ 
-                {
-                    'ResourceType':'key-pair', 
-                    "Tags": [dcTag, nameTag]
-                }
-            ]
-        )
-    except Exception as ex:
-        resp = Result(detail=ex , status_code=2091)
-        resp.err_resp()
+    # try:
+    #     nameTag = {"Key": "Name", "Value": data['keyPair']}
+    #     key = resource_ec2.create_key_pair(
+    #         DryRun=DryRun,
+    #         KeyName=nameTag['Value'],
+    #         TagSpecifications = [ 
+    #             {
+    #                 'ResourceType':'key-pair', 
+    #                 "Tags": [dcTag, nameTag]
+    #             }
+    #         ]
+    #     )
+    # except Exception as ex:
+    #     resp = Result(detail=ex , status_code=2091)
+    #     resp.err_resp()
     # 9-2: save keypair to easyun server
     # try: 
     #     if not os.path.exists('keys'):
