@@ -1,2 +1,7 @@
-# -*- coding: utf-8 -*-
-"""dashboard models."""
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+  @module:  Dashboard Models
+  @desc:    Dashboard models define
+  @author:  
+"""

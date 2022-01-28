@@ -94,6 +94,13 @@ class DcParmIn(Schema):
     keypair = String(required=True, example="key_easyun_user")
 
 
+class DcNameQuery(Schema):
+    dc = String(
+        required=True, 
+        validate=Length(0, 30),
+        example='Easyun'
+    )
+
 class DataCenterResultOut(Schema):
     region_name = String(data_key='regionName')
     vpc_id = String(data_key='vpcId')
