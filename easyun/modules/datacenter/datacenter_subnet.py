@@ -9,10 +9,11 @@ from apiflask import Schema, input, output, auth_required
 from flask import request
 from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
-from easyun.common.result import Result
-from . import bp, DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.result import Result
+from easyun.common.utils import len_iter, query_region
+from . import bp, DryRun
 from .schemas import DataCenterEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn,DcNameQuery,DataCenterSubnetIn,DataCenterSubnetInsert
 
 
@@ -83,10 +84,10 @@ def get_subnet_detail(subnet_id, param):
         thisSubnet =  resource_ec2.Subnet(subnet_id)
         # 统计subnet下的服务器数量
         svrCollection = thisSubnet.instances.all()
-        svrNum = sum(1 for _ in svrCollection)
+        svrNum = len_iter(svrCollection)
         # 统计subnet下的网卡数量
         eniCollection = thisSubnet.network_interfaces.all()
-        eniNum = sum(1 for _ in svrCollection)
+        eniNum = len_iter(svrCollection)
         # 判断subnet type是 public 还是 private
         '''待实现'''
         subnetType = 'public'

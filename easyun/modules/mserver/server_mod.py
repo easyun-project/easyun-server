@@ -31,7 +31,34 @@ class UpdateOut(Schema):
     svr_ids = List(String)
     new_name = List(String)
 
-@bp.post('/mod_name')
+
+
+@bp.get('/name/<svr_id>')
+@auth_required(auth_token)
+# @input()
+# @output()
+def get_svr_name(svr_id):
+    '''查询指定云服务器的名称'''
+    try:
+        resource_ec2 = boto3.resource('ec2', region_name = REGION)
+        server = resource_ec2.Instance(svr_id)
+        svr_name = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
+        response = Result(
+            detail={
+                'Svr_Id' : svr_id,
+                'Svr_Name' : svr_name[0]
+            },
+            status_code=200
+            )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+
+@bp.put('/name')
 # @auth_required(auth_token)
 @input(NewNameIn)
 # @output(UpdateOut)
@@ -64,30 +91,6 @@ def update_svr_name(NewNameIn):
 
 
 
-@bp.get('/svrname/<server_id>')
-@auth_required(auth_token)
-# @input()
-# @output()
-def get_svr_name(server_id):
-    '''查询指定云服务器的名称'''
-    try:
-        resource_ec2 = boto3.resource('ec2', region_name = REGION)
-        server = resource_ec2.Instance(server_id)
-        svr_name = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
-        response = Result(
-            detail={
-                'Svr_Id' : server_id,
-                'Svr_Name' : svr_name[0]
-            },
-            status_code=200
-            )
-        return response.make_resp()
-    except Exception as e:
-        response = Result(
-            message=str(e), status_code=3001, http_status_code=400
-        )
-        response.err_resp()
-    
 
     
     # 2.查询相同架构下的Instance Types
@@ -416,15 +419,15 @@ def detach_disk(DeleteDiskIn):
         response.err_resp()
 
 
-# @bp.get('/instypes/<server_id>')
+# @bp.get('/instypes/<svr_id>')
 # @auth_required(auth_token)
 # # @input()
 # # @output()
-# def get_ins_types(server_id):
+# def get_ins_types(svr_id):
 #     '''查询指定云服务器的实例配置'''
 #     RESOURCE = boto3.resource('ec2', region_name=REGION)
 #     # 1.查询云服务器的架构 x86-64bit / arm-64bit
-#     server = RESOURCE.Instance(server_id)
+#     server = RESOURCE.Instance(svr_id)
 
 
     

@@ -12,6 +12,7 @@ from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
+from easyun.common.utils import len_iter, query_region
 from datetime import date, datetime
 from . import bp, DC_NAME, DC_REGION, TagEasyun
 from .datacenter_sdk import datacentersdk,app_log
@@ -47,60 +48,62 @@ from flask import current_app
 # logger.addHandler(file_handler)
 
 
-@bp.get('/quota')
+
+
+
+@bp.get('/usage')
 #@auth_required(auth_token)
-@input(DataCenterListIn, location='query')
+@input(DcNameQuery, location='query')
 # @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
-def list_dcquota(param):
-    '''获取数据中心资源配额 [mock]'''
-    dcName=param.get('dcName')
-    
+def list_dc_usage(param):
+    '''获取数据中心已使用资源数据 [mock]'''
+    dcName=param.get('dc')    
     thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
 
-    if (thisDC is None):
-            response = Result(message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
-            response.err_resp() 
+    # if (thisDC is None):
+    #         response = Result(message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
+    #         response.err_resp() 
   
-    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
-
+    # client_ec2 = boto3.client('ec2', region_name= thisDC.region)
     resource_ec2 = boto3.resource('ec2', region_name= thisDC.region)
-    vpc = resource_ec2.Vpc(thisDC.vpc_id)
-    noVPCUsed = len(list(resource_ec2.vpcs.all()))
-    noSecurityGroupUsed = len(list(resource_ec2.security_groups.all()))
-    noSubnetsUsed = len(list(resource_ec2.subnets.all()))
-    noEIPUsed = len(list(resource_ec2.vpc_addresses.all()))
-    noIGUsed = len(list(resource_ec2.internet_gateways.all()))
-    noNetworkInterfaceUsed = len(list(resource_ec2.network_interfaces.all()))
+    # thisVPC = resource_ec2.Vpc(thisDC.vpc_id)
 
+    VPCUsedNum = len_iter(resource_ec2.vpcs.all())
+    SecurityGroupUsedNum = len_iter(resource_ec2.security_groups.all())
+    SubnetsUsedNum = len_iter(resource_ec2.subnets.all())
+    EipUsedNum = len_iter(resource_ec2.vpc_addresses.all())
+    IgwUsedNum = len_iter(resource_ec2.internet_gateways.all())
+    NetworkInterfaceUsedNum = len_iter(resource_ec2.network_interfaces.all())
 
-    vpcUsageLimit = []
-    limitVPC = {
-            'vpc limit' : 5,
-            'EIP limit' : 5,
-            'NAT limit' : 5,
-            'Internet Gateway Limit': 10,
-            'Network Interface Limit': 10,
-            'Security Group Limit' : 5,
-            'Subnet Limit': 200
+    usageList = []
+    dcUsage = {
+            'vpcNum' : VPCUsedNum,
+            'subnetNum': SubnetsUsedNum,
+            'igwNum': IgwUsedNum,
+            'natNum' : 5,
+            'eipNum' : EipUsedNum,            
+            'eniNum': NetworkInterfaceUsedNum,
+            'secgroupNum' : SecurityGroupUsedNum,
             }
+    usageList.append(dcUsage)
 
-    usageVPC = {
-            'vpc number used' : noVPCUsed,
-            'EIP used' : noEIPUsed,
-            'NAT used' : 5,
-            'Internet Gateway used': noIGUsed,
-            'Network Interface used': noNetworkInterfaceUsed,
-            'Security Group used' : noSecurityGroupUsed,
-            'Subnet Used': noSubnetsUsed
+    svrUsage = {
+            'instanceNum' : 12,
+
             }
-    vpcUsageLimit.append(limitVPC)
-    vpcUsageLimit.append(usageVPC)
+    usageList.append(svrUsage)
 
-        
+    strUsage = {
+            'blockNum' : 14,
+            'fileNum' : 3,            
+            }
+    usageList.append(strUsage)
+
     resp = Result(
-        detail = vpcUsageLimit,
+        detail = usageList,
         status_code=200
     )
+
     return resp.make_resp()
 
     # dcUsageList = [

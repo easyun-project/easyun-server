@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-  @Description: DataCenter Management - action: start, restart, stop, delete; and get status
-  @file:    datacenter_add.py
-  @desc:    DataCenter Creation module
-  @LastEditors:  Aleck
+  @module:  DataCenter Creation
+  @desc:    create some datacenter basic service, like vpc, subnet, securitygroup, etc.
+  @auth:    aleck
 """
 
 from apiflask import Schema, input, output, doc, abort, auth_required
@@ -136,12 +135,6 @@ class DcParmIn1(Schema):
             "enableRDP": False
         }
     )
-
-    keyPair = String(
-        required=True, validate=Length(0, 20),
-        example="key_easyun_user"
-    )
-
 
 # 定义api返回数据格式
 class DcResultOut(Schema):
@@ -546,36 +539,7 @@ def create_dc(data):
         resp.err_resp()
 
 
-    # step 9 removed and added into account part
-    # step 9: create key pairs   
-    # 9-1: generate a new key
-    # try:
-    #     nameTag = {"Key": "Name", "Value": data['keyPair']}
-    #     key = resource_ec2.create_key_pair(
-    #         DryRun=DryRun,
-    #         KeyName=nameTag['Value'],
-    #         TagSpecifications = [ 
-    #             {
-    #                 'ResourceType':'key-pair', 
-    #                 "Tags": [dcTag, nameTag]
-    #             }
-    #         ]
-    #     )
-    # except Exception as ex:
-    #     resp = Result(detail=ex , status_code=2091)
-    #     resp.err_resp()
-    # 9-2: save keypair to easyun server
-    # try: 
-    #     if not os.path.exists('keys'):
-    #         os.mkdir('keys')
-    #     keyfilename = key.key_name+'.pem'
-    #     with open(os.path.join('keys/',keyfilename)) as file:
-    #         file.write(key.key_material)        
-    # except Exception as ex:
-    #     resp = Result(detail=ex , status_code=2092)
-    #     resp.err_resp()
-
-   # step 10: Write Datacenter metadata to database
+   # step 9: Write Datacenter metadata to local database
     try:
         curr_account:Account = Account.query.first()
         curr_user = auth_token.current_user.username
@@ -602,7 +566,21 @@ def create_dc(data):
         resp = Result(detail=ex , status_code=2092)
         resp.err_resp()
 
+# step 10: Update Datacenter name list to DynamoDB
+    try:
+        # 待補充
+        resp = Result(
+            detail = 'updated.',
+            status_code = 200 
+        )
+        return resp.make_resp()
 
+    except Exception as ex:
+        resp = Result(detail=ex , status_code=2092)
+        resp.err_resp()
+
+
+# 根據勾選狀態匹配Security group IP規則
 def check_perm(sg):
     permList = []
     if sg["enableRDP"]:

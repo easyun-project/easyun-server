@@ -10,4 +10,4 @@ ver = '/api/v1'
 
 bp = APIBlueprint('账号管理', __name__, url_prefix = ver+'/account') 
 
-from . import view
+from . import api_qouta, view

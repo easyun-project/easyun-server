@@ -7,4 +7,4 @@ from apiflask import APIBlueprint
 
 bp = APIBlueprint('公共组件', __name__)
 
-from . import auth, errors, models
+from . import auth, errors, models, utils

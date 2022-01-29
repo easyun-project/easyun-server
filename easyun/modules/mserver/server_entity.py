@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: Server Management - Get info: Server list, Server detail
-@LastEditors: 
-'''
+"""
+  @module:  Server Detail
+  @desc:    Get Server detail info
+  @auth:    
+"""
+
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
-from easyun import FLAG
 from easyun.common.auth import auth_token
-from datetime import date, datetime
-from . import bp, REGION
 from easyun.common.result import Result, make_resp, error_resp, bad_request
+from . import bp
 
 
 class DetailOut(Schema):
@@ -32,11 +32,9 @@ class DetailOut(Schema):
     PrivateIpAddress = String()
     PublicIpAddress = String()
 
-
     InstanceId = String()
     LaunchTime = String()
 
-    
     PrivateDnsName = String()
     PublicDnsName = String()
 
@@ -62,15 +60,9 @@ class DetailOut(Schema):
 @bp.get('/detail/<svr_id>')
 @auth_required(auth_token)
 @output(DetailOut, description='Server detail info')
-def get_svr(svr_id):
+def get_server_detail(svr_id):
     '''查看指定云服务器详情'''
-    CLIENT = boto3.client('ec2', region_name=REGION)
-
-    # Helper method to serialize datetime fields
-    def json_datetime_serializer(obj):
-        if isinstance(obj, (datetime, date)):
-            return obj.isoformat()
-        raise TypeError ("Type %s not serializable" % type(obj))
+    CLIENT = boto3.client('ec2')
     try:
         instance = CLIENT.describe_instances(InstanceIds=[svr_id])
 
@@ -107,4 +99,18 @@ def get_svr(svr_id):
         response = Result(
             message=str(e), status_code=3001, http_status_code=400
         )
-        response.err_resp()  
+        response.err_resp()
+
+
+@bp.put('/attach_disk')
+@auth_required(auth_token)
+def attach_disk(svr_id):
+    '''云服务器关联磁盘(volume)'''
+    pass
+
+
+@bp.put('/attach_eip')
+@auth_required(auth_token)
+def attach_eip(svr_id):
+    '''云服务器关联静态IP(eip)'''
+    pass
