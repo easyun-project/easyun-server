@@ -101,16 +101,93 @@ def get_server_detail(svr_id):
         )
         response.err_resp()
 
+class DiskInfoIn(Schema):
+    svrId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
+    diskPath = String(required=True, example='/dev/sdg')
 
-@bp.put('/attach_disk')
+
+@bp.put('/attach/disk')
 @auth_required(auth_token)
 def attach_disk(svr_id):
     '''云服务器关联磁盘(volume)'''
     pass
 
 
-@bp.put('/attach_eip')
+@bp.post('/detach/disk')
+@auth_required(auth_token)
+@input(DiskInfoIn)
+# @output()
+def detach_disk(parm):
+    '''detach磁盘'''
+    try:
+        CLIENT = boto3.client('ec2')
+        RESOURCE = boto3.resource('ec2')
+        server =RESOURCE.Instance(parm['svrId'])
+        disks = CLIENT.describe_instances(InstanceIds=[parm['svrId']])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
+        vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == parm['diskPath']]
+        print(vid)
+        # print(dir(volume))
+        if len(vid)==0:
+            raise ValueError('invalid device')
+        volume = RESOURCE.Volume(vid[0])
+
+        volume.detach_from_instance(
+            Device=parm['diskPath'],
+            InstanceId=parm['svrId']
+        )
+        # waiter = CLIENT.get_waiter('volume_available')
+        # waiter.wait(
+        #     VolumeIds=[
+        #         volume.id,
+        #     ]
+        # )
+        from time import sleep 
+        while True:
+            volume1 = RESOURCE.Volume(volume.volume_id)
+            print(volume1.state)
+            if volume1.state == 'available':
+                # volume1.delete()
+                break
+            sleep(0.5)
+        
+        response = Result(
+            detail={'msg':'delete {} success'.format(parm['diskPath'])},
+            status_code=200
+            )   
+        # response = Result(
+        #     detail={'VolumeId':volume1.volume_id,
+        #     "State" : volume1.state,
+        #     },
+        #     status_code=200
+        #     )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+
+class EipInfoIn(Schema):
+    InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
+    Device = String(required=True, example='/dev/sdg')
+
+
+@bp.put('/attach/eip')
 @auth_required(auth_token)
 def attach_eip(svr_id):
+    '''云服务器关联静态IP(eip)'''
+    pass
+
+
+@bp.put('/detach/eip')
+@auth_required(auth_token)
+def detach_eip(svr_id):
     '''云服务器关联静态IP(eip)'''
     pass

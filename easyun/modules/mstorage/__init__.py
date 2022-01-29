@@ -14,4 +14,4 @@ FLAG = "Easyun"
 
 REGION = "us-east-1"
 
-from . import bucketView, ebsView
+from . import bucketView, stblockView
