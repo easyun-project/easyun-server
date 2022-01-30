@@ -11,10 +11,11 @@ from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.common.utils import len_iter, query_region
+from easyun.common.utils import len_iter, query_dc_region
 from . import bp, DryRun
-from .schemas import DataCenterEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn,DcNameQuery,DataCenterSubnetIn,DataCenterSubnetInsert
+from .schemas import DataCenterEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn, DataCenterSubnetIn,DataCenterSubnetInsert
 
 
 @bp.get('/subnet')

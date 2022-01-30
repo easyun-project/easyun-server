@@ -26,7 +26,7 @@ def get_bucket_Region(bucketName):
         region = response['LocationConstraint']
     return region
 
-@bp.route("/S3/Bucket")
+@bp.route("/object/bucket")
 class S3_Buckets(MethodView):
     # token 验证
     decorators = [auth_required(auth_token)]
@@ -126,7 +126,7 @@ class S3_Buckets(MethodView):
             )
             return response.err_resp()
 
-# @bp.route("/S3/Bucket")
+# @bp.route("/object/bucket")
 # class S3_Controller(MethodView):
 #     # token 验证
 #     decorators = [auth_required(auth_token)]

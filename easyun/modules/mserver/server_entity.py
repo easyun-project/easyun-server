@@ -108,7 +108,7 @@ class DiskInfoIn(Schema):
 
 @bp.put('/attach/disk')
 @auth_required(auth_token)
-def attach_disk(svr_id):
+def attach_disk(parm):
     '''云服务器关联磁盘(volume)'''
     pass
 
@@ -118,7 +118,7 @@ def attach_disk(svr_id):
 @input(DiskInfoIn)
 # @output()
 def detach_disk(parm):
-    '''detach磁盘'''
+    '''云服务器分离磁盘(volume)'''
     try:
         CLIENT = boto3.client('ec2')
         RESOURCE = boto3.resource('ec2')
@@ -189,5 +189,5 @@ def attach_eip(svr_id):
 @bp.put('/detach/eip')
 @auth_required(auth_token)
 def detach_eip(svr_id):
-    '''云服务器关联静态IP(eip)'''
+    '''云服务器分离静态IP(eip)'''
     pass

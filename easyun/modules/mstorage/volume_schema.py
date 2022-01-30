@@ -1,3 +1,10 @@
+# encoding: utf-8
+"""
+  @module:  Block Storage Schema
+  @desc:    块存储(EBS) 资源管理Schema定义
+  @auth:    
+"""
+
 from apiflask import Schema
 from apiflask.fields import String
 from apiflask.validators import Length

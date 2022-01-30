@@ -5,17 +5,27 @@
   @auth:    aleck
 """
 
+import boto3
 from datetime import date, datetime
 from .models import Datacenter, Account
 
 
-def query_region(dc):
+def query_dc_region(dc):
     '''通过dcName查询Region信息'''
     try:
         thisDC:Datacenter = Datacenter.query.filter_by(name = dc).first()
         return thisDC.region
     except Exception as ex:
         return 'Datacenter not existed, kindly create it first!'
+
+   
+def query_svr_name(svr_id):
+    '''通过instanceID 查询服务器 tag:Name '''
+    resource_ec2 = boto3.resource('ec2')
+    server = resource_ec2.Instance(svr_id)
+    tagName = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
+    svrName = tagName[0] if len(tagName) else ''
+    return svrName
 
 
 def len_iter(iterator):

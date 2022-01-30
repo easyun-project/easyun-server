@@ -3,14 +3,13 @@
 @Description: The app module, containing the app factory function.
 @LastEditors: 
 '''
-from datetime import datetime
+
 import os
 import logging
 from apiflask import APIFlask, Schema
 from apiflask.fields import String, Integer, Field, Nested
 from logging.handlers import RotatingFileHandler
 import click
-import boto3
 from flask_sqlalchemy import SQLAlchemy
 from config import env_config
 from flask_cors import CORS
@@ -20,7 +19,7 @@ from .celery import FlaskCelery
 from config import Config
 
 # define api version
-ver = '/api/v1.0'
+ver = '/api/v1'
 
 #保留 FLAG 用于兼容旧代码
 FLAG = "Easyun"

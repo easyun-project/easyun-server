@@ -1,4 +1,10 @@
 # -*- coding: UTF-8 -*-
+"""
+  @module:  Easyun Common Models
+  @desc:    Easyun通用modesl定义
+  @auth:    
+"""
+
 import os
 import base64
 from datetime import datetime, timedelta

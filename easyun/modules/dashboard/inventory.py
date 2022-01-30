@@ -12,7 +12,7 @@ from apiflask.validators import Length, OneOf
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
-from .schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery
 from . import bp
 
 

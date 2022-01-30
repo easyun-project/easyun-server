@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-  @file:    datacenter_get.py
-  @desc:    DataCenter Get module
+  @module:  DataCenter Get Module
+  @desc:    数据中心相关信息GET API
+  @auth:      
 """
 
 import boto3
@@ -11,12 +12,13 @@ from apiflask.validators import Length, OneOf
 from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun.common.utils import len_iter, query_region
+from easyun.common.utils import len_iter, query_dc_region
 from datetime import date, datetime
 from . import bp, DC_NAME, DC_REGION, TagEasyun
 from .datacenter_sdk import datacentersdk,app_log
-from .schemas import ResourceListOut, DataCenterListOut, DCInfoOut, VpcListOut,DataCenterListIn,DcNameQuery
+from .schemas import ResourceListOut, DataCenterListOut, DCInfoOut, VpcListOut,DataCenterListIn
 
 # from logging.handlers import RotatingFileHandler
 # import logging
@@ -47,85 +49,6 @@ from flask import current_app
 # logger.addHandler(file_handler1)
 # logger.addHandler(file_handler)
 
-
-
-
-
-@bp.get('/usage')
-#@auth_required(auth_token)
-@input(DcNameQuery, location='query')
-# @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
-def list_dc_usage(param):
-    '''获取数据中心已使用资源数据 [mock]'''
-    dcName=param.get('dc')    
-    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-
-    # if (thisDC is None):
-    #         response = Result(message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
-    #         response.err_resp() 
-  
-    # client_ec2 = boto3.client('ec2', region_name= thisDC.region)
-    resource_ec2 = boto3.resource('ec2', region_name= thisDC.region)
-    # thisVPC = resource_ec2.Vpc(thisDC.vpc_id)
-
-    VPCUsedNum = len_iter(resource_ec2.vpcs.all())
-    SecurityGroupUsedNum = len_iter(resource_ec2.security_groups.all())
-    SubnetsUsedNum = len_iter(resource_ec2.subnets.all())
-    EipUsedNum = len_iter(resource_ec2.vpc_addresses.all())
-    IgwUsedNum = len_iter(resource_ec2.internet_gateways.all())
-    NetworkInterfaceUsedNum = len_iter(resource_ec2.network_interfaces.all())
-
-    usageList = []
-    dcUsage = {
-            'vpcNum' : VPCUsedNum,
-            'subnetNum': SubnetsUsedNum,
-            'igwNum': IgwUsedNum,
-            'natNum' : 5,
-            'eipNum' : EipUsedNum,            
-            'eniNum': NetworkInterfaceUsedNum,
-            'secgroupNum' : SecurityGroupUsedNum,
-            }
-    usageList.append(dcUsage)
-
-    svrUsage = {
-            'instanceNum' : 12,
-
-            }
-    usageList.append(svrUsage)
-
-    strUsage = {
-            'blockNum' : 14,
-            'fileNum' : 3,            
-            }
-    usageList.append(strUsage)
-
-    resp = Result(
-        detail = usageList,
-        status_code=200
-    )
-
-    return resp.make_resp()
-
-    # dcUsageList = [
-    #     {
-    #         "vpcname": "vip1",
-    #         'vpcId': 'vpc-0a818f9a74c0657ad',
-    #         'EIP usage': '3/5 is being used',
-    #         'Subnet usage': '3/5 is being used'
-    #     },
-    #     {
-    #         "vpcname": "vip2",
-    #         'vpcId': 'vpc-0a818f9a74c0657ad',
-    #         'EIP usage': '3/5 is being used',
-    #         'Subnet usage': '3/5 is being used'
-    #     }
-    # ]
-
-    # resp = Result(
-    #     detail = dcUsageList,
-    #     status_code=200
-    # )
-    # return resp.make_resp()
 
    
 # @app_log('download keypair')
@@ -200,12 +123,12 @@ def get_datacenter_detail(dc_name):
         dcRegion = thisDC.get_region()
 
         resource_ec2 = boto3.resource('ec2', region_name= dcRegion)
-        thisVPC = resource_ec2.Vpc(thisDC.vpc_id)
+        dcVPC = resource_ec2.Vpc(thisDC.vpc_id)
         dcItem = {
             'dcName' : thisDC.name,
             'dcRegion' : thisDC.region,
             'vpcID' : thisDC.vpc_id,
-            'vpcCidr' : thisVPC.cidr_block,
+            'vpcCidr' : dcVPC.cidr_block,
             'createDate' : thisDC.create_date.isoformat(),
             'createUser' : thisDC.create_user,
             'dcAccount' : thisDC.account_id,
@@ -287,13 +210,13 @@ def list_dc_service(service, parm):
         if service == 'vpc':
             '''获取数据中心 VPC 信息'''
             vpcId = thisDC.vpc_id            
-            thisVPC = resource_ec2.Vpc(vpcId)
+            dcVPC = resource_ec2.Vpc(vpcId)
             vpcAttributes = {
-                'tagName': [tag.get('Value') for tag in thisVPC.tags if tag.get('Key') == 'Name'][0],
-                'vpcId':thisVPC.vpc_id,
-                'cidrBlock4':thisVPC.cidr_block,
-                'vpcState':thisVPC.state,
-                'vpcDefault':thisVPC.is_default
+                'tagName': [tag.get('Value') for tag in dcVPC.tags if tag.get('Key') == 'Name'][0],
+                'vpcId':dcVPC.vpc_id,
+                'cidrBlock4':dcVPC.cidr_block,
+                'vpcState':dcVPC.state,
+                'vpcDefault':dcVPC.is_default
             }
             resp = Result(
                 detail = vpcAttributes,
