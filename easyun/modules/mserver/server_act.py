@@ -70,7 +70,7 @@ class DeleteIn(Schema):
         example=["i-0710xxxxxxxxxxxxx"]
     )
 
-@bp.delete('/')
+@bp.delete('')
 @auth_required(auth_token)
 @input(DeleteIn)
 def delete_svr(parm):

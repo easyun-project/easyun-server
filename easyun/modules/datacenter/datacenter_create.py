@@ -144,7 +144,7 @@ class DcResultOut(Schema):
     create_date = DateTime()
 
 
-@bp.post('/create')
+@bp.post('')
 @auth_required(auth_token)
 @input(DcParmIn1)
 @output(DcResultOut)

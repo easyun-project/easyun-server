@@ -432,14 +432,14 @@ def delete_disk(DeleteDiskIn):
 
 
 
-@bp.put('/attach/server')
+@bp.put('/block/attach')
 @auth_required(auth_token)
 def attach_server(parm):
     '''块存储关联云服务器(ec2)'''
     pass
 
 
-@bp.put('/detach/server')
+@bp.put('/block/detach')
 @auth_required(auth_token)
 def detach_server(parm):
     '''块存储分离云服务器(ec2)'''

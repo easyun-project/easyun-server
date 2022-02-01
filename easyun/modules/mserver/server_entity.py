@@ -113,7 +113,7 @@ def attach_disk(parm):
     pass
 
 
-@bp.post('/detach/disk')
+@bp.put('/detach/disk')
 @auth_required(auth_token)
 @input(DiskInfoIn)
 # @output()

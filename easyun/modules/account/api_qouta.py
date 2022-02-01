@@ -17,48 +17,67 @@ from datetime import date, datetime
 from . import bp
 
 
-
 @bp.get('/quota')
 @auth_required(auth_token)
-# @input(DcNameQuery, location='query')
-def get_cloud_quota(param):
+def get_account_quota():
     '''获取云账号下资源配额 [mock]'''
-    dcName=param.get('dcName')
-    
-    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-
-    if (thisDC is None):
-            response = Result(message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
-            response.err_resp() 
-  
-    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
-
-    resource_ec2 = boto3.resource('ec2', region_name= thisDC.region)
-    vpc = resource_ec2.Vpc(thisDC.vpc_id)
-    noVPCUsed = len(list(resource_ec2.vpcs.all()))
-    noSecurityGroupUsed = len(list(resource_ec2.security_groups.all()))
-    noSubnetsUsed = len(list(resource_ec2.subnets.all()))
-    noEIPUsed = len(list(resource_ec2.vpc_addresses.all()))
-    noIGUsed = len(list(resource_ec2.internet_gateways.all()))
-    noNetworkInterfaceUsed = len(list(resource_ec2.network_interfaces.all()))
+    pass
+    resp = Result(
+        detail = '功能开发中...',
+        status_code=200
+    )
+    return resp.make_resp()
 
 
-    qoutaList = []
+@bp.get('/quota/<region>')
+@auth_required(auth_token)
+# @input(DcNameQuery, location='query')
+def get_region_quota(region):
+    '''获取指定region的资源配额 [mock]'''
+
+    AWS_Valid_Quota = [
+            {
+                'qoutaName':'od_instances',
+                'serviceCode':'ec2',
+                'quotaCode':'L-1216C47A',
+                'quotaDes' :'Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances'
+            },
+            {
+                'qoutaName':'spot_instances',
+                'serviceCode':'ec2',
+                'quotaCode':'L-34B43A08',
+                'quotaDes' :'All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests'
+            },
+            {
+                'qoutaName':'eips',
+                'serviceCode':'ec2',
+                'quotaCode':'L-0263D0A3',
+                'quotaDes' :'EC2-VPC Elastic IPs'
+            },            
+    ]
+
+    client_sq = boto3.client('service-quotas', region_name= region)
+
+    eipQuota = client_sq.get_service_quota(
+            ServiceCode='ec2',
+            QuotaCode='L-0263D0A3'  #EC2-VPC Elastic IPs
+    #             QuotaCode='L-1216C47A'  #Running On-Demand Standard
+    )['Quota']
+
+    quotaList = []
     vpcLimit = {
-            'vpc limit' : 5,
-            'EIP limit' : 5,
-            'NAT limit' : 5,
-            'Internet Gateway Limit': 10,
-            'Network Interface Limit': 10,
-            'Security Group Limit' : 5,
-            'Subnet Limit': 200
+            'vpcQuota' : 5,
+            'eipQuota' : eipQuota.get('Value'),
+            'natQuota' : 5,
+            'igwQuota': 10,
+            'eniQuota': 10,
+            'secgroupQuota' : 5,
+            'subnetQuota': 200
             }
-
-    qoutaList.append(vpcLimit)
-
+    quotaList.append(vpcLimit)
         
     resp = Result(
-        detail = qoutaList,
+        detail = quotaList,
         status_code=200
     )
     return resp.make_resp()

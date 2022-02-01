@@ -1,70 +1,70 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: Server Management - Get Server Parameters, like: AMI id,instance type
-@LastEditors: aleck
-'''
+"""
+  @module:  Server Management - parameters
+  @desc:    Get parameters to create new server, like: AMI id,instance type
+  @auth:    
+"""
+
 import boto3
 import ast, random, json
 from apiflask import Schema, input, output, auth_required
-from apiflask.fields import Integer, String, List, Dict
+from apiflask.fields import Integer, String, List, Dict, Nested
 from apiflask.validators import Length, OneOf
 from . import bp
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
+from easyun.common.schemas import DcNameQuery
 from easyun.cloud.ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes
 
 
-class QueryDC(Schema):
-    # datacenter basic parm
+class ImageQuery(Schema):
+    # query parameters for instance image 
     dc = String(
         required=True, 
-        validate=Length(0, 60),
-        # validate=OneOf(DC_LIST),        
+        validate=Length(0, 30),
         example='Easyun'
+    )    
+    arch = String(
+        required=True, 
+        validate=OneOf(['x86_64', 'arm64']),  #Image architecture ( x86_64 | arm64 )
+        example="x86_64"
+    )
+    os = String(
+        required=True, 
+        validate=OneOf(['windows', 'linux']),  #OS platform ( Windows | Linux )
+        example="linux"
     )
 
-# class ImageIn(Schema):
-    # parameters for image
-    # imgArch = String(
-    #     required=True, 
-    #     validate=OneOf(['x86_64', 'arm64']),  #The image architecture ( x86_64 | arm64 )
-    #     example="x86_64"
-    # )
-    # imgOS = String(
-    #     required=True, 
-    #     validate=OneOf(['windows', 'linux']),  #The OS platform ( Windows | Linux )
-    #     example="linux"
-    # )
-
-@bp.get('/param/image/<imgOS>/<imgArch>')
+@bp.get('/param/image')
 @auth_required(auth_token)
-@input(QueryDC, location='query')
+@input(ImageQuery, location='query')
 # @output()
-def list_images(imgOS, imgArch, parm):
+def list_images( parm):
     '''获取可用的AMI列表(包含 System Disk信息)'''
 
+    imgArch = parm.get('arch')
+    # if imgArch not in ['x86_64', 'arm64']:
+    #     resp = Result(
+    #         detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
+    #         message='Validation error',
+    #         status_code=3011,
+    #         http_status_code=400
+    #     )
+    #     return resp.err_resp()
+    imgOS = parm.get('os')        
     if imgOS == 'windows':
-        ami_list = AMI_Win
+        amiList = AMI_Win.get(str(imgArch)) 
         # 从image name中截取有意义字段
         def split_name(imgName):
             pass
     elif imgOS == 'linux':
-        ami_list = AMI_Lnx
+        amiList = AMI_Lnx.get(str(imgArch)) 
         def split_name(imgName):
             pass
     else:
         resp = Result(
             detail='Unknown image architecture. The valure must be one of: windows, linux.',
-            message='Validation error',
-            status_code=3011,
-            http_status_code=400
-        )        
-        return resp.err_resp()
-
-    if imgArch not in ['x86_64', 'arm64']:
-        resp = Result(
-            detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
             message='Validation error',
             status_code=3011,
             http_status_code=400
@@ -77,7 +77,7 @@ def list_images(imgOS, imgArch, parm):
         # {'Name': 'platform','Values': ['windows']}, # for Windows only        
         {'Name': 'virtualization-type', 'Values': ['hvm']},
         {'Name': 'architecture','Values': [imgArch]},
-        {'Name': 'name','Values': [ami['amiName'] for ami in ami_list]},
+        {'Name': 'name','Values': [ami.get('amiName') for ami in amiList]},
     ]
 
     try:
@@ -97,9 +97,9 @@ def list_images(imgOS, imgArch, parm):
             {
                 # image properties
                 'imgID': img['ImageId'],
-                'imgName': [ami['imgName'] for ami in ami_list if ami['amiName']==img['Name']][0],
-                'imgVersion' : [ami['imgVersion'] for ami in ami_list if ami['amiName']==img['Name']][0],
-                'imgCode': [ami['imgCode'] for ami in ami_list if ami['amiName']==img['Name']][0],
+                'imgName': [ami['imgName'] for ami in amiList if ami['amiName']==img['Name']][0],
+                'imgVersion' : [ami['imgVersion'] for ami in amiList if ami['amiName']==img['Name']][0],
+                'osCode': [ami['osCode'] for ami in amiList if ami['amiName']==img['Name']][0],
                 'imgDescription': img['Description'],
                 # root disk parameters
                 'rootDevice' : {
@@ -123,20 +123,35 @@ def list_images(imgOS, imgArch, parm):
         return response.make_resp()
 
 
-@bp.get('/param/insfamily/<insArch>')
+
+class InsFamilyQuery(Schema):
+    # query parameters for instance family 
+    dc = String(
+        required=True, 
+        validate=Length(0, 60),      
+        example='Easyun'
+    )
+    arch = String(
+        required=True, 
+        validate=OneOf(['x86_64', 'arm64']),  #Processor architecture ( x86_64 | arm64 )
+        example="x86_64"
+    )
+
+@bp.get('/param/insfamily')
 @auth_required(auth_token)
-@input(QueryDC, location='query')
-def get_ins_family(insArch, parm):
+@input(InsFamilyQuery, location='query')
+def get_ins_family(parm):
     '''获取可用的Instance Family列表'''
-    if insArch not in ['x86_64', 'arm64']:
-        resp = Result(
-            detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
-            message='Validation error',
-            status_code=3012,
-            http_status_code=400
-        )
-        return resp.err_resp()
-        
+    insArch = parm.get('arch')
+    # if insArch not in ['x86_64', 'arm64']:
+    #     resp = Result(
+    #         detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
+    #         message='Validation error',
+    #         status_code=3012,
+    #         http_status_code=400
+    #     )
+    #     return resp.err_resp()
+    #         
     filters=[
         {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
         {'Name': 'current-generation', 'Values': ['true']},
@@ -183,61 +198,42 @@ def get_ins_family(insArch, parm):
         return response.err_resp()
 
 
+
 # 定义 insFamily 有效取值范围
 InsFamily_All = ['all']
 for i in Instance_Family:
     familyList = [f['familyName'] for f in i['insFamily']]
     InsFamily_All.extend(familyList)
 
-class QueryInst(Schema):
-    # datacenter basic parm
+class InsTypeQuery(Schema):
+    # query parameters for instance type 
+    dc = String(
+        required=True, 
+        validate=Length(0, 60),      
+        example='Easyun'
+    )
+    arch = String(
+        required=True, 
+        validate=OneOf(['x86_64', 'arm64']),  #Processor architecture ( x86_64 | arm64 )
+        example="x86_64"
+    )
     family = String( 
         required=True, 
         validate=OneOf(InsFamily_All),
         example="m5"
     )
-    dc = String(
-        required=True, 
-        validate=Length(0, 30),
-        # validate=OneOf(DC_LIST),  
-        example='Easyun'
-    )    
-    # insArch = String(
-    #     required=True, 
-    #     validate=OneOf(['x86_64', 'arm64']),  #The CPU architecture ( x86_64 | arm64 )
-    #     example="x86_64"
-    # )    
-    # imgCode = String(
-    #     required=False, 
-    #     example="linux"        
-    # )
+    os = String(
+        required=False, 
+        validate=OneOf(['amzn2', 'ubuntu', 'debian', 'linux','rhel','sles','windows']),         
+        example="linux"        
+    )
 
-@bp.get('/param/instype/<imgCode>/<insArch>')
+@bp.get('/param/instype')
 @auth_required(auth_token)
-@input(QueryInst, location='query')
-def list_ins_types(imgCode, insArch, parm):
+@input(InsTypeQuery, location='query')
+def list_ins_types(parm):
     '''获取可用的Instance Types列表(含月度成本)'''
-    if insArch not in ['x86_64', 'arm64']:
-        resp = Result(
-            detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
-            message='Validation error',
-            status_code=3013,
-            http_status_code=400
-        )
-        return resp.err_resp()
-
-    # 根据 Image code 匹配 OS
-    if imgCode in ['amzn2', 'ubuntu', 'debian', 'linux']:
-        insOS = 'Linux'
-    elif imgCode == 'rhel':
-        insOS = 'RHEL'
-    elif imgCode == 'sles':
-        insOS = 'SUSE' 
-    elif imgCode == 'windows':
-        insOS = 'Windows'
-    else: 
-        insOS = 'NA'
-
+    insArch = parm['arch']
     insFamily = parm['family']
     if insFamily == 'all':
         filters=[
@@ -251,17 +247,13 @@ def list_ins_types(imgCode, insArch, parm):
         filters=[ 
             {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
             {'Name': 'current-generation', 'Values': ['true']},
-            {'Name': 'instance-type', 'Values': [insFamily+'*']}
+            {'Name': 'instance-type', 'Values': [insFamily]}
             ]
     
     try:
         thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
         dcRegion = thisDC.get_region()
-        client_ec2 = boto3.client('ec2', region_name = dcRegion)     
-        # instypes = client_ec2.describe_instance_types(
-        #     #InstanceTypes=['t2.micro']
-        #     Filters = filters,
-        # ) 
+        client_ec2 = boto3.client('ec2', region_name = dcRegion)
         # 基于NextToken判断获取完整 instance types 列表
         describe_args = {}
         instypeList = []
@@ -279,7 +271,7 @@ def list_ins_types(imgCode, insArch, parm):
                     "memSize": i['MemoryInfo']['SizeInMiB']/1024,
                     # "Memory": "{} GiB".format(i['MemoryInfo']['SizeInMiB']/1024),
                     "netSpeed": i['NetworkInfo']['NetworkPerformance'],                    
-                    "monthPrice": ec2_monthly_cost(dcRegion,i['InstanceType'], insOS),
+                    "monthPrice": ec2_monthly_cost(dcRegion,i['InstanceType'], parm.get('os')),
                 }
                 instypeList.append(tmp)
             if 'NextToken' not in result:
@@ -300,42 +292,11 @@ def list_ins_types(imgCode, insArch, parm):
         )
         return response.make_resp()
 
-# 获取实例价格功能实现部分
-def ec2_pricelist(region, instype, os, soft='NA', option='OnDemand',tenancy='Shared'):
-    '''获取EC2的价格列表(单位时间Hrs)'''
-    # AWS Price API only support us-east-1, ap-south-1
-    priceRegion = 'us-east-1'    
-    try:
-        client_price = boto3.client('pricing', region_name= priceRegion )
-        result = client_price.get_products(
-            ServiceCode='AmazonEC2',
-            Filters=[
-                {'Type': 'TERM_MATCH', 'Field': 'ServiceCode','Value': 'AmazonEC2'},
-                {'Type': 'TERM_MATCH', 'Field': 'locationType','Value': 'AWS Region'},
-                {'Type': 'TERM_MATCH', 'Field': 'capacitystatus','Value': 'UnusedCapacityReservation'},             
-                {'Type': 'TERM_MATCH', 'Field': 'RegionCode','Value': region},
-                {'Type': 'TERM_MATCH', 'Field': 'marketoption','Value': option},
-                {'Type': 'TERM_MATCH', 'Field': 'tenancy','Value': tenancy},
-                {'Type': 'TERM_MATCH', 'Field': 'instanceType','Value': instype},
-                {'Type': 'TERM_MATCH', 'Field': 'operatingSystem','Value': os},
-                {'Type': 'TERM_MATCH', 'Field': 'preInstalledSw','Value': soft},
-            ],
-        )
-        # 通过 ast.literal_eval()函数 对字符串进行类型转换
-        prod = ast.literal_eval(result['PriceList'][0])
-        price1 = prod['terms'].get(option)  
-        key1 = list(price1.keys())[0]
-        price2 = price1[key1]['priceDimensions']
-        key2 = list(price2.keys())[0]
-        price3 = price2[key2]
-        return price3
-    except Exception as ex:
-        return ex
 
 def ec2_monthly_cost(region, instype, os):
     '''获取EC2的月度成本(单位时间Month)'''
-    if os == 'NA':
-        return None
+    # if os == 'NA':
+    #     return None
     try:
         pricelist = ec2_pricelist(region, instype, os)
         unit = pricelist.get('unit')
@@ -348,7 +309,56 @@ def ec2_monthly_cost(region, instype, os):
             'value': monthPrice,
             'currency' : currency
         }
+    except Exception as ex:
+        return ex
 
+# 获取实例价格功能实现部分
+def ec2_pricelist(
+        region, instype, os, 
+        soft='NA', 
+        option='OnDemand',
+        tenancy='Shared'
+    ):
+    '''获取EC2的价格列表(单位时间Hrs)'''
+    # AWS Price API only support us-east-1, ap-south-1
+    priceRegion = 'us-east-1'
+
+    # 将传入的 os 匹配为 price api 支持的 operatingSystem
+    if os in ['amzn2', 'ubuntu', 'debian', 'linux']:
+        insOS = 'Linux'
+    elif os == 'rhel':
+        insOS = 'RHEL'
+    elif os == 'sles':
+        insOS = 'SUSE' 
+    elif os == 'windows':
+        insOS = 'Windows'
+    else: 
+        insOS = 'NA'
+
+    try:
+        client_price = boto3.client('pricing', region_name= priceRegion )
+        result = client_price.get_products(
+            ServiceCode='AmazonEC2',
+            Filters=[
+                {'Type': 'TERM_MATCH', 'Field': 'ServiceCode','Value': 'AmazonEC2'},
+                {'Type': 'TERM_MATCH', 'Field': 'locationType','Value': 'AWS Region'},
+                {'Type': 'TERM_MATCH', 'Field': 'capacitystatus','Value': 'UnusedCapacityReservation'},             
+                {'Type': 'TERM_MATCH', 'Field': 'RegionCode','Value': region},
+                {'Type': 'TERM_MATCH', 'Field': 'marketoption','Value': option},
+                {'Type': 'TERM_MATCH', 'Field': 'tenancy','Value': tenancy},
+                {'Type': 'TERM_MATCH', 'Field': 'instanceType','Value': instype},
+                {'Type': 'TERM_MATCH', 'Field': 'operatingSystem','Value': insOS},
+                {'Type': 'TERM_MATCH', 'Field': 'preInstalledSw','Value': soft},
+            ],
+        )
+        # 通过 ast.literal_eval()函数 对字符串进行类型转换
+        prod = ast.literal_eval(result['PriceList'][0])
+        price1 = prod['terms'].get(option)  
+        key1 = list(price1.keys())[0]
+        price2 = price1[key1]['priceDimensions']
+        key2 = list(price2.keys())[0]
+        price3 = price2[key2]
+        return price3
     except Exception as ex:
         return ex
 

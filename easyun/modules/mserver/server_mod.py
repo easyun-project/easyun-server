@@ -114,7 +114,7 @@ class ConfigIn(Schema):
     )
 
 
-@bp.post('/mod_config')
+@bp.post('/config')
 # @auth_required(auth_token)
 @input(ConfigIn)
 @output(UpdateOut)

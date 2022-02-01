@@ -50,7 +50,7 @@ NewDataCenter = {
 }
 
 
-@bp.delete('/')
+@bp.delete('')
 #@auth_required(auth_token)
 @input(DataCenterListIn)
 def remove_datacenter(param):
