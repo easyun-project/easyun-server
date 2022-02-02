@@ -61,7 +61,7 @@ class DetailOut(Schema):
 @auth_required(auth_token)
 @output(DetailOut, description='Server detail info')
 def get_server_detail(svr_id):
-    '''查看指定云服务器详情'''
+    '''获取指定云服务器详情信息'''
     CLIENT = boto3.client('ec2')
     try:
         instance = CLIENT.describe_instances(InstanceIds=[svr_id])
@@ -104,6 +104,36 @@ def get_server_detail(svr_id):
 class DiskInfoIn(Schema):
     svrId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
     diskPath = String(required=True, example='/dev/sdg')
+
+
+@bp.get('/instype/<svr_id>')
+@auth_required(auth_token)
+def get_ins_types(svr_id):
+    '''获取指定云服务器实例参数 [测试]'''
+    # 用于查询受支持的Instance Family列表)
+    try:
+        resource_ec2 = boto3.resource('ec2')
+        thisSvr = resource_ec2.Instance(svr_id)
+        instypeParam = {
+            'insArch': thisSvr.architecture,
+            'insHyper': thisSvr.hypervisor,
+            'insType': thisSvr.instance_type,
+            'imgID': thisSvr.image_id
+        }
+
+        resp = Result(
+            detail = instypeParam, 
+            status_code=200
+            )
+        return resp.make_resp()
+
+    except Exception as ex:
+        response = Result(
+            message=str(ex), 
+            status_code=3001, 
+            http_status_code=400
+        )
+        response.err_resp()
 
 
 @bp.put('/attach/disk')

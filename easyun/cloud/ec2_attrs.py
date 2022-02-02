@@ -14,36 +14,31 @@ AMI_Win = {
     'x86_64': [
         {
             'amiName': 'Windows_Server-2012-R2_RTM-English-64Bit-Base-2021.11.10',
-            'imgName': 'Windows Server 2012 R2 64Bit',
+            'osName': 'Windows Server 2012 R2 64Bit',
             'osCode': 'windows',
-            'imgVersion': '2021.11.10'
+            'osVersion': '2021.11.10'
         },
         {
             'amiName': 'Windows_Server-2016-English-Full-Base-2021.11.10',
-            'imgName': 'Windows Server 2016',
+            'osName': 'Windows Server 2016',
             'osCode': 'windows',
-            'imgVersion': '2021.11.10'         
+            'osVersion': '2021.11.10'         
         },   
         {
             'amiName': 'Windows_Server-2019-English-Full-Base-2021.11.10',
-            'imgName': 'Windows Server 2019',
+            'osName': 'Windows Server 2019',
             'osCode': 'windows',
-            'imgVersion': '2021.11.10'
+            'osVersion': '2021.11.10'
         },
         {
             'amiName': 'Windows_Server-2022-English-Full-Base-2021.11.16',
-            'imgName': 'Windows Server 2022',
+            'osName': 'Windows Server 2022',
             'osCode': 'windows',
-            'imgVersion': '2021.11.10'         
+            'osVersion': '2021.11.10'         
         }
     ],
     'arm64': [
-        {
-            'amiName': 'Windows_Server-2012-R2_RTM-English-64Bit-Base-2021.11.10',
-            'imgName': 'Windows Server 2012 R2 64Bit',
-            'osCode': 'windows',
-            'imgVersion': '2021.11.10'
-        },   
+        # Windows Server 暂无 arm 版本
     ]
 }
 
@@ -51,60 +46,96 @@ AMI_Lnx = {
     'x86_64': [
         {
             'amiName': 'amzn2-ami-kernel-5.10-hvm-2.0.20211201.0-x86_64-gp2',
-            'imgName': 'Amazon Linux 2 Kernel 5.10',
+            'osName': 'Amazon Linux 2 Kernel 5.10',
             'osCode': 'amzn2',
-            'imgVersion': '2.0.20211201.0'
+            'osVersion': '2.0.20211201.0'
         },
         {
             'amiName': 'RHEL-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2',
-            'imgName': 'Red Hat Enterprise Linux',
+            'osName': 'Red Hat Enterprise Linux',
             'osCode': 'rhel',
-            'imgVersion': '8.4'     
+            'osVersion': '8.4'     
         },   
         {
             'amiName': 'suse-sles-15-sp2-v20201211-hvm-ssd-x86_64',
-            'imgName': 'SUSE Linux Enterprise Server',
+            'osName': 'SUSE Linux Enterprise Server',
             'osCode': 'sles',
-            'imgVersion': '15 SP2'      
+            'osVersion': '15 SP2'      
         },
         {
             'amiName': 'suse-sles-12-sp5-v20201212-hvm-ssd-x86_64',
-            'imgName': 'SUSE Linux Enterprise Server',
+            'osName': 'SUSE Linux Enterprise Server',
             'osCode': 'sles',
-            'imgVersion': '12 SP5'         
+            'osVersion': '12 SP5'         
         },
         {
             'amiName': 'ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20211021',
-            'imgName': 'Ubuntu',
+            'osName': 'Ubuntu',
             'osCode': 'ubuntu',
-            'imgVersion': '20.04 LTS'
+            'osVersion': '20.04 LTS'
         },
         {
             'amiName': 'ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20211027',
-            'imgName': 'Ubuntu',
+            'osName': 'Ubuntu',
             'osCode': 'ubuntu',
-            'imgVersion': '18.04 LTS'       
+            'osVersion': '18.04 LTS'       
         },   
         {
             'amiName': 'ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20210928',
-            'imgName': 'Ubuntu',
+            'osName': 'Ubuntu',
             'osCode': 'ubuntu',
-            'imgVersion': '16.04 LTS'
+            'osVersion': '16.04 LTS'
         },
         {
-            'amiName': 'debian-10-amd64-20210208-542',
-            'imgName': 'Debian 10',
+            'amiName': 'debian-10-amd64-20211011-792',
+            'osName': 'Debian 10',
             'osCode': 'debian',
-            'imgVersion': '20210208'         
-        } 
+            'osVersion': '10 [2021.10]'
+        }
     ],
     'arm64': [
         {
-            'amiName': 'amzn2-ami-kernel-5.10-hvm-2.0.20211201.0-x86_64-gp2',
-            'imgName': 'Amazon Linux 2 Kernel 5.10',
+            'amiName': 'amzn2-ami-kernel-5.10-hvm-2.0.20211223.0-arm64-gp2',
+            'osName': 'Amazon Linux 2 Kernel 5.10',
             'osCode': 'amzn2',
-            'imgVersion': '2.0.20211201.0'
+            'osVersion': '2.0.20211201.0'
         },
+        {
+            'amiName': 'RHEL-8.4.0_HVM-20210825-arm64-0-Hourly2-GP2',
+            'osName': 'Red Hat Enterprise Linux',
+            'osCode': 'rhel',
+            'osVersion': '8.4'     
+        },   
+        {
+            'amiName': 'suse-sles-15-sp2-v20210604-hvm-ssd-arm64',
+            'osName': 'SUSE Linux Enterprise Server',
+            'osCode': 'sles',
+            'osVersion': '15 SP2'      
+        },
+        {
+            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20211129',
+            'osName': 'Ubuntu',
+            'osCode': 'ubuntu',
+            'osVersion': '20.04 LTS'
+        },
+        {
+            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-arm64-server-20211129',
+            'osName': 'Ubuntu',
+            'osCode': 'ubuntu',
+            'osVersion': '18.04 LTS'       
+        },   
+        {
+            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-arm64-server-20210928',
+            'osName': 'Ubuntu',
+            'osCode': 'ubuntu',
+            'osVersion': '16.04 LTS'
+        },
+        {
+            'amiName': 'debian-10-arm64-20211011-792',
+            'osName': 'Debian 10',
+            'osCode': 'debian',
+            'osVersion': '10 [2021.10]'
+        }
     ]
 }
 

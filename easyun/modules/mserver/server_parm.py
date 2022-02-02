@@ -97,8 +97,8 @@ def list_images( parm):
             {
                 # image properties
                 'imgID': img['ImageId'],
-                'imgName': [ami['imgName'] for ami in amiList if ami['amiName']==img['Name']][0],
-                'imgVersion' : [ami['imgVersion'] for ami in amiList if ami['amiName']==img['Name']][0],
+                'osName': [ami['osName'] for ami in amiList if ami['amiName']==img['Name']][0],
+                'osVersion' : [ami['osVersion'] for ami in amiList if ami['amiName']==img['Name']][0],
                 'osCode': [ami['osCode'] for ami in amiList if ami['amiName']==img['Name']][0],
                 'imgDescription': img['Description'],
                 # root disk parameters
@@ -295,8 +295,8 @@ def list_ins_types(parm):
 
 def ec2_monthly_cost(region, instype, os):
     '''获取EC2的月度成本(单位时间Month)'''
-    # if os == 'NA':
-    #     return None
+    if not os:
+        return None
     try:
         pricelist = ec2_pricelist(region, instype, os)
         unit = pricelist.get('unit')
@@ -361,15 +361,3 @@ def ec2_pricelist(
         return price3
     except Exception as ex:
         return ex
-
-
-@bp.get('/param/instype/<svrID>')
-@auth_required(auth_token)
-def get_ins_types(svrID):
-    '''获取指定云服务器支持的Instance Types列表'''
-
-    # 1.查询云服务器的架构 x86-64bit / arm-64bit
-
-    # 2.查询相同架构下的Instance Types
-
-    return ''
