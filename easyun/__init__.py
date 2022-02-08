@@ -15,8 +15,9 @@ from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
 # from .common.result import BaseResponseSchema
-from .celery import FlaskCelery
 from config import Config
+from easyun.libs.celery import FlaskCelery
+from easyun.libs.log import EasyunLogging
 
 # define api version
 ver = '/api/v1'
@@ -33,6 +34,7 @@ celery = FlaskCelery(
         backend=Config.CELERY_RESULT_BACKEND,
         broker=Config.CELERY_BROKER_URL
     )
+log = EasyunLogging()
 
 
 class BaseResponseSchema(Schema):
@@ -60,7 +62,6 @@ def create_app(run_env=None):
     register_commands(app=app)
 
     register_blueprints(app)
-    configure_logger(app)
 
     app.logger.setLevel(logging.INFO)
     if run_env != 'test':
@@ -86,21 +87,6 @@ def register_blueprints(app: APIFlask):
     app.register_blueprint(dashboard.bp)
     return None
 
-
-def configure_logger(app):
-    """Configure loggers."""
-    if not app.debug and not app.testing:
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
-        file_handler = RotatingFileHandler(
-            'logs/easyun_api.log', maxBytes=10240, backupCount=10)
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-        file_handler.setLevel(logging.INFO)
-        if not app.logger.handlers:
-            app.logger.addHandler(file_handler)
-
-
 def register_extensions(app: APIFlask):
     """初始化扩展
 
@@ -110,6 +96,7 @@ def register_extensions(app: APIFlask):
     db.init_app(app)
     cors.init_app(app)
     celery.init_app(app)
+    log.init_app(app)
 
     with app.app_context():
         #先建表避免account 数据写入失败
