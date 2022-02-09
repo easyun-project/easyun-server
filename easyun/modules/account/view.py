@@ -6,7 +6,7 @@ import boto3
 from datetime import date, timedelta
 from flask import send_file
 from flask.views import MethodView
-from apiflask import auth_required, Schema
+from apiflask import abort, auth_required, Schema
 from apiflask.decorators import output, input
 from apiflask.validators import Length
 from marshmallow.fields import String
@@ -16,7 +16,7 @@ from . import bp
 from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyPairs
-from .schema import FreeTierInputSchema, FreeTierOutputSchema, SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
+from .schema import FreeTierInputSchema, FreeTierOutputSchema, SSHKeysInputByName, SSHKeysOutputSchema, AWSInfoOutSchema, CreateSSHKeySchema
 # 导入boto错误类型
 from botocore.exceptions import ClientError
 
@@ -94,7 +94,7 @@ class KeyPairsController(MethodView):
     def get(self, id:int):
         key_pair_obj: KeyPairs = KeyPairs.query.get(id)
         if key_pair_obj is None:
-            return "404"
+            abort(404, "key pair not found")
         return send_file(BytesIO(bytes(key_pair_obj.material, encoding='utf-8')),
                         download_name=f"{key_pair_obj.name}.{key_pair_obj.extension}",
                         as_attachment=True)
@@ -112,6 +112,18 @@ class KeyPairsController(MethodView):
         except Exception as e:
             print(e, type(e))
             pass
+
+
+@bp.route("/ssh_keys/<key_name>")
+@input(SSHKeysInputByName, location='query')
+def get_keypair_by_name(key_name, query_data):
+    key_pair_obj:KeyPairs = KeyPairs.query.filter(KeyPairs.name == key_name and query_data.get('region')).first()
+    if key_pair_obj is None:
+        abort(404, "key pair not found")
+    return send_file(BytesIO(bytes(key_pair_obj.material, encoding='utf-8')),
+                        download_name=f"{key_pair_obj.name}.{key_pair_obj.extension}",
+                        as_attachment=True)
+
 
 
 @bp.route("/free_tier")

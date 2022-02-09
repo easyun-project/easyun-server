@@ -19,6 +19,9 @@ class AWSInfoOutSchema(Schema):
     aws_type = String()
     role = String()
 
+class SSHKeysInputByName(Schema):
+    region = String()
+
 class SSHKeysOutputSchema(Schema):
     id = Integer()
     region = String()
