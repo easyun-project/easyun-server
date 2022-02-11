@@ -15,7 +15,8 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.ec2_attrs import AMI_Win, AMI_Lnx, Instance_Family, get_familyDes
+from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
+from easyun.cloud.aws_ec2_instype import Instance_Family, get_familyDes
 
 
 class ImageQuery(Schema):

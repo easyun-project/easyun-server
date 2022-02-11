@@ -23,7 +23,7 @@ from .schemas import DataCenterEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn
 @input(DcNameQuery, location='query')
 # # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_subnet_detail(param):
-    '''获取数据中心全部subnet信息'''
+    '''获取 全部subnet子网信息'''
     # only for globa regions
     # dc_name=request.args.get("dc_name")
     # type=request.args.get("subnet")
@@ -76,7 +76,7 @@ def list_subnet_detail(param):
 @input(DcNameQuery, location='query')
 # # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def get_subnet_detail(subnet_id, param):
-    '''获取指定subnet的信息'''
+    '''获取 指定subnet子网信息'''
 
     dcName = param.get('dc')
     try:
@@ -126,7 +126,7 @@ def get_subnet_detail(subnet_id, param):
 @input(DcNameQuery, location='query')
 # # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_subnet_brief(param):
-    '''获取数据中心subnet列表[仅基础字段]'''
+    '''获取 全部subnet子网列表[仅基础字段]'''
     subnetList = [
         {
             'tagName':'Public subnet 1',
@@ -169,7 +169,7 @@ def list_subnet_brief(param):
 # @auth_required(auth_token)
 @input(DataCenterSubnetIn)
 def delete_subnet(param):
-    '''删除数据中心subnet mock'''
+    '''删除 指定subnet【未完成】'''
     dcName=param.get('dcName')
     subnetID=param.get('subnetID')
 
@@ -212,7 +212,7 @@ def delete_subnet(param):
 @input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_subnet(param):
-    '''添加数据中心subnet mock'''
+    '''新增 subnet 【未完成】'''
     dcName=param.get('dcName')
     subnetCIDR=param.get('subnetCDIR')
 
@@ -266,7 +266,7 @@ def add_subnet(param):
 # @input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def mod_subnet(param):
-    '''修改数据中心subnet [mock]'''
+    '''修改数据中心subnet 【mock】'''
 
     resp = Result(
         detail = {"subnetId", 'subnet-123456'},

@@ -52,7 +52,7 @@ def list_server_detail(parm):
         # vpc.instances.all() 返回 EC2.Instance 对象
         for s in vpc.instances.all():
             #获取tag:Name
-            tagName = [tag['Value'] for tag in s.tags if tag['Key'] == 'Name']
+            nameTag = [tag['Value'] for tag in s.tags if tag['Key'] == 'Name']
             #获取ebs卷大小并进行累加
             ebs_size = 0
             for disk in s.block_device_mappings:            
@@ -64,7 +64,7 @@ def list_server_detail(parm):
             ram_m = ins_type['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
             svr = {
                 'svrId' : s.id,
-                'tagName': tagName[0] if len(tagName) else None,
+                'tagName': nameTag[0] if len(nameTag) else None,
                 'svrState' : s.state["Name"],
                 'insType' : s.instance_type,
                 'vpuNumb' : s.cpu_options['CoreCount'],
@@ -122,10 +122,10 @@ def list_server_brief(parm):
         # vpc.instances.all() 返回 EC2.Instance 对象
         for s in vpc.instances.all():
             #获取tag:Name
-            tagName = [tag['Value'] for tag in s.tags if tag['Key'] == 'Name']
+            nameTag = [tag['Value'] for tag in s.tags if tag['Key'] == 'Name']
             svr = {
                 'svrId' : s.id,
-                'tagName': tagName[0] if len(tagName) else None,
+                'tagName': nameTag[0] if len(nameTag) else None,
                 'svrState' : s.state["Name"],
                 'insType' : s.instance_type,          
                 'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,

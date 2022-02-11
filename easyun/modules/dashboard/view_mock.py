@@ -8,74 +8,73 @@ from easyun.common.result import Result
 from . import bp
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
+from easyun.common.schemas import DcNameQuery
 
 
-class QueryIn(Schema):
-    dc = String(required=True, example='Easyun')
 
-@bp.get("/summary/datacenter")
-@auth_required(auth_token)
-@input(QueryIn, location='query')
-def summary_dc(parm):
-    '''获取 数据中心 Summary信息[Mock]'''
-    dcName = parm['dc']
-    summaryList = [
-      {
-        "azName": "us-east-1a",
-        "dcRegion": {
-            "icon":"USA",
-            "name":"US East (N. Virginia)",            
-        },
-        "azStatus": "running",
-        "subnetNum": 2
-      },
-      {
-        "azName": "us-east-1b",
-        "dcRegion": {
-            "icon":"USA",
-            "name":"US East (N. Virginia)",            
-        },
-        "azStatus": "running",
-        "subnetNum": 2
-      },
-      {
-        "azName": "us-east-1c",
-        "dcRegion": {
-            "icon":"USA",
-            "name":"US East (N. Virginia)",            
-        },
-        "azStatus": "empty",
-        "subnetNum": 0
-      },
-      {
-        "azName": "us-east-1d",
-        "dcRegion": {
-            "icon":"USA",
-            "name":"US East (N. Virginia)",            
-        },
-        "azStatus": "empty",
-        "subnetNum": 0
-      },
-      {
-        "azName": "us-east-1e",
-        "dcRegion": {
-            "icon":"USA",
-            "name":"US East (N. Virginia)",            
-        },
-        "azStatus": "running",
-        "subnetNum": 1
-      }
-    ]
+# @bp.get("/summary/datacenter")
+# @auth_required(auth_token)
+# @input(DcNameQuery, location='query')
+# def summary_dc(parm):
+#     '''获取 数据中心 Summary信息[Mock]'''
+#     dcName = parm['dc']
+#     summaryList = [
+#       {
+#         "azName": "us-east-1a",
+#         "dcRegion": {
+#             "icon":"USA",
+#             "name":"US East (N. Virginia)",            
+#         },
+#         "azStatus": "running",
+#         "subnetNum": 2
+#       },
+#       {
+#         "azName": "us-east-1b",
+#         "dcRegion": {
+#             "icon":"USA",
+#             "name":"US East (N. Virginia)",            
+#         },
+#         "azStatus": "running",
+#         "subnetNum": 2
+#       },
+#       {
+#         "azName": "us-east-1c",
+#         "dcRegion": {
+#             "icon":"USA",
+#             "name":"US East (N. Virginia)",            
+#         },
+#         "azStatus": "empty",
+#         "subnetNum": 0
+#       },
+#       {
+#         "azName": "us-east-1d",
+#         "dcRegion": {
+#             "icon":"USA",
+#             "name":"US East (N. Virginia)",            
+#         },
+#         "azStatus": "empty",
+#         "subnetNum": 0
+#       },
+#       {
+#         "azName": "us-east-1e",
+#         "dcRegion": {
+#             "icon":"USA",
+#             "name":"US East (N. Virginia)",            
+#         },
+#         "azStatus": "running",
+#         "subnetNum": 1
+#       }
+#     ]
 
-    resp = Result(
-        detail = summaryList
-        )
-    return resp.make_resp()   
+#     resp = Result(
+#         detail = summaryList
+#         )
+#     return resp.make_resp()   
 
 
 @bp.get("/summary/health")
 @auth_required(auth_token)
-@input(QueryIn, location='query')
+@input(DcNameQuery, location='query')
 def summary_health(parm):
     '''获取 健康状态 Summary信息[Mock]'''
     dcName = parm['dc'] 
@@ -113,7 +112,7 @@ def summary_health(parm):
 
 @bp.get("/summary/resource")
 @auth_required(auth_token)
-@input(QueryIn, location='query')
+@input(DcNameQuery, location='query')
 @auth_required(auth_token)
 def graph_summary(parm):
     '''获取 IaaS资源 Summary信息[Mock]'''
@@ -126,7 +125,10 @@ def graph_summary(parm):
                 "runNum": 15,
                 "stopNum": 4,
                 "vcpuNum": 76,
-                "ramSize": 119
+                "ramSize": {
+                    'value':119,
+                    'unit':'GiB'
+                }
             }
         },
         {
@@ -155,7 +157,10 @@ def graph_summary(parm):
             "type":"st_object",
             "data":{
                 "sumNum": 6,
-                "objSize": 17,
+                "objSize": {
+                    'value':17.1,
+                    'unit':'GiB'
+                },
                 "objNum": 502013,
                 "pubNum": 1,
                 "encNum": 5
@@ -165,7 +170,10 @@ def graph_summary(parm):
             "type":"st_block",
             "data":{
                 "sumNum": 12,
-                "blcSize": 20.52,
+                "blcSize": {
+                    'value': 20.52,
+                    'unit':'TiB'
+                },
                 "useNum": 10,
                 "avaNum": 2,
                 "encNum": 3
@@ -176,9 +184,15 @@ def graph_summary(parm):
             "data":{
                 "sumNum": 3,
                 "efsNum": 1,
-                "efsSize": 827.7,
+                "efsSize": {
+                    'value': 827.7,
+                    'unit':'MiB'
+                },
                 "fsxNum": 2,
-                "fsxSize": 3.27
+                "fsxSize": {
+                    'value': 3.27,
+                    'unit':'GiB'
+                }
             }
         }
     ]

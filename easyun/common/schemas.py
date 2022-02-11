@@ -12,10 +12,21 @@ from .utils import query_dc_list
 
 
 class DcNameQuery(Schema):
-    # datacenter basic parm
+    ''' datacenter name for query parm '''
     dc = String(
         required=True, 
         validate=Length(0, 30),
         # validate=OneOf(query_dc_list()),
         example='Easyun'
     )
+
+
+class DcNameBody(Schema):
+    ''' datacenter name for body parm '''
+    dc = String(
+        required=True, 
+        validate=Length(0, 30),
+        # validate=OneOf(query_dc_list()),
+        example='Easyun'
+    )
+    

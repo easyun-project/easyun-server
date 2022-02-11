@@ -42,11 +42,11 @@ def get_svr_name(svr_id):
     try:
         resource_ec2 = boto3.resource('ec2', region_name = REGION)
         server = resource_ec2.Instance(svr_id)
-        svr_name = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
+        nameTag = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
         response = Result(
             detail={
                 'Svr_Id' : svr_id,
-                'Svr_Name' : svr_name[0]
+                'Svr_Name' : nameTag[0]
             },
             status_code=200
             )

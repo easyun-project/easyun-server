@@ -152,42 +152,42 @@ from .schemas import DataCenterEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn
 #     return resp.make_resp()
 
 
-@bp.get('/staticip')
-#@auth_required(auth_token)
-@input(DataCenterListsIn, location='query')
-# @output(SubnetsOut, description='List DataCenter Subnets Resources')
-def list_datacenter(param):
-    '''获取数据中心 EIP 列表'''
-    # only for globa regions
-    # dc_name=request.args.get("vpc_idp")
-    dc_name=param['vpc_id']
-    type=param['type']
-    # type=request.args.get("eip")
+# @bp.get('/staticip')
+# #@auth_required(auth_token)
+# @input(DataCenterListsIn, location='query')
+# # @output(SubnetsOut, description='List DataCenter Subnets Resources')
+# def list_datacenter(param):
+#     '''获取数据中心 EIP 列表'''
+#     # only for globa regions
+#     # dc_name=request.args.get("vpc_idp")
+#     dc_name=param['vpc_id']
+#     type=param['type']
+#     # type=request.args.get("eip")
     
-    if dc_name== 'ALL':
-        datacenters = Datacenter.query.all()
+#     if dc_name== 'ALL':
+#         datacenters = Datacenter.query.all()
 
 
-    if (datacenters is None):
-        response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
-        print(response.err_resp())
-        response.err_resp()   
+#     if (datacenters is None):
+#         response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
+#         print(response.err_resp())
+#         response.err_resp()   
     
-    for datacenter in datacenters:
-        vpc_id=datacenter.vpc_id
-        region_name=datacenter.region
-        create_date =datacenter.create_date
+#     for datacenter in datacenters:
+#         vpc_id=datacenter.vpc_id
+#         region_name=datacenter.region
+#         create_date =datacenter.create_date
     
-    svc_resp = {
-        'region_name': region_name,
-        'vpc_id': vpc_id,
-        'azs': 'us-east-2',
-        # 'subnets': subnet_list,
-        # 'securitygroup': sg_list,
-        # 'keypair': keypair_list,        
-        'create_date': create_date
-    }
+#     svc_resp = {
+#         'region_name': region_name,
+#         'vpc_id': vpc_id,
+#         'azs': 'us-east-2',
+#         # 'subnets': subnet_list,
+#         # 'securitygroup': sg_list,
+#         # 'keypair': keypair_list,        
+#         'create_date': create_date
+#     }
 
-    response = Result(detail=svc_resp, status_code=200)
+#     response = Result(detail=svc_resp, status_code=200)
 
-    return response.make_resp()
+#     return response.make_resp()

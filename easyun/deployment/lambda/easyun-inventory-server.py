@@ -25,8 +25,8 @@ def get_dcList():
 def get_svr_name(insID):
     resource_ec2 = boto3.resource('ec2', region_name=this_region)
     server = resource_ec2.Instance(insID)
-    tagName = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
-    svrName = tagName[0] if len(tagName) else ''
+    nameTag = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
+    svrName = nameTag[0] if len(nameTag) else None
     return svrName
 
 # 获取指定 datacenter 的 disk(volume)     
@@ -43,7 +43,7 @@ def list_disks(dcName):
     SystemDisk = ['/dev/xvda','/dev/sda1']
     diskList = []
     for d in volumeList:
-        tagName = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
+        nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
         attach = d['Attachments']
         if attach:
             attachPath = attach[0].get('Device')
@@ -56,7 +56,7 @@ def list_disks(dcName):
         diskType = 'system' if attachPath in SystemDisk else 'user'
         disk = {
             'diskID': d['VolumeId'],
-            'tagName': tagName[0] if len(tagName) else '',
+            'tagName': nameTag[0] if len(nameTag) else None,
             'volumeType': d['VolumeType'],
             'totalSize': d['Size'],
 #             'usedSize': none,

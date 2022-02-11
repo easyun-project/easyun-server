@@ -48,7 +48,7 @@ def list_stblock_detail(parm):
         )['Volumes']
         diskList = []
         for d in volumeList:
-            tagName = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
+            nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
             attach = d['Attachments']
             if attach:
                 attachPath = attach[0].get('Device')
@@ -107,7 +107,7 @@ def get_server_detail(disk_id):
     resource_ec2 = boto3.resource('ec2')
     try:
         thisDisk = resource_ec2.Volume(disk_id)
-        tagName = [tag['Value'] for tag in thisDisk.tags if tag.get('Key') == 'Name']
+        nameTag = [tag['Value'] for tag in thisDisk.tags if tag.get('Key') == 'Name']
         attach = thisDisk.attachments
         if attach:
             attachPath = attach[0].get('Device')
@@ -121,7 +121,7 @@ def get_server_detail(disk_id):
 
         diskAttributes = {
                 'diskID': thisDisk.volume_id,
-                'tagName': tagName[0] if len(tagName) else None,
+                'tagName': nameTag[0] if len(nameTag) else None,
                 'volumeType': thisDisk.volume_type,
                 'totalSize': thisDisk.size,
     #             'usedSize': none,
@@ -174,7 +174,7 @@ def list_stblock_brief(parm):
         )['Volumes']
         diskList = []
         for d in volumeList:
-            tagName = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
+            nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
             
             disk = {
                 'diskID': d['VolumeId'],

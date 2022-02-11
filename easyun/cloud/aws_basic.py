@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  Basic function
+  @module:  AWS Basic function
   @desc:    Contains some basic cloud functions
   @auth:    aleck
 """
 import boto3
 from ec2_metadata import ec2_metadata
+from boto3.session import Session
 
 
 def get_deploy_env(cloud):
@@ -49,3 +50,20 @@ def get_deploy_env(cloud):
     }
 
     
+
+'''获取AWS Region 列表(区分海外和国内)'''
+s = Session()
+def get_aws_region(serviceName, account_type = 'Global'):
+#     regions = 'us-east-1'
+    try:
+        if account_type == 'gcr':
+            regionList = s.get_available_regions(serviceName, 'aws-cn')
+        elif account_type == 'global':
+            regionList = s.get_available_regions(serviceName)
+        else:
+            # regionList = 'account_type error'
+            regionList = None
+        return regionList
+    except Exception as ex:
+        return(ex)
+#         return(ex.args)

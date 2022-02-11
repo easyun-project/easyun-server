@@ -124,7 +124,7 @@ class DataCenterListsIn(Schema):
 
 class DataCenterEIPIn(Schema):
     dcName = String()
-    eip_id = String()
+    alloId = String()
 
 class DataCenterNewEIPIn(Schema):
     dcName = String()
