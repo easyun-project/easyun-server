@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-  @Description: DataCenter Management - action: start, restart, stop, delete; and get status
-  @file:    datacenter_add.py
-  @desc:    DataCenter Creation module
-  @LastEditors:  Aleck
+  @module:  DataCenter Creation
+  @desc:    create some datacenter basic service, like vpc, subnet, securitygroup, etc.
+  @auth:    aleck
 """
 
 from apiflask import Schema, input, output, doc, abort, auth_required
@@ -67,7 +66,7 @@ class securityGroup(Schema):
 
 
 # 定义api传入参数格式
-class DcParmIn(Schema):
+class DcParmIn1(Schema):
     dcName = String(required=True, validate=Length(0, 60),
         example="Easyun")     #VPC name
     dcRegion = String(required=True, validate=Length(0, 20),
@@ -137,12 +136,6 @@ class DcParmIn(Schema):
         }
     )
 
-    keyPair = String(
-        required=True, validate=Length(0, 20),
-        example="key_easyun_user"
-    )
-
-
 # 定义api返回数据格式
 class DcResultOut(Schema):
     name = String()
@@ -151,9 +144,9 @@ class DcResultOut(Schema):
     create_date = DateTime()
 
 
-@bp.post('/create')
+@bp.post('')
 @auth_required(auth_token)
-@input(DcParmIn)
+@input(DcParmIn1)
 @output(DcResultOut)
 # @doc(tag='【仅限测试用】', operation_id='create_dc')
 def create_dc(data):
@@ -166,6 +159,13 @@ def create_dc(data):
     
     resource_ec2 = boto3.resource('ec2', region_name = dcRgeion)
     client_ec2 = boto3.client('ec2', region_name = dcRgeion)
+
+    # Step 0:  Check DC existed or not, if DC existed, need reject
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+    if (thisDC is not None):
+        response = Result(message='Datacenter already existed', status_code=2001,http_status_code=400)
+        response.err_resp()   
+
 
     # Step 1: create easyun vpc, including:
     # 1* main route table
@@ -539,35 +539,7 @@ def create_dc(data):
         resp.err_resp()
 
 
-    # step 9: create key pairs
-    # 9-1: generate a new key
-    try:
-        nameTag = {"Key": "Name", "Value": data['keyPair']}
-        key = resource_ec2.create_key_pair(
-            DryRun=DryRun,
-            KeyName=nameTag['Value'],
-            TagSpecifications = [ 
-                {
-                    'ResourceType':'key-pair', 
-                    "Tags": [dcTag, nameTag]
-                }
-            ]
-        )
-    except Exception as ex:
-        resp = Result(detail=ex , status_code=2091)
-        resp.err_resp()
-    # 9-2: save keypair to easyun server
-    # try: 
-    #     if not os.path.exists('keys'):
-    #         os.mkdir('keys')
-    #     keyfilename = key.key_name+'.pem'
-    #     with open(os.path.join('keys/',keyfilename)) as file:
-    #         file.write(key.key_material)        
-    # except Exception as ex:
-    #     resp = Result(detail=ex , status_code=2092)
-    #     resp.err_resp()
-
-   # step 10: Write Datacenter metadata to database
+   # step 9: Write Datacenter metadata to local database
     try:
         curr_account:Account = Account.query.first()
         curr_user = auth_token.current_user.username
@@ -594,7 +566,21 @@ def create_dc(data):
         resp = Result(detail=ex , status_code=2092)
         resp.err_resp()
 
+# step 10: Update Datacenter name list to DynamoDB
+    try:
+        # 待補充
+        resp = Result(
+            detail = 'updated.',
+            status_code = 200 
+        )
+        return resp.make_resp()
 
+    except Exception as ex:
+        resp = Result(detail=ex , status_code=2092)
+        resp.err_resp()
+
+
+# 根據勾選狀態匹配Security group IP規則
 def check_perm(sg):
     permList = []
     if sg["enableRDP"]:

@@ -45,12 +45,12 @@ class SvrParmIn(Schema):
     )
 
 
-@bp.post('/')
+@bp.post('')
 @auth_required(auth_token)
 @input(SvrParmIn)
 # @output(NewSvrSchema)
 def add_server(parm):
-    '''新建云服务器'''
+    '''新建云服务器(EC2)'''
     flagTag = {"Key": "Flag", "Value": parm['dcName']}
     nameTag = {"Key": "Name", "Value": parm['tagName']}
 

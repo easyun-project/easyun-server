@@ -4,7 +4,7 @@ from apiflask import APIBlueprint
 from easyun.common.models import Account, Datacenter
 
 # define api version
-ver = '/api/v1.0'
+ver = '/api/v1'
 
 bp = APIBlueprint('存储管理', __name__, url_prefix = ver+'/storage') 
 
@@ -14,4 +14,4 @@ FLAG = "Easyun"
 
 REGION = "us-east-1"
 
-from . import bucketView, ebsView
+from . import bucketView, stblockView

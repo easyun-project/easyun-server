@@ -23,7 +23,7 @@ from . import bp, DC_REGION, VERBOSE,TagEasyun
 from .datacenter_sdk import datacentersdk
 
 # from . import vpc_act
-from .schemas import VpcListOut
+from .schemas import VpcListOut,DataCenterListIn
 
 a = datacentersdk()
 # 云服务器参数定义
@@ -50,13 +50,29 @@ NewDataCenter = {
 }
 
 
+@bp.delete('')
+#@auth_required(auth_token)
+@input(DataCenterListIn)
+def remove_datacenter(param):
+    '''删除Datacenter --- mock'''
 
-@bp.post('/cleanup')
-@auth_required(auth_token)
-@input({})
-@output({}, 201, description='Remove the Datacenter')
-def remove_datacenter(this_dc):
-    '''删除Datacenter'''
+    dcName=param.get('dcName')
+    dcTag = {"Key": "Flag", "Value": dcName}
+  
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+
+    if (thisDC is None):
+            response = Result(message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
+            response.err_resp() 
+  
+    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+
+    resp = Result(
+        detail = [{"DC deletion": dcName}],
+        status_code = 200 
+    )
+    return resp.make_resp()
+
     # delete easyun vpc
     # delete 2 x pub-subnet
     # delete 2 x pri-subnet

@@ -12,6 +12,7 @@ from apiflask.validators import Length, OneOf
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.schemas import DcNameQuery
 from . import bp
 from .easyun_boto3 import EasyunBoto3
 
@@ -41,17 +42,9 @@ INVENTORY_TABLE = {
 }
 
 
-class InventoryIn(Schema):
-    dc = String(
-        required=True,
-        validate=Length(0, 30),
-        example='Easyun'
-    )
-
-
 @bp.get("/inventory/<resource>")
 @auth_required(auth_token)
-@input(InventoryIn, location='query')
+@input(DcNameQuery, location='query')
 def get_inventory(resource, parm):
     '''获取数据中心资源明细(Inventory)'''
     if resource not in RESOURCE_NAME:

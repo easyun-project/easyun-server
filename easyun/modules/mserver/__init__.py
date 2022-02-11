@@ -17,4 +17,4 @@ REGION = 'us-east-1'
 thisDC = 'Easyun'
 VPC = 'vpc-057f0e3d715c24147'
 
-from . import server_add, server_act, server_list, server_mod, server_parm, server_entity
+from . import server_add, server_act, server_get, server_mod, server_parm, server_entity

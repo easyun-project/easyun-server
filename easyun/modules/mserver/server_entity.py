@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: Server Management - Get info: Server list, Server detail
-@LastEditors: 
-'''
+"""
+  @module:  Server Detail
+  @desc:    Get Server detail info
+  @auth:    
+"""
+
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
-from easyun import FLAG
 from easyun.common.auth import auth_token
-from datetime import date, datetime
-from . import bp, REGION
 from easyun.common.result import Result, make_resp, error_resp, bad_request
+from . import bp
 
 
 class DetailOut(Schema):
@@ -32,11 +32,9 @@ class DetailOut(Schema):
     PrivateIpAddress = String()
     PublicIpAddress = String()
 
-
     InstanceId = String()
     LaunchTime = String()
 
-    
     PrivateDnsName = String()
     PublicDnsName = String()
 
@@ -62,15 +60,9 @@ class DetailOut(Schema):
 @bp.get('/detail/<svr_id>')
 @auth_required(auth_token)
 @output(DetailOut, description='Server detail info')
-def get_svr(svr_id):
-    '''查看指定云服务器详情'''
-    CLIENT = boto3.client('ec2', region_name=REGION)
-
-    # Helper method to serialize datetime fields
-    def json_datetime_serializer(obj):
-        if isinstance(obj, (datetime, date)):
-            return obj.isoformat()
-        raise TypeError ("Type %s not serializable" % type(obj))
+def get_server_detail(svr_id):
+    '''获取指定云服务器详情信息'''
+    CLIENT = boto3.client('ec2')
     try:
         instance = CLIENT.describe_instances(InstanceIds=[svr_id])
 
@@ -107,4 +99,125 @@ def get_svr(svr_id):
         response = Result(
             message=str(e), status_code=3001, http_status_code=400
         )
-        response.err_resp()  
+        response.err_resp()
+
+class DiskInfoIn(Schema):
+    svrId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
+    diskPath = String(required=True, example='/dev/sdg')
+
+
+@bp.get('/instype/<svr_id>')
+@auth_required(auth_token)
+def get_ins_types(svr_id):
+    '''获取指定云服务器实例参数 [测试]'''
+    # 用于查询受支持的Instance Family列表)
+    try:
+        resource_ec2 = boto3.resource('ec2')
+        thisSvr = resource_ec2.Instance(svr_id)
+        instypeParam = {
+            'insArch': thisSvr.architecture,
+            'insHyper': thisSvr.hypervisor,
+            'insType': thisSvr.instance_type,
+            'imgID': thisSvr.image_id
+        }
+
+        resp = Result(
+            detail = instypeParam, 
+            status_code=200
+            )
+        return resp.make_resp()
+
+    except Exception as ex:
+        response = Result(
+            message=str(ex), 
+            status_code=3001, 
+            http_status_code=400
+        )
+        response.err_resp()
+
+
+@bp.put('/attach/disk')
+@auth_required(auth_token)
+def attach_disk(parm):
+    '''云服务器关联磁盘(volume)'''
+    pass
+
+
+@bp.put('/detach/disk')
+@auth_required(auth_token)
+@input(DiskInfoIn)
+# @output()
+def detach_disk(parm):
+    '''云服务器分离磁盘(volume)'''
+    try:
+        CLIENT = boto3.client('ec2')
+        RESOURCE = boto3.resource('ec2')
+        server =RESOURCE.Instance(parm['svrId'])
+        disks = CLIENT.describe_instances(InstanceIds=[parm['svrId']])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
+        vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == parm['diskPath']]
+        print(vid)
+        # print(dir(volume))
+        if len(vid)==0:
+            raise ValueError('invalid device')
+        volume = RESOURCE.Volume(vid[0])
+
+        volume.detach_from_instance(
+            Device=parm['diskPath'],
+            InstanceId=parm['svrId']
+        )
+        # waiter = CLIENT.get_waiter('volume_available')
+        # waiter.wait(
+        #     VolumeIds=[
+        #         volume.id,
+        #     ]
+        # )
+        from time import sleep 
+        while True:
+            volume1 = RESOURCE.Volume(volume.volume_id)
+            print(volume1.state)
+            if volume1.state == 'available':
+                # volume1.delete()
+                break
+            sleep(0.5)
+        
+        response = Result(
+            detail={'msg':'delete {} success'.format(parm['diskPath'])},
+            status_code=200
+            )   
+        # response = Result(
+        #     detail={'VolumeId':volume1.volume_id,
+        #     "State" : volume1.state,
+        #     },
+        #     status_code=200
+        #     )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+
+class EipInfoIn(Schema):
+    InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
+    Device = String(required=True, example='/dev/sdg')
+
+
+@bp.put('/attach/eip')
+@auth_required(auth_token)
+def attach_eip(svr_id):
+    '''云服务器关联静态IP(eip)'''
+    pass
+
+
+@bp.put('/detach/eip')
+@auth_required(auth_token)
+def detach_eip(svr_id):
+    '''云服务器分离静态IP(eip)'''
+    pass
