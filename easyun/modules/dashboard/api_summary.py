@@ -15,8 +15,13 @@ from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.common.utils import len_iter
 from easyun.cloud.aws_region import AWS_Regions, query_country_code, query_region_name
+from .models import Boto3_Cloudwatch
 from . import bp
 
+
+# SUMMARY_TABLE = {
+#     'summary' : 'easyun-inventory-summary',
+# }
 
 @bp.get("/summary/datacenter")
 @auth_required(auth_token)
@@ -27,6 +32,7 @@ def summary_dc(parm):
     dcRegion = thisDC.get_region()
     # dcVPC = thisDC.get_vpc()
 
+    # 从AWS Region列表中匹配 当前 region 信息
     regionDict = [region for region in AWS_Regions if region['regionCode']==dcRegion][0]
     regionInfo = {
         "icon" : regionDict.get('countryCode'),
@@ -73,6 +79,33 @@ def summary_dc(parm):
     return resp.make_resp()   
 
 
-SUMMARY_TABLE = {
-    'summary' : 'easyun-inventory-summary',
-}
+
+@bp.get("/summary/health")
+@auth_required(auth_token)
+@input(DcNameQuery, location='query')
+def summary_health(parm):
+    '''获取健康状态 Summary信息'''
+    thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
+    dcRegion = thisDC.get_region() 
+    try:
+        # 设置 boto3 接口默认 region_name
+        # boto3.setup_default_session(region_name=dcRegion)
+
+        cwSdk = Boto3_Cloudwatch(dcRegion)        
+        alarms = cwSdk.get_alarms()
+        dashboards = cwSdk.get_dashboards()
+        summary_list = {
+            "alarms": alarms,
+            "dashboards": dashboards
+        }
+        resp = Result(
+            detail=summary_list
+        )
+        return resp.make_resp()
+
+    except Exception as e:
+        resp = Result(
+            detail=str(e),
+            status_code=7010
+        )
+        return resp.err_resp()

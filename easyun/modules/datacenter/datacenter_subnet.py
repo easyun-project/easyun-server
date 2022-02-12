@@ -45,14 +45,19 @@ def list_subnet_detail(param):
         )
         subnetList = []
         for subnet in subnets['Subnets']:
+            # 获取Tag:Name
+            nameTag = next((tag['Value'] for tag in subnet.get('Tags') if tag["Key"] == 'Name'), None)
+            # 判断subnet type是 public 还是 private
+            subnetType = get_subnet_type(subnet['SubnetId'])
             subnet_record = {
-                'tagName': [tag.get('Value') for tag in subnet['Tags'] if tag.get('Key') == 'Name'][0],
-                'subnetType':'public',  # public/private
+                # 'tagName': [tag.get('Value') for tag in subnet['Tags'] if tag.get('Key') == 'Name'][0],
+                'tagName' : nameTag,
+                'subnetType': subnetType,
                 'subnetState':subnet['State'],
                 'subnetId':subnet['SubnetId'],
                 'subnetVpc':subnet['VpcId'],
                 'subnetAz':subnet['AvailabilityZone'],
-                'cidrBlock4':subnet['CidrBlock'],
+                'cidrBlock':subnet['CidrBlock'],
                 'ipv4Count':subnet['AvailableIpAddressCount'],
                 'mapPubip':subnet['MapPublicIpOnLaunch']
             }
@@ -90,8 +95,7 @@ def get_subnet_detail(subnet_id, param):
         eniCollection = thisSubnet.network_interfaces.all()
         eniNum = len_iter(svrCollection)
         # 判断subnet type是 public 还是 private
-        '''待实现'''
-        subnetType = 'public'
+        subnetType = get_subnet_type(subnet_id)
 
         subnetAttributes = {
             'tagName': [tag.get('Value') for tag in thisSubnet.tags if tag.get('Key') == 'Name'][0],
@@ -100,7 +104,7 @@ def get_subnet_detail(subnet_id, param):
             'subnetId':thisSubnet.subnet_id,
             'subnetVpc':thisSubnet.vpc_id,
             'subnetAz':thisSubnet.availability_zone,
-            'cidrBlock4':thisSubnet.cidr_block,
+            'cidrBlock':thisSubnet.cidr_block,
             'ipv4Count':thisSubnet.available_ip_address_count,
             'mapPubip':thisSubnet.map_public_ip_on_launch,
             'svrNum':svrNum,
@@ -127,42 +131,71 @@ def get_subnet_detail(subnet_id, param):
 # # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_subnet_brief(param):
     '''获取 全部subnet子网列表[仅基础字段]'''
+    dcName=param.get('dc')
+    try:
+        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+        # if thisDC == None:
+        #     response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
+        #     response.err_resp() 
+        client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+
+        subnets = client_ec2.describe_subnets(
+            Filters=[
+                {
+                    'Name': 'tag:Flag', 'Values': [dcName]
+                },             
+            ]
+        )
+        subnetList = []
+        for subnet in subnets['Subnets']:
+            # 获取Tag:Name
+            nameTag = next((tag['Value'] for tag in subnet.get('Tags') if tag["Key"] == 'Name'), None)            
+            # 判断subnet type是 public 还是 private            
+            subnetType = get_subnet_type(subnet['SubnetId'])
+            subnet_record = {
+                'tagName': nameTag,
+                'subnetType': subnetType,
+                'subnetId':subnet['SubnetId'],
+                'subnetAz':subnet['AvailabilityZone'],
+                'cidrBlock':subnet['CidrBlock']
+            }
+            subnetList.append(subnet_record)
+    
+        resp = Result(
+            detail = subnetList,
+            status_code=200
+        )
+        return resp.make_resp()
+
+    except Exception as e:
+        resp = Result(
+            detail=str(e), 
+            status_code=2032
+        )
+        resp.err_resp()
+
+
     subnetList = [
         {
             'tagName':'Public subnet 1',
-            'subnetType':'public',
-            'subnetId':'subnet-0dd77078e6ddba304',
-            'subnetAz':'us-east-1a',
-            'cidrBlock4':'10.11.1.0/24'
-        },
-        {
-            'tagName':'Public subnet 2',
-            'subnetType':'public',
-            'subnetId':'subnet-096bb246c63812505',
-            'subnetAz':'us-east-1c',
-            'cidrBlock4':'10.11.2.0/24'
-        },        
-        {
-            'tagName':'Private subnet 1',
-            'subnetType':'private',
-            'subnetId':'subnet-0c03d878665e84b13',
-            'subnetAz':'us-east-1a',
-            'cidrBlock4':'10.11.21.0/24'
-        },
-        {
             'tagName':'Private subnet 2',
-            'subnetType':'private',
-            'subnetId':'subnet-00d617ca17c12edb5',
-            'subnetAz':'us-east-1c',
-            'cidrBlock4':'10.11.22.0/24'
         }
     ]
 
-    resp = Result(
-        detail = subnetList,
-        status_code=200
-    )
-    return resp.make_resp()    
+
+def get_subnet_type(subnet_id):
+    '''判断subnet type是 public 还是 private'''
+    # 偷懒仅以名称判断，完整功能待实现
+    resource_ec2 = boto3.resource('ec2')
+    thisSubnet = resource_ec2.Subnet(subnet_id)
+    nameTag = next((tag['Value'] for tag in thisSubnet.tags if tag["Key"] == 'Name'), None)
+    if nameTag.lower().startswith('pub'):
+        subnetType = 'public'
+    elif nameTag.lower().startswith('pri'):
+        subnetType = 'private'
+    else:
+        subnetType = None
+    return subnetType
 
 
 @bp.delete('/subnet')

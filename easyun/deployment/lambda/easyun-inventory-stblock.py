@@ -4,18 +4,19 @@
   @auth:    aleck
 """
 
-import json
 import boto3
+import json
 import datetime
 from dateutil.tz import tzlocal
 
-deploy_region = 'us-east-1'
-this_region = 'us-east-1'
+Deploy_Region = 'us-east-1'
+This_Region = 'us-east-1'
+DC_List_Table = 'easyun-inventory-summary'
 
 # 从ddb获取当前datacenter列表
 def get_dcList():
-    resource_ddb = boto3.resource('dynamodb', region_name= deploy_region)    
-    table = resource_ddb.Table('easyun-inventory-summary')
+    resource_ddb = boto3.resource('dynamodb', region_name= Deploy_Region)    
+    table = resource_ddb.Table(DC_List_Table)
     dcList = table.get_item(
         Key={'dcName': 'all'}
     )['Item']['dcList']
@@ -23,21 +24,17 @@ def get_dcList():
 
 # 通过instanceID 获取服务器 tag:Name     
 def get_svr_name(insID):
-    resource_ec2 = boto3.resource('ec2', region_name=this_region)
+    resource_ec2 = boto3.resource('ec2')
     server = resource_ec2.Instance(insID)
-    nameTag = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
-    svrName = nameTag[0] if len(nameTag) else ''
-    return svrName
+    nameTag = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
+    return nameTag
 
 # 获取指定 datacenter 的 disk(volume)     
 def list_disks(dcName):
-    client_ec2 = boto3.client('ec2', region_name = this_region)
+    client_ec2 = boto3.client('ec2')
     volumeList = client_ec2.describe_volumes(
         Filters=[
-            {
-                'Name': 'tag:Flag',
-                'Values': [dcName,]
-            },
+            {'Name': 'tag:Flag', 'Values': [dcName]},
         ]
     )['Volumes']
     SystemDisk = ['/dev/xvda','/dev/sda1']
@@ -78,6 +75,10 @@ def lambda_handler(event, context):
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table('easyun-inventory-stblock')    
     dcList = get_dcList()
+
+    # 设置 boto3 接口默认 region_name
+    boto3.setup_default_session(region_name = This_Region )
+
     for dc in dcList:
         diskInvt = list_disks(dc)
         diskItem={
@@ -86,7 +87,9 @@ def lambda_handler(event, context):
         }
         table.put_item(Item = diskItem)    
 
-    return {
+    resp = {
         'statusCode': 200,
         'body': json.dumps('loaded!')
     }
+
+    return resp

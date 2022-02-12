@@ -214,7 +214,7 @@ def list_dc_service(service, parm):
             vpcAttributes = {
                 'tagName': [tag.get('Value') for tag in dcVPC.tags if tag.get('Key') == 'Name'][0],
                 'vpcId':dcVPC.vpc_id,
-                'cidrBlock4':dcVPC.cidr_block,
+                'cidrBlock':dcVPC.cidr_block,
                 'vpcState':dcVPC.state,
                 'vpcDefault':dcVPC.is_default
             }

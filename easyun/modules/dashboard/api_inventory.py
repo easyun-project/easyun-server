@@ -14,7 +14,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
 from . import bp
-from .easyun_boto3 import EasyunBoto3
+
 
 # 定义各资源的表格名称
 RESOURCE_NAME = [
@@ -32,10 +32,10 @@ RESOURCE_NAME = [
 # 定义各资源对应的ddb表名称
 INVENTORY_TABLE = {
     'server': 'easyun-inventory-server',
-    'database': 'easyun-inventory-rds',
+    'database': 'easyun-inventory-database',
     'st_block': 'easyun-inventory-stblock',
     'st_object': 'easyun-inventory-stobject',
-    'st_file': 'easyun-inventory-stobject',
+    'st_file': 'easyun-inventory-stfiles',
     'nw_subnet': 'easyun-inventory-subnet',
     'nw_secgroup': 'easyun-inventory-secgroup',
     'nw_gateway': 'easyun-inventory-gateway'
@@ -58,20 +58,21 @@ def get_inventory(resource, parm):
 
     try:
         # dcName = request.args.get('dc', 'Easyun')  #获取查询参数 ?dc=xxx ,默认值‘Easyun’
-        thisDC = Datacenter.query.filter_by(name=parm['dc']).first()
+        dcName = parm.get('dc')
+        thisDC = Datacenter.query.filter_by(name=dcName).first()
         dcRegion = thisDC.get_region()
         # 设置 boto3 接口默认 region_name
         boto3.setup_default_session(region_name=dcRegion)
 
         inventoryList = [
-            query_inventory('server', parm['dc']),
-            query_inventory('st_block', parm['dc']),
-            query_inventory('st_object', parm['dc']),
-            query_inventory('st_file', parm['dc']),
-            query_inventory('database', parm['dc']),
-            query_inventory('nw_subnet', parm['dc']),
-            query_inventory('nw_secgroup', parm['dc']),
-            query_inventory('nw_gateway', parm['dc'])
+            query_inventory('server', dcName),
+            query_inventory('st_block', dcName),
+            query_inventory('st_object', dcName),
+            query_inventory('st_file', dcName),
+            query_inventory('database', dcName),
+            query_inventory('nw_subnet', dcName),
+            query_inventory('nw_secgroup', dcName),
+            query_inventory('nw_gateway', dcName)
         ]
 
         if resource == 'all':
@@ -113,33 +114,9 @@ def query_inventory(resource, dcName):
             'data': inventory
         }
 
-    except Exception as e:
+    except Exception as ex:
         return {
             'type': resource,
             'data': []
         }
 
-
-@bp.get("/summary/health")
-@auth_required(auth_token)
-# @input(InventoryIn, location='query')
-def get_health():
-    try:
-        easy_boto3 = EasyunBoto3("cloudwatch")
-        alarms = easy_boto3.get_alarms()
-        dashboards = easy_boto3.get_dashboards()
-        summary_list = {
-            "alarms": alarms,
-            "dashboards": dashboards
-        }
-        resp = Result(
-            detail=summary_list
-        )
-        return resp.make_resp()
-
-    except Exception as e:
-        resp = Result(
-            detail=str(e),
-            status_code=7010
-        )
-        return resp.err_resp()
