@@ -23,7 +23,7 @@ class DcNameQuery(Schema):
 
 class DcNameBody(Schema):
     ''' datacenter name for body parm '''
-    dc = String(
+    dcName = String(
         required=True, 
         validate=Length(0, 30),
         # validate=OneOf(query_dc_list()),

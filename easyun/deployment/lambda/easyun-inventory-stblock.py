@@ -40,8 +40,8 @@ def list_disks(dcName):
     SystemDisk = ['/dev/xvda','/dev/sda1']
     diskList = []
     for d in volumeList:
-        nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
-        attach = d['Attachments']
+        nameTag = next((tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name'), None)
+        attach = d.get('Attachments')
         if attach:
             attachPath = attach[0].get('Device')
             insId = attach[0].get('InstanceId')
@@ -53,7 +53,7 @@ def list_disks(dcName):
         diskType = 'system' if attachPath in SystemDisk else 'user'
         disk = {
             'diskID': d['VolumeId'],
-            'tagName': nameTag[0] if len(nameTag) else None,
+            'tagName': nameTag,
             'volumeType': d['VolumeType'],
             'totalSize': d['Size'],
 #             'usedSize': none,

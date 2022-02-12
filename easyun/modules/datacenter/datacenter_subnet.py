@@ -141,9 +141,7 @@ def list_subnet_brief(param):
 
         subnets = client_ec2.describe_subnets(
             Filters=[
-                {
-                    'Name': 'tag:Flag', 'Values': [dcName]
-                },             
+                { 'Name': 'tag:Flag', 'Values': [dcName] },             
             ]
         )
         subnetList = []
@@ -299,7 +297,7 @@ def add_subnet(param):
 # @input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def mod_subnet(param):
-    '''修改数据中心subnet 【mock】'''
+    '''修改数据中心subnet 【未完成】'''
 
     resp = Result(
         detail = {"subnetId", 'subnet-123456'},

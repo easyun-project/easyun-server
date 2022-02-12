@@ -7,12 +7,9 @@ import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict, Boolean
 from apiflask.validators import Length, OneOf
-from flask import jsonify
-from marshmallow.utils import pprint
-from werkzeug.wrappers import response
-from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.result import make_resp, error_resp, bad_request, Result
+from easyun.common.utils import query_dc_region, query_svr_name
 from . import bp, REGION
 
 
@@ -40,13 +37,14 @@ class UpdateOut(Schema):
 def get_svr_name(svr_id):
     '''查询指定云服务器的名称'''
     try:
-        resource_ec2 = boto3.resource('ec2', region_name = REGION)
-        server = resource_ec2.Instance(svr_id)
-        nameTag = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
+        # dcRegion = query_dc_region()
+        # 设置 boto3 接口默认 region_name
+        # boto3.setup_default_session(region_name = dcRegion )
+
         response = Result(
             detail={
-                'Svr_Id' : svr_id,
-                'Svr_Name' : nameTag[0]
+                'svrId' : svr_id,
+                'tagName' : query_svr_name(svr_id)
             },
             status_code=200
             )

@@ -51,3 +51,35 @@ class Boto3_Cloudwatch:
             }
             dashboards.append(obj)
         return dashboards
+
+
+class Boto3_DynamoDB:
+    def __init__(self, region_name='us-east-1'):
+        self._resource = boto3.resource('dynamodb', region_name=region_name)
+        self._client = boto3.client('dynamodb')
+
+    def get_table_names(self):
+        dynamodb_client = self._client
+        table_name_list = dynamodb_client.list_tables()['TableNames']
+        return table_name_list
+
+    def get_summary_server(self):
+        dynamodb_resource = self._resource
+        db = dynamodb_resource.Table('Servers')
+        summaries = db.scan()
+        items = summaries['Items']
+        return items
+
+    def get_summary_s3(self):
+        dynamodb_resource = self._resource
+        db = dynamodb_resource.Table('Buckets')
+        summaries = db.scan()
+        items = summaries['Items']
+        return items
+
+    def get_summary_health(self):
+        dynamodb_resource = self._resource
+        db = dynamodb_resource.Table('Alarms')
+        summaries = db.scan()
+        items = summaries['Items']
+        return items

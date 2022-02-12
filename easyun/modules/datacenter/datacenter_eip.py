@@ -7,8 +7,6 @@
 from email import message
 import boto3
 from apiflask import Schema, input, output, auth_required
-from flask import request
-from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.result import Result
 from . import bp,DryRun
@@ -39,21 +37,29 @@ def list_eip_detail(param):
     try:
         eips = client_ec2.describe_addresses(
             Filters=[
-                {
-                    'Name': 'tag:Flag', 'Values': [dcName]
-                },             
+                {'Name': 'tag:Flag', 'Values': [dcName]},             
             ]
         )
 
         eipList = []    
 
         for eip in eips['Addresses']:
-            PublicIp =  eip['PublicIp']
-            AllocationId =  eip['AllocationId']
-            subnet_record = {'PublicIp': PublicIp,
-                    'AllocationId': AllocationId
+            nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag["Key"] == 'Name'), None)
+            eipItem = {
+                'pubIp': eip['PublicIp'],
+                'tagName': nameTag,                
+                'alloId': eip['AllocationId'],
+                'eipDomain': eip['Domain'],
+                'ipv4Pool': eip['PublicIpv4Pool'],
+                'boarderGroup' : eip['NetworkBorderGroup'],
+                #可基于AssociationId判断eip是否可用
+                'assoId': eip.get('AssociationId'),
+                #eip关联的目标ID及Name
+                'targetId' : eip.get('InstanceId'),
+                # 'targetName': 'server_name_xxx',
+                'eniId': eip.get('NetworkInterfaceId')                
             }
-            eipList.append(subnet_record)
+            eipList.append(eipItem)
 
         resp = Result(
             detail = eipList,
@@ -79,18 +85,31 @@ def get_eip_detail(pub_ip, param):
         client_ec2 = boto3.client('ec2', region_name= thisDC.region)
         eips = client_ec2.describe_addresses(
             Filters=[
-                {
-                    'Name': 'tag:Flag', 'Values': [dcName]
-                },             
+                { 'Name': 'tag:Flag', 'Values': [dcName] },             
             ],
             PublicIps = [pub_ip],
-            # AllocationIds=[ 
-            #     eip_id
-            # ]
+            # AllocationIds=[ eip_id ]
         )
 
         # 从describe_addresses返回结果筛选出所需的字段
-        eipAttributes = eips.get('Addresses')[0]
+        eip = eips.get('Addresses')[0]
+
+        if eip:
+            nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag["Key"] == 'Name'), None)
+            eipAttributes = {
+                'pubIp': eip['PublicIp'],
+                'tagName': nameTag,                
+                'alloId': eip['AllocationId'],
+                'eipDomain': eip['Domain'],
+                'ipv4Pool': eip['PublicIpv4Pool'],
+                'boarderGroup' : eip['NetworkBorderGroup'],
+                #可基于AssociationId判断eip是否可用
+                'assoId': eip.get('AssociationId'),
+                #eip关联的目标ID及Name                
+                'targetId' : eip.get('InstanceId'),
+                'targetName': 'server_name_xxx',
+                'eniId': eip.get('NetworkInterfaceId')                
+            }            
 
         resp = Result(
             detail = eipAttributes,
@@ -115,27 +134,25 @@ def list_eip_brief(param):
     try:
         eips = client_ec2.describe_addresses(
             Filters=[
-                {
-                    'Name': 'tag:Flag', 'Values': [dcName]
-                },             
+                { 'Name': 'tag:Flag', 'Values': [dcName] },             
             ]
         )
 
         eipList = []
 
         for eip in eips['Addresses']:
-            {'Tags': [{'Key': 'Flag', 'Value': 'EasyunSvr'},
-               {'Key': 'Name', 'Value': 'easyun-notebook'}]
-               }
-            nameTag = [tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name']
-            subnet_record = {
+            # nameTag = [tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name']
+            nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name'), None)
+            eipItem = {
                 'pubIp': eip['PublicIp'],
                 'alloId': eip['AllocationId'],
+                # 'tagName': nameTag[0] if len(nameTag) else None
+                'tagName': nameTag,          
                 #可基于AssociationId判断eip是否可用
                 'assoId': eip.get('AssociationId'),
-                'tagName': nameTag[0] if len(nameTag) else None
+                'isAvailable': True if not eip.get('AssociationId') else False
             }
-            eipList.append(subnet_record)
+            eipList.append(eipItem)
 
         resp = Result(
             detail = eipList,
@@ -149,7 +166,7 @@ def list_eip_brief(param):
 
 
 @bp.delete('/eip')
-# @auth_required(auth_token)
+@auth_required(auth_token)
 @input(DataCenterEIPIn)
 def delete_eip(param):
     '''删除 指定静态IP(EIP)'''

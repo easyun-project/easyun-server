@@ -11,6 +11,7 @@ from flask.views import MethodView
 from apiflask import auth_required, Schema, input, output
 from apiflask.fields import String, Integer, Boolean
 from apiflask.validators import Length
+from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -25,7 +26,7 @@ from .volume_schema import newVolume
 SystemDisk = ['/dev/xvda','/dev/sda1']
 
 
-@bp.get('/block')
+@bp.get('/block/volume')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(SvrListOut, description='Get Servers list')
@@ -40,16 +41,14 @@ def list_stblock_detail(parm):
         client_ec2 = boto3.client('ec2')
         volumeList = client_ec2.describe_volumes(
             Filters=[
-                {
-                    'Name': 'tag:Flag',
-                    'Values': [dcName,]
-                },
+                { 'Name': 'tag:Flag',  'Values': [dcName,] },
             ]
         )['Volumes']
         diskList = []
         for d in volumeList:
-            nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
-            attach = d['Attachments']
+            # nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
+            nameTag = next((tag['Value'] for tag in d.get('Tags') if tag["Key"] == 'Name'), None)
+            attach = d.get('Attachments')
             if attach:
                 attachPath = attach[0].get('Device')
                 insId = attach[0].get('InstanceId')
@@ -57,11 +56,11 @@ def list_stblock_detail(parm):
             else:
                 attachPath = None
                 attachSvr = None
-            
+            # 基于卷挂载路径判断disk类型是 system 还是 user
             diskType = 'system' if attachPath in SystemDisk else 'user'
             disk = {
                 'diskID': d['VolumeId'],
-                'tagName': tagName[0] if len(tagName) else None,
+                'tagName': nameTag,
                 'volumeType': d['VolumeType'],
                 'totalSize': d['Size'],
     #             'usedSize': none,
@@ -97,7 +96,7 @@ class DiskOut(Schema):
    create_time = String()
    tags = String()
 
-@bp.get('/block/<disk_id>')
+@bp.get('/block/volume/<disk_id>')
 @auth_required(auth_token)
 # @input(DcNameQuery, location='query')
 @output(DiskOut)
@@ -107,7 +106,8 @@ def get_server_detail(disk_id):
     resource_ec2 = boto3.resource('ec2')
     try:
         thisDisk = resource_ec2.Volume(disk_id)
-        nameTag = [tag['Value'] for tag in thisDisk.tags if tag.get('Key') == 'Name']
+        # nameTag = [tag['Value'] for tag in thisDisk.tags if tag.get('Key') == 'Name']
+        nameTag = next((tag['Value'] for tag in thisDisk.tags if tag['Key'] == 'Name'), None)
         attach = thisDisk.attachments
         if attach:
             attachPath = attach[0].get('Device')
@@ -121,7 +121,8 @@ def get_server_detail(disk_id):
 
         diskAttributes = {
                 'diskID': thisDisk.volume_id,
-                'tagName': nameTag[0] if len(nameTag) else None,
+                # 'tagName': nameTag[0] if len(nameTag) else None,
+                'tagName' : nameTag,
                 'volumeType': thisDisk.volume_type,
                 'totalSize': thisDisk.size,
     #             'usedSize': none,
@@ -151,7 +152,7 @@ def get_server_detail(disk_id):
         response.err_resp()
 
 
-@bp.get('/block/list')
+@bp.get('/block/volume/list')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(SvrListOut, description='Get Servers list')
@@ -174,15 +175,15 @@ def list_stblock_brief(parm):
         )['Volumes']
         diskList = []
         for d in volumeList:
-            nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
-            
+            nameTag = next((tag['Value'] for tag in d.get('Tags') if tag['Key'] == 'Name'), None)
             disk = {
                 'diskID': d['VolumeId'],
-                'tagName': tagName[0] if len(tagName) else None,
+                'tagName': nameTag,
                 'volumeType': d['VolumeType'],
                 'totalSize': d['Size'],
-                'diskState': d['State'],
                 'diskAz': d['AvailabilityZone'],
+                'diskState': d['State'],
+                'isAvailable': True if d['State'] == 'available' else False
             }
             diskList.append(disk)
 
@@ -214,7 +215,7 @@ class NewDiskIn(Schema):
     Device = String(required=True, example='/dev/sdg')
 
 
-@bp.post('/block/disk')
+@bp.post('/block/volume')
 @auth_required(auth_token)
 @input(NewDiskIn)
 # @output()
@@ -311,11 +312,11 @@ def add_disk(NewDiskIn):
 
 
 
-@bp.post("/block/volume")
+@bp.post("/block/volume1")
 @auth_required(auth_token)
 @input(newVolume)
 def post(self, data):
-    '''新增磁盘(EBS Volume)'''
+    '''新增磁盘(EBS Volume) 【重复】'''
     try:
         ec2Client = boto3.client('ec2')
         
@@ -362,12 +363,12 @@ class DeleteDiskIn(Schema):
     diskPath = String(required=True, example='/dev/sdg')
 
 
-@bp.delete('/block/disk')
+@bp.delete('/block/volume')
 @auth_required(auth_token)
 @input(DeleteDiskIn)
 # @output()
 def delete_disk(DeleteDiskIn):
-    '''删除磁盘'''
+    '''删除磁盘(EBS Volume)'''
     try:
         CLIENT = boto3.client('ec2')
         RESOURCE = boto3.resource('ec2')
