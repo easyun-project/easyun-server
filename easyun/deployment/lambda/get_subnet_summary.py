@@ -1,5 +1,5 @@
 """
-  @module:  Dashboard lambda - Subnet
+  @module:  Dashboard lambda function - Subnet
   @desc:    抓取所有数据中心的子网(Subnet)数据并写入ddb
   @auth:    qian
 """

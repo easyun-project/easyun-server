@@ -1,5 +1,5 @@
 """
-  @module:  Dashboard lambda
+  @module:  Dashboard lambda function
   @desc:    抓取所有数据中心的服务器(EC2)数据并写入ddb
   @auth:    xdq, aleck
 """
@@ -12,15 +12,15 @@ from dateutil.tz import tzlocal
 
 Deploy_Region = 'us-east-1'
 This_Region = 'us-east-1'
-DC_List_Table = 'easyun-inventory-summary'
+Inventory_Table = 'easyun-inventory-all'
 
 # 从ddb获取当前datacenter列表
-def get_dcList():
+def get_dc_list():
     resource_ddb = boto3.resource('dynamodb', region_name= Deploy_Region) 
-    table = resource_ddb.Table(DC_List_Table)
+    table = resource_ddb.Table(Inventory_Table)
     dcList = table.get_item(
-        Key={'dcName': 'all'}
-    )['Item']['dcList']
+        Key={'dc_name': 'all', 'invt_type': 'dclist'}
+    )['Item'].get('invt_list')
     return dcList
 
 # 获取指定 datacenter 的服务器列表(ec2)
@@ -37,10 +37,10 @@ def list_servers(dcName):
         # tag:name
         nameTag = next((tag['Value'] for tag in s.tags if tag["Key"] == 'Name'), None)
         # disk
-        diskSize = 0
+        volumeSize = 0
         for disk in s.block_device_mappings:
             ebsId = disk['Ebs']['VolumeId']
-            diskSize += resource_ec2.Volume(ebsId).size
+            volumeSize += resource_ec2.Volume(ebsId).size
         # memory
         insType = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
         ramSize = insType['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
@@ -50,8 +50,8 @@ def list_servers(dcName):
             'svrState' : s.state["Name"],
             'insType' : s.instance_type,
             'vpuNum' : s.cpu_options['CoreCount'],
-            'ramSize' : ramSize/1024,
-            'diskSize' : diskSize, 
+            'ramSize' : Decimal(ramSize/1024),
+            'volumeSize' : volumeSize, 
             'osName' : resource_ec2.Image(s.image_id).platform_details,               
             'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,
             'pubIp' : s.public_ip_address,
@@ -66,7 +66,7 @@ def list_servers(dcName):
 def lambda_handler(event, context):
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table("easyun-inventory-server")
-    dcList = get_dcList()
+    dcList = get_dc_list()
 
     # 设置 boto3 接口默认 region_name
     boto3.setup_default_session(region_name = This_Region )
@@ -75,13 +75,11 @@ def lambda_handler(event, context):
         svrInvt = list_servers(dc)
         svrItem = {
             'dcName': dc,
-            'serverInventory': svrInvt
+            'dcInventory': svrInvt
         }
         table.put_item(Item = svrItem)
 
-    resp = {
+    return {
         'statusCode': 200,
         'body': json.dumps('loaded!')
     }
-
-    return resp

@@ -80,7 +80,7 @@ def add_server(parm):
             {
                 'svrId' : server.id,
                 'insTpye' : server.instance_type,
-                'creastTime' : server.launch_time.isoformat(),                
+                'createTime' : server.launch_time.isoformat(),                
                 'svrState' : server.state["Name"],
                 'priIp' : server.private_ip_address
             } for server in servers]

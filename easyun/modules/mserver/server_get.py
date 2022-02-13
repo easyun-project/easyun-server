@@ -62,10 +62,10 @@ def list_server_detail(parm):
             # nameTag = [tag['Value'] for tag in s.tags if tag['Key'] == 'Name']
             nameTag = next((tag['Value'] for tag in s.tags if tag["Key"] == 'Name'), None)
             #获取ebs卷总容量
-            diskSize = 0
+            volumeSize = 0
             for disk in s.block_device_mappings:            
                 ebsId = disk['Ebs']['VolumeId']
-                diskSize += resource_ec2.Volume(ebsId).size        
+                volumeSize += resource_ec2.Volume(ebsId).size        
             #获取内存容量            
             insType = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
             ramSize = insType['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
@@ -76,7 +76,7 @@ def list_server_detail(parm):
                 'insType' : s.instance_type,
                 'vpuNum' : s.cpu_options['CoreCount'],
                 'ramSize' : ramSize/1024,
-                'diskSize' : diskSize, 
+                'volumeSize' : volumeSize, 
                 'osName' : resource_ec2.Image(s.image_id).platform_details,             
                 # 'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,
                 'azName' : s.placement.get('AvailabilityZone'),

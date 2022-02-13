@@ -1,5 +1,5 @@
 """
-  @module:  Dashboard lambda
+  @module:  Dashboard lambda function
   @desc:    抓取所有数据中心的对象存储(S3)数据并写入ddb
   @auth:    xdq
 """
@@ -11,15 +11,15 @@ from dateutil.tz import tzlocal
 
 deploy_region = 'us-east-1'
 this_region = 'us-east-1'
-
+Inventory_Table = 'easyun-inventory-all'
 
 # 从ddb获取当前datacenter列表
-def get_dcList():
+def get_dc_list():
     resource_ddb = boto3.resource('dynamodb', region_name=deploy_region)
-    table = resource_ddb.Table('easyun-inventory-summary')
+    table = resource_ddb.Table(Inventory_Table)
     dcList = table.get_item(
-        Key={'dcName': 'all'}
-    )['Item']['dcList']
+        Key={'dc_name': 'all', 'invt_type': 'dclist'}
+    )['Item'].get('invt_list')
     return dcList
 
 
@@ -71,7 +71,7 @@ def list_buckets(dcName):
             'bucketAccess': get_bucket_access(s3_client, b.name),
             'bucketEncryption': get_bucket_encryption(s3_client, b.name),
             'bucketVersiong': bucket_versioning.status,
-            'createDate': b.creation_date.isoformat()
+            'createTime': b.creation_date.isoformat()
         }
         bucket_list.append(bucket)
     return bucket_list
@@ -81,7 +81,7 @@ def list_buckets(dcName):
 def lambda_handler(event, context):
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table("easyun-inventory-stobject")
-    dcList = get_dcList()
+    dcList = get_dc_list()
     for dc in dcList:
         bucketInvt = list_buckets(dc)
         dcInventory = {

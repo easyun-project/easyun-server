@@ -1,5 +1,5 @@
 """
-  @module:  Dashboard lambda
+  @module:  Dashboard lambda function
   @desc:    抓取所有数据中心的块存储(EBS)数据并写入ddb
   @auth:    aleck
 """
@@ -11,15 +11,15 @@ from dateutil.tz import tzlocal
 
 Deploy_Region = 'us-east-1'
 This_Region = 'us-east-1'
-DC_List_Table = 'easyun-inventory-summary'
+Inventory_Table = 'easyun-inventory-all'
 
 # 从ddb获取当前datacenter列表
-def get_dcList():
+def get_dc_list():
     resource_ddb = boto3.resource('dynamodb', region_name= Deploy_Region)    
-    table = resource_ddb.Table(DC_List_Table)
+    table = resource_ddb.Table(Inventory_Table)
     dcList = table.get_item(
-        Key={'dcName': 'all'}
-    )['Item']['dcList']
+        Key={'dc_name': 'all', 'invt_type': 'dclist'}
+    )['Item'].get('invt_list')
     return dcList
 
 # 通过instanceID 获取服务器 tag:Name     
@@ -52,20 +52,20 @@ def list_disks(dcName):
         
         diskType = 'system' if attachPath in SystemDisk else 'user'
         disk = {
-            'diskID': d['VolumeId'],
+            'volumeId': d['VolumeId'],
             'tagName': nameTag,
             'volumeType': d['VolumeType'],
-            'totalSize': d['Size'],
+            'volumeSize': d['Size'],
 #             'usedSize': none,
-            'diskIops': d.get('Iops'),
-            'diskThruput': d.get('Throughput'),
-            'diskState': d['State'],
+            'volumeIops': d.get('Iops'),
+            'volumeThruput': d.get('Throughput'),
+            'volumeState': d['State'],
             'attachSvr': attachSvr,
             'attachPath': attachPath,
             'diskType': diskType,
-            'diskEncrypt': d['Encrypted'],
-            'diskAz': d['AvailabilityZone'],
-            'createDate': d['CreateTime'].isoformat(),
+            'isEncrypted': d['Encrypted'],
+            'volumeAz': d['AvailabilityZone'],
+            'createTime': d['CreateTime'].isoformat(),
         }
         diskList.append(disk)    
     return diskList
@@ -74,7 +74,7 @@ def list_disks(dcName):
 def lambda_handler(event, context):
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table('easyun-inventory-stblock')    
-    dcList = get_dcList()
+    dcList = get_dc_list()
 
     # 设置 boto3 接口默认 region_name
     boto3.setup_default_session(region_name = This_Region )
@@ -87,9 +87,7 @@ def lambda_handler(event, context):
         }
         table.put_item(Item = diskItem)    
 
-    resp = {
+    return {
         'statusCode': 200,
         'body': json.dumps('loaded!')
     }
-
-    return resp

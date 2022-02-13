@@ -117,7 +117,7 @@ serverList = [
     {
         "priIp": "10.10.1.153",
         "svrId": "i-09aa9e2c83d840ab1",
-        "diskSize": 24,
+        "volumeSize": 24,
         "pubIp": "34.207.216.18",
         "svrState": "stopped",
         "azName": "us-east-1a",
@@ -126,12 +126,12 @@ serverList = [
         "osName": "Linux/UNIX",
         "ramSize": 0.5,
         "tagName": "test-devbk",
-        "createDate": "2021-11-06T09:10:41.173000+00:00"
+        "createTime": "2021-11-06T09:10:41.173000+00:00"
     },
     {
         "priIp": "10.10.1.32",
         "svrId": "i-043e8074448089cad",
-        "diskSize": 28,
+        "volumeSize": 28,
         "pubIp": "54.224.217.126",
         "svrState": "stopped",
         "azName": "us-east-1a",
@@ -140,12 +140,12 @@ serverList = [
         "osName": "Linux/UNIX",
         "ramSize": 0.5,
         "tagName": "test-notebook-svr",
-        "createDate": "2021-12-09T09:10:41.173000+00:00"
+        "createTime": "2021-12-09T09:10:41.173000+00:00"
     },
     {
         "priIp": "10.10.1.39",
         "svrId": "i-0199109e87f5fc8bd",
-        "diskSize": 29,
+        "volumeSize": 29,
         "pubIp": "34.207.216.182",
         "svrState": "running",
         "azName": "us-east-1a",
@@ -154,12 +154,12 @@ serverList = [
         "osName": "Linux/UNIX",
         "ramSize": 0.5,
         "tagName": "boto3test",
-        "createDate": "2021-12-19T09:10:41.173000+00:00"
+        "createTime": "2021-12-19T09:10:41.173000+00:00"
     },
     {
         "priIp": "10.10.1.214",
         "svrId": "i-01bf31db382e24093",
-        "diskSize": 29,
+        "volumeSize": 29,
         "pubIp": "34.207.216.181",
         "svrState": "stopped",
         "azName": "us-east-1a",
@@ -168,7 +168,7 @@ serverList = [
         "osName": "Linux/UNIX",
         "ramSize": 0.5,
         "tagName": "test-from-dev",
-        "createDate": "2021-11-09T09:10:41.173000+00:00"
+        "createTime": "2021-11-09T09:10:41.173000+00:00"
     }
 ]
 

@@ -59,20 +59,20 @@ def list_stblock_detail(parm):
             # 基于卷挂载路径判断disk类型是 system 还是 user
             diskType = 'system' if attachPath in SystemDisk else 'user'
             disk = {
-                'diskID': d['VolumeId'],
+                'volumeId': d['VolumeId'],
                 'tagName': nameTag,
                 'volumeType': d['VolumeType'],
-                'totalSize': d['Size'],
+                'volumeSize': d['Size'],
     #             'usedSize': none,
-                'diskIops': d.get('Iops'),
-                'diskThruput': d.get('Throughput'),
-                'diskState': d['State'],
+                'volumeIops': d.get('Iops'),
+                'volumeThruput': d.get('Throughput'),
+                'volumeState': d['State'],
                 'attachSvr': attachSvr,
                 'attachPath': attachPath,
                 'diskType': diskType,
-                'diskEncrypt': d['Encrypted'],
-                'diskAz': d['AvailabilityZone'],
-                'createDate': d['CreateTime'].isoformat(),
+                'isEncrypted': d['Encrypted'],
+                'volumeAz': d['AvailabilityZone'],
+                'createTime': d['CreateTime'].isoformat(),
             }
             diskList.append(disk)
 
@@ -120,21 +120,21 @@ def get_server_detail(disk_id):
         diskType = 'system' if attachPath in SystemDisk else 'user'
 
         diskAttributes = {
-                'diskID': thisDisk.volume_id,
+                'volumeId': thisDisk.volume_id,
                 # 'tagName': nameTag[0] if len(nameTag) else None,
                 'tagName' : nameTag,
                 'volumeType': thisDisk.volume_type,
-                'totalSize': thisDisk.size,
+                'volumeSize': thisDisk.size,
     #             'usedSize': none,
-                'diskIops': thisDisk.iops,
-                'diskThruput': thisDisk.throughput,
-                'diskState': thisDisk.state,
+                'volumeIops': thisDisk.iops,
+                'volumeThruput': thisDisk.throughput,
+                'volumeState': thisDisk.state,
                 'attachSvr': attachSvr,
                 'attachPath': attachPath,
                 'diskType': diskType,
-                'diskEncrypt': thisDisk.encrypted,
-                'diskAz': thisDisk.availability_zone,
-                'createDate': thisDisk.create_time.isoformat()  
+                'isEncrypted': thisDisk.encrypted,
+                'volumeAz': thisDisk.availability_zone,
+                'createTime': thisDisk.create_time.isoformat()  
         }
 
         response = Result(
@@ -177,12 +177,12 @@ def list_stblock_brief(parm):
         for d in volumeList:
             nameTag = next((tag['Value'] for tag in d.get('Tags') if tag['Key'] == 'Name'), None)
             disk = {
-                'diskID': d['VolumeId'],
+                'volumeId': d['VolumeId'],
                 'tagName': nameTag,
                 'volumeType': d['VolumeType'],
-                'totalSize': d['Size'],
-                'diskAz': d['AvailabilityZone'],
-                'diskState': d['State'],
+                'volumeSize': d['Size'],
+                'volumeAz': d['AvailabilityZone'],
+                'volumeState': d['State'],
                 'isAvailable': True if d['State'] == 'available' else False
             }
             diskList.append(disk)
