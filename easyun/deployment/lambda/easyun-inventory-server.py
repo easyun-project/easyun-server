@@ -72,12 +72,12 @@ def lambda_handler(event, context):
     boto3.setup_default_session(region_name = This_Region )
 
     for dc in dcList:
-        svrInvt = list_servers(dc)
-        svrItem = {
+        invtList = list_servers(dc)
+        newItem={
             'dcName': dc,
-            'dcInventory': svrInvt
+            'dcInventory': invtList
         }
-        table.put_item(Item = svrItem)
+        table.put_item(Item = newItem)  
 
     return {
         'statusCode': 200,

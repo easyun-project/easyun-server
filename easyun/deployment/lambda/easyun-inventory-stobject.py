@@ -83,12 +83,12 @@ def lambda_handler(event, context):
     table = resource_ddb.Table("easyun-inventory-stobject")
     dcList = get_dc_list()
     for dc in dcList:
-        bucketInvt = list_buckets(dc)
-        dcInventory = {
+        invtList = list_buckets(dc)
+        newItem={
             'dcName': dc,
-            'bucketInventory': bucketInvt
+            'dcInventory': invtList
         }
-        table.put_item(Item=dcInventory)
+        table.put_item(Item = newItem)    
 
     return {
         'statusCode': 200,

@@ -81,7 +81,7 @@ def graph_summary(parm):
                     'unit':'TiB'
                 },
                 "useNum": 10,
-                "avaNum": 2,
+                "avlNum": 2,
                 "encNum": 3
             }
         },

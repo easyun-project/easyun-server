@@ -30,11 +30,14 @@ def list_subnet_detail(param):
 
     dcName=param.get('dc')
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+        # thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
         # if thisDC == None:
         #     response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
         #     response.err_resp() 
-        client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+        dcRegion =  query_dc_region(dcName)
+        # 设置 boto3 接口默认 region_name
+        boto3.setup_default_session(region_name = dcRegion )
+        client_ec2 = boto3.client('ec2')
 
         subnets = client_ec2.describe_subnets(
             Filters=[
@@ -58,8 +61,9 @@ def list_subnet_detail(param):
                 'subnetVpc':subnet['VpcId'],
                 'subnetAz':subnet['AvailabilityZone'],
                 'cidrBlock':subnet['CidrBlock'],
-                'ipv4Count':subnet['AvailableIpAddressCount'],
-                'mapPubip':subnet['MapPublicIpOnLaunch']
+                # 'cidrBlockv6':subnet['Ipv6CidrBlockAssociationSet'][0].get('Ipv6CidrBlock'),
+                'avlipNum':subnet['AvailableIpAddressCount'],
+                'isMappubip':subnet['MapPublicIpOnLaunch']
             }
             subnetList.append(subnet_record)
     
@@ -68,9 +72,9 @@ def list_subnet_detail(param):
             status_code=200
         )
         return resp.make_resp()
-    except Exception as e:
+    except Exception as ex:
         resp = Result(
-            detail=str(e), 
+            detail=str(ex), 
             status_code=2030
         )
         resp.err_resp()
@@ -105,8 +109,8 @@ def get_subnet_detail(subnet_id, param):
             'subnetVpc':thisSubnet.vpc_id,
             'subnetAz':thisSubnet.availability_zone,
             'cidrBlock':thisSubnet.cidr_block,
-            'ipv4Count':thisSubnet.available_ip_address_count,
-            'mapPubip':thisSubnet.map_public_ip_on_launch,
+            'avlipNum':thisSubnet.available_ip_address_count,
+            'isMappubip':thisSubnet.map_public_ip_on_launch,
             'svrNum':svrNum,
             'eniNum':eniNum
         }
@@ -133,11 +137,8 @@ def list_subnet_brief(param):
     '''获取 全部subnet子网列表[仅基础字段]'''
     dcName=param.get('dc')
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-        # if thisDC == None:
-        #     response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
-        #     response.err_resp() 
-        client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+        dcRegion =  query_dc_region(dcName)
+        client_ec2 = boto3.client('ec2', region_name= dcRegion)
 
         subnets = client_ec2.describe_subnets(
             Filters=[
@@ -173,17 +174,9 @@ def list_subnet_brief(param):
         resp.err_resp()
 
 
-    subnetList = [
-        {
-            'tagName':'Public subnet 1',
-            'tagName':'Private subnet 2',
-        }
-    ]
-
-
 def get_subnet_type(subnet_id):
     '''判断subnet type是 public 还是 private'''
-    # 偷懒仅以名称判断，完整功能待实现
+    # 偷个懒仅以名称判断，完整功能待实现
     resource_ec2 = boto3.resource('ec2')
     thisSubnet = resource_ec2.Subnet(subnet_id)
     nameTag = next((tag['Value'] for tag in thisSubnet.tags if tag["Key"] == 'Name'), None)
