@@ -11,12 +11,14 @@ from .models import Datacenter, Account
 
 
 def query_dc_list():
-    '''从本地数据库查询datacenter名单 [ToBeFix]'''
+    '''从本地数据库查询datacenter名单'''
     try:
-        dcList = Datacenter.query.with_entities(Datacenter.name).all()
+        # dcList = Datacenter.query.with_entities(Datacenter.name).all()
+        dcList = [dc.name for dc in Datacenter.query.all()]
         return dcList
     except Exception as ex:
-        return 'get datacenter list error.'
+        # return 'get datacenter list error.'
+        return str(ex)
 
 
 def query_dc_region(dc):

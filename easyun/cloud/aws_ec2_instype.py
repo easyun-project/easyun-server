@@ -10,42 +10,42 @@ import boto3
 
 '''支持的Instance Tpyes列表'''
 # 临时使用，后续可删除
-Instance_Types = [
-    {
-        'useCases': 'general',
-        'desCode': 'GP',    # General Purpose
-        'insFamily': ['t2', 't3', 't3a', 'm4', 'm5', 'm5a', 'm6', 'm6a', 't4g', 'm6g', 'a1']
-    }, 
-    {
-        'useCases': 'compute',
-        'desCode': 'CO',    # Compute Optimized
-        'insFamily': ['c4', 'c5', 'c5a', 'c6i', 'c6g', 'c7g']
-    }, 
-    {
-        'useCases': 'memory',
-        'desCode': 'MO',    # Memory Optimized
-        'insFamily': ['r4', 'r5', 'r5a', 'r5b', 'r5n', 'r5dn', 'r6i', 'x1', 'z1d', 'x2idn', 'x2iedn', 'x2iezn', 'R6g','X2g']
-    }, 
-    {
-        'useCases': 'storage',
-        'desCode': 'SO',    # Storage Optimized
-        'insFamily': ['d2', 'd3', 'd3en', 'i3', 'i3en', 'i4i', 'Is4gen', 'Im4gn', 'h1']
-    },    
-    {
-        'useCases': 'accelerate',
-        'desCode': 'AC',    # Accelerated Computing
-        'insFamily': ['p2', 'p3', 'p4', 'dl1', 'inf1', 'g3', 'g4dn', 'g4ad', 'g5', 'g5g', 'f1', 'vt1']
-    }
-]
+# Instance_Types = [
+#     {
+#         'useCases': 'general',
+#         'catdesCode': 'GP',    # General Purpose
+#         'familyList': ['t2', 't3', 't3a', 'm4', 'm5', 'm5a', 'm6', 'm6a', 't4g', 'm6g', 'a1']
+#     }, 
+#     {
+#         'useCases': 'compute',
+#         'catdesCode': 'CO',    # Compute Optimized
+#         'familyList': ['c4', 'c5', 'c5a', 'c6i', 'c6g', 'c7g']
+#     }, 
+#     {
+#         'useCases': 'memory',
+#         'catdesCode': 'MO',    # Memory Optimized
+#         'familyList': ['r4', 'r5', 'r5a', 'r5b', 'r5n', 'r5dn', 'r6i', 'x1', 'z1d', 'x2idn', 'x2iedn', 'x2iezn', 'R6g','X2g']
+#     }, 
+#     {
+#         'useCases': 'storage',
+#         'catdesCode': 'SO',    # Storage Optimized
+#         'familyList': ['d2', 'd3', 'd3en', 'i3', 'i3en', 'i4i', 'Is4gen', 'Im4gn', 'h1']
+#     },    
+#     {
+#         'useCases': 'accelerate',
+#         'catdesCode': 'AC',    # Accelerated Computing
+#         'familyList': ['p2', 'p3', 'p4', 'dl1', 'inf1', 'g3', 'g4dn', 'g4ad', 'g5', 'g5g', 'f1', 'vt1']
+#     }
+# ]
 
 
 '''EC2 Instance Family 列表'''
 # 后续放在配置文件中便于维护
 Instance_Family = [
     {
-        'insCatg': 'general',
-        'desCode': 'GP',    # General Purpose
-        'insFamily': [
+        'catgName': 'general',
+        'catdesCode': 'GP',    # General Purpose
+        'familyList': [
             {'familyName':'t2', 'familyDes':'突增实例', 'insArch':'x86_64'},
             {'familyName':'t3', 'familyDes':'突增实例', 'insArch':'x86_64'},
             {'familyName':'t3a', 'familyDes':'突增实例-AMD', 'insArch':'x86_64'},
@@ -66,9 +66,9 @@ Instance_Family = [
         ]
     },
     {
-        'insCatg': 'compute',
-        'desCode': 'CO',    # Compute Optimized
-        'insFamily': [
+        'catgName': 'compute',
+        'catdesCode': 'CO',    # Compute Optimized
+        'familyList': [
             {'familyName':'c4', 'familyDes':'计算密集型', 'insArch':'x86_64'},
             {'familyName':'c5', 'familyDes':'计算密集型', 'insArch':'x86_64'},
             {'familyName':'c5a', 'familyDes':'计算密集型-AMD', 'insArch':'x86_64'},
@@ -83,9 +83,9 @@ Instance_Family = [
         ]
     },
     {
-        'insCatg': 'memory',
-        'desCode': 'MO',    # Memory Optimized
-        'insFamily': [
+        'catgName': 'memory',
+        'catdesCode': 'MO',    # Memory Optimized
+        'familyList': [
             {'familyName':'r4', 'familyDes':'内存优化实例', 'insArch':'x86_64'},
             {'familyName':'r5', 'familyDes':'内存优化实例', 'insArch':'x86_64'},
             {'familyName':'r5d', 'familyDes':'内存优化实例', 'insArch':'x86_64'},
@@ -108,9 +108,9 @@ Instance_Family = [
         ]
     },
     {
-        'insCatg': 'storage',
-        'desCode': 'SO',    # Storage Optimized
-        'insFamily': [
+        'catgName': 'storage',
+        'catdesCode': 'SO',    # Storage Optimized
+        'familyList': [
             {'familyName':'d2', 'familyDes':'存储实例-HDD', 'insArch':'x86_64'},
             {'familyName':'d3', 'familyDes':'存储实例-HDD', 'insArch':'x86_64'},
             {'familyName':'d3en', 'familyDes':'存储实例-HDD', 'insArch':'x86_64'},
@@ -123,9 +123,9 @@ Instance_Family = [
         ]
     },
     {
-        'insCatg': 'accelerate',
-        'desCode': 'AC',    # Accelerated Computing
-        'insFamily': [
+        'catgName': 'accelerate',
+        'catdesCode': 'AC',    # Accelerated Computing
+        'familyList': [
             {'familyName':'p2', 'familyDes':'GPU实例-K80', 'insArch':'x86_64'},
             {'familyName':'p3', 'familyDes':'GPU实例-V100', 'insArch':'x86_64'},
             {'familyName':'p4', 'familyDes':'GPU实例-A100', 'insArch':'x86_64'},
@@ -146,7 +146,7 @@ Instance_Family = [
 def get_familyDes(parm):
     '''获取Instance Family描述信息'''
     for i in Instance_Family:        
-        familyDes = [f['familyDes'] for f in i['insFamily'] if f.get('familyName')==parm]
+        familyDes = [f['familyDes'] for f in i['familyList'] if f.get('familyName')==parm]
         if familyDes:
             return familyDes[0]
     if not familyDes:

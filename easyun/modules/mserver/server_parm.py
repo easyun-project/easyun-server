@@ -112,7 +112,7 @@ def list_images( parm):
         ]
         resp = Result(
             detail=imgList,
-            message = "success,"+ str(len(imgList)),
+            message = str(len(imgList))+",success",
             status_code=200
         )
         return resp.make_resp()
@@ -138,6 +138,7 @@ class InsFamilyQuery(Schema):
         example="x86_64"
     )
 
+
 @bp.get('/param/insfamily')
 @auth_required(auth_token)
 @input(InsFamilyQuery, location='query')
@@ -152,11 +153,82 @@ def get_ins_family(parm):
     #         http_status_code=400
     #     )
     #     return resp.err_resp()
-    #         
-    filters=[
-        {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
-        {'Name': 'current-generation', 'Values': ['true']},
-    ]
+    try:
+        familyList = []
+        for familyDict in Instance_Family:
+            subFamily = familyDict['familyList']
+            for f in subFamily:
+                if f['insArch'] == insArch:
+                    tmp = {
+                        'catgName': familyDict['catgName'],
+                        'catdesCode': familyDict['catdesCode'],
+                        'familyName': f['familyName'],
+                        'familyDes': f['familyDes']
+                    }
+                    familyList.append(tmp)
+
+        response = Result(
+            detail = familyList,
+            message = str(len(familyList))+",success",
+            status_code=200
+        )
+        return response.make_resp()
+
+    except Exception as ex:
+        response = Result(
+            message= ex, 
+            status_code=3020
+        )
+        return response.err_resp()
+
+
+
+# 定义 insFamily 有效取值范围
+InsFamily_All = ['all']
+for i in Instance_Family:
+    familyList = [f['familyName'] for f in i['familyList']]
+    InsFamily_All.extend(familyList)
+
+
+class InsTypelsQuery(Schema):
+    # query parameters for instance family 
+    dc = String(
+        required=True, 
+        validate=Length(0, 60),      
+        example='Easyun'
+    )
+    arch = String(
+        required=True, 
+        validate=OneOf(['x86_64', 'arm64']),  #Processor architecture ( x86_64 | arm64 )
+        example="x86_64"
+    )
+    family = String( 
+        required=True, 
+        validate=OneOf(InsFamily_All),
+        example="m5"
+    )
+
+
+@bp.get('/param/instype/list')
+@auth_required(auth_token)
+@input(InsTypelsQuery, location='query')
+def get_ins_type_list(parm):
+    '''获取可用的Instance Types列表(不含成本)'''
+    insArch = parm.get('arch')
+    insFamily = parm['family']
+    if insFamily == 'all':
+        filters=[
+            {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
+            {'Name': 'current-generation', 'Values': ['true']},
+            ]
+    else:
+        insFamily = insFamily+"."+"*"
+        filters=[ 
+            {'Name': 'processor-info.supported-architecture', 'Values': [insArch]}, 
+            {'Name': 'current-generation', 'Values': ['true']},
+            {'Name': 'instance-type', 'Values': [insFamily]}
+            ]
+
     try:
         # this_dc = Datacenter(name=dcname)
         thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
@@ -176,7 +248,7 @@ def get_ins_family(parm):
                 insFamily = insType.split('.')[0]
                 tmp = {
                     'insType': insType,
-                    'insFamily': insFamily,
+                    'familyName': insFamily,
                     'familyDes': get_familyDes(insFamily)
                 }
                 instypeList.append(tmp)
@@ -187,7 +259,7 @@ def get_ins_family(parm):
         # print(ec2_types)
         response = Result(
             detail = instypeList,
-            message = "success,"+ str(len(instypeList)),
+            message = str(len(instypeList))+",success",
             status_code=200
         )
         return response.make_resp()
@@ -198,13 +270,6 @@ def get_ins_family(parm):
         )
         return response.err_resp()
 
-
-
-# 定义 insFamily 有效取值范围
-InsFamily_All = ['all']
-for i in Instance_Family:
-    familyList = [f['familyName'] for f in i['insFamily']]
-    InsFamily_All.extend(familyList)
 
 class InsTypeQuery(Schema):
     # query parameters for instance type 
@@ -282,7 +347,7 @@ def list_ins_types(parm):
         # print(ec2_types)
         response = Result(
             detail = instypeList,
-            message = "success,"+ str(len(instypeList)),
+            message = str(len(instypeList))+",success",
             status_code=200
         )
         return response.make_resp()
