@@ -10,21 +10,22 @@ from flask import request
 from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.result import Result
-from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.schemas import DcNameQuery
+from . import bp,DryRun
 from .schemas import DataCenterEIPIn,DataCenterNewEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
 
 
 @bp.get('/secgroup')
-#@auth_required(auth_token)
-@input(DataCenterListIn, location='query')
+@auth_required(auth_token)
+@input(DcNameQuery, location='query')
 # @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
-def list_secgroup(param):
-    dc_name=param['vpc_id']
-    type=param['seurityid']
-    '''获取数据中心全部SecurityGroup [mock]'''
+def list_secgroup_detail(parm):
+    '''获取数据中心全部SecurityGroup信息 【mock】'''    
+    dcName=parm['dc']
+
     sgList = [
         {
             "tagName": "easyun-sg-default",
@@ -114,11 +115,44 @@ def list_secgroup(param):
 
 
 
+@bp.get('/secgroup/list')
+@auth_required(auth_token)
+@input(DcNameQuery, location='query')
+# @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
+def list_secgroup_brief(parm):
+    '''获取 全部SecurityGroup列表[仅基础字段] 【mock】'''      
+    dcName=parm['dc']
+
+    sgList = [
+        {
+            "tagName": "easyun-sg-default",
+            'sgId': 'sg-0a818f9a74c0657ad',
+            'sgDes': 'default VPC security group'
+        },
+        {
+            "tagName": "easyun-sg-webapp",
+            'sgId': 'sg-02f0f5390e1cba746',
+            'sgDes': 'allow web application access'   
+        },
+        {
+            "tagName": "easyun-sg-database",
+            'sgId': 'sg-05df5c8e8396d06e9',
+            'sgDes': 'allow database access'
+        }
+    ]
+
+    resp = Result(
+        detail = sgList,
+        status_code=200
+    )
+    return resp.make_resp()
+
+
 @bp.delete('/secgroup')
 @auth_required(auth_token)
 @input(DcParmIn)
 def delete_secgroup(param):
-    '''删除 SecurityGroup [mock]'''   
+    '''删除 SecurityGroup 【mock】'''   
     resp = Result(
         detail = {
             'secgroupId':'sg-xxxxxxx'

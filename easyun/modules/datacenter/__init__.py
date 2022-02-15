@@ -118,4 +118,4 @@ sg_dict={'easyun-sg-default' : 'Secure Group For Easyun Default',
 
 
 
-from . import datacenter_add, datacenter_param, datacenter_get, datacenter_sdk, datacenter_delete, datacenter_create, datacenter_mock, datacenter_subnet, datacenter_eip
+from . import api_mock, datacenter_add, datacenter_param, datacenter_get, datacenter_sdk, datacenter_delete, datacenter_create, dcm_overview, dcm_eip, dcm_secgroup, dcm_subnet
