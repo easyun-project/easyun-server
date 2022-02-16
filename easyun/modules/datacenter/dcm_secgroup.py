@@ -12,6 +12,7 @@ from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.utils import len_iter, query_dc_region
 from easyun.common.schemas import DcNameQuery
 from . import bp,DryRun
 from .schemas import DataCenterEIPIn,DataCenterNewEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
@@ -23,95 +24,52 @@ from .schemas import DataCenterEIPIn,DataCenterNewEIPIn,DataCenterListsIn,DataCe
 @input(DcNameQuery, location='query')
 # @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
 def list_secgroup_detail(parm):
-    '''获取数据中心全部SecurityGroup信息 【mock】'''    
+    '''获取数据中心全部SecurityGroup信息'''    
     dcName=parm['dc']
+    try:
+        dcRegion =  query_dc_region(dcName)
+        # 设置 boto3 接口默认 region_name
+        boto3.setup_default_session(region_name = dcRegion )
+        client_ec2 = boto3.client('ec2')
 
-    sgList = [
-        {
-            "tagName": "easyun-sg-default",
-            'sgId': 'sg-0a818f9a74c0657ad',
-            'sgDes': 'default VPC security group',
-            'ipPermissions': [
+        sgs = client_ec2.describe_security_groups(
+            Filters=[
                 {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 22,
-                    'ToPort': 22,
-                    'IpRanges': [
-                        {'CidrIp': '0.0.0.0/0'}
-                    ],
-                },           
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 3389,
-                    'ToPort': 3389,
-                    'IpRanges': [{
-                        'CidrIp': '0.0.0.0/0'
-                    }]
-                }
+                    'Name': 'tag:Flag', 'Values': [dcName]
+                },             
             ]
-        },
-        {
-            "tagName": "easyun-sg-webapp",
-            'sgId': 'sg-02f0f5390e1cba746',
-            'sgDes': 'allow web application access',
-            'ipPermissions': [
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 22,
-                    'ToPort': 22,
-                    'IpRanges': [
-                        {'CidrIp': '0.0.0.0/0'}
-                    ],
-                },           
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 80,
-                    'ToPort': 80,
-                    'IpRanges': [{
-                        'CidrIp': '0.0.0.0/0'
-                    }]
-                }
-            ]            
-        },
-        {
-            "tagName": "easyun-sg-database",
-            'sgId': 'sg-05df5c8e8396d06e9',
-            'sgDes': 'allow database access',
-            'ipPermissions': [
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 22,
-                    'ToPort': 22,
-                    'IpRanges': [
-                        {'CidrIp': '0.0.0.0/0'}
-                    ],
-                },           
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 3389,
-                    'ToPort': 3389,
-                    'IpRanges': [{
-                        'CidrIp': '0.0.0.0/0'
-                    }]
-                }
-            ] 
-        }
-    ]
+        )['SecurityGroups']
 
-    TagEasyunSecurityGroup= [ 
-        {'ResourceType':'security-group', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": 'securitygroup[name]'}
-            ]
-        }
-    ]
+        sgList = []
+        for sg in sgs:
+            # 获取Tag:Name
+            nameTag = next((tag['Value'] for tag in sg.get('Tags') if tag["Key"] == 'Name'), None)            
+            sgItem = {
+                'sgId':sg['GroupId'],
+                'tagName': nameTag,
+                'sgName': sg['GroupName'],                
+                'sgDes':sg['Description'],
+                # Inbound Ip Permissions
+                'ibrulesNum':len(sg['IpPermissions']),                
+                'ibPermissions':sg['IpPermissions'],
+                # Outbound Ip Permissions
+                'obrulesNum':len(sg['IpPermissionsEgress']),                
+                'obPermissions':sg['IpPermissionsEgress'] 
+            }
+            sgList.append(sgItem)    
 
-    resp = Result(
-        detail = sgList,
-        status_code=200
-    )
-    return resp.make_resp()
+        resp = Result(
+            detail = sgList,
+            status_code=200
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(
+            detail=str(ex), 
+            status_code=2030
+        )
+        resp.err_resp()
 
 
 
@@ -120,32 +78,47 @@ def list_secgroup_detail(parm):
 @input(DcNameQuery, location='query')
 # @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
 def list_secgroup_brief(parm):
-    '''获取 全部SecurityGroup列表[仅基础字段] 【mock】'''      
+    '''获取 全部SecurityGroup列表[仅基础字段]'''
     dcName=parm['dc']
+    try:
+        dcRegion =  query_dc_region(dcName)
+        # 设置 boto3 接口默认 region_name
+        boto3.setup_default_session(region_name = dcRegion )
+        client_ec2 = boto3.client('ec2')
 
-    sgList = [
-        {
-            "tagName": "easyun-sg-default",
-            'sgId': 'sg-0a818f9a74c0657ad',
-            'sgDes': 'default VPC security group'
-        },
-        {
-            "tagName": "easyun-sg-webapp",
-            'sgId': 'sg-02f0f5390e1cba746',
-            'sgDes': 'allow web application access'   
-        },
-        {
-            "tagName": "easyun-sg-database",
-            'sgId': 'sg-05df5c8e8396d06e9',
-            'sgDes': 'allow database access'
-        }
-    ]
+        sgs = client_ec2.describe_security_groups(
+            Filters=[
+                {
+                    'Name': 'tag:Flag', 'Values': [dcName]
+                },             
+            ]
+        )['SecurityGroups']
 
-    resp = Result(
-        detail = sgList,
-        status_code=200
-    )
-    return resp.make_resp()
+        sgList = []
+        for sg in sgs:
+            # 获取Tag:Name
+            nameTag = next((tag['Value'] for tag in sg.get('Tags') if tag["Key"] == 'Name'), None)            
+            sgItem = {
+                'sgId':sg['GroupId'],
+                'tagName': nameTag,
+                'sgName': sg['GroupName'],                
+                'sgDes':sg['Description'],
+            }
+            sgList.append(sgItem)    
+
+        resp = Result(
+            detail = sgList,
+            status_code=200
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(
+            detail=str(ex), 
+            status_code=2030
+        )
+        resp.err_resp()
+
 
 
 @bp.delete('/secgroup')
@@ -161,3 +134,13 @@ def delete_secgroup(param):
     )
 
     return resp.make_resp()
+
+
+TagEasyunSecurityGroup= [ 
+    {'ResourceType':'security-group', 
+        "Tags": [
+        {"Key": "Flag", "Value": "Easyun"},
+        {"Key": "Name", "Value": 'securitygroup[name]'}
+        ]
+    }
+]

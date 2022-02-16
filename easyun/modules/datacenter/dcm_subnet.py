@@ -45,9 +45,9 @@ def list_subnet_detail(param):
                     'Name': 'tag:Flag', 'Values': [dcName]
                 },             
             ]
-        )
+        )['Subnets']
         subnetList = []
-        for subnet in subnets['Subnets']:
+        for subnet in subnets:
             # 获取Tag:Name
             nameTag = next((tag['Value'] for tag in subnet.get('Tags') if tag["Key"] == 'Name'), None)
             # 判断subnet type是 public 还是 private
@@ -144,9 +144,9 @@ def list_subnet_brief(param):
             Filters=[
                 { 'Name': 'tag:Flag', 'Values': [dcName] },             
             ]
-        )
+        )['Subnets']
         subnetList = []
-        for subnet in subnets['Subnets']:
+        for subnet in subnets:
             # 获取Tag:Name
             nameTag = next((tag['Value'] for tag in subnet.get('Tags') if tag["Key"] == 'Name'), None)            
             # 判断subnet type是 public 还是 private            

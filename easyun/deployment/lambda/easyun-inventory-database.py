@@ -1,5 +1,5 @@
 """
-  @module:  Dashboard lambda function function
+  @module:  Dashboard lambda function - databse
   @desc:    抓取所有数据中心的数据库(RDS)数据并写入ddb
   @auth:    aleck
 """
@@ -58,12 +58,12 @@ def list_dbinstances(dcName):
 
 # 在lambda_handle() 调用以上方法   
 def lambda_handler(event, context):
+    # 设置 boto3 接口默认 region_name
+    boto3.setup_default_session(region_name = Deploy_Region)
+
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table('easyun-inventory-database')    
     dcList = get_dc_list()
-
-    # 设置 boto3 接口默认 region_name
-    boto3.setup_default_session(region_name = This_Region )
 
     for dc in dcList:
         invtList = list_dbinstances(dc)

@@ -233,3 +233,38 @@ def query_region_name(region):
         return regionDict['regionName'].get('eng')
     else:
         return None
+
+
+
+# AWS API Service endpoint
+#The Cost Explorer API provides the following endpoint:
+# Global Region：
+# https://ce.us-east-1.amazonaws.com
+# GCR Region:
+# https://ce.cn-northwest-1.amazonaws.com.cn
+
+def query_ce_region(account_type):
+    if account_type == 'global':
+        ceRegion = 'us-east-1' 
+    elif account_type == 'gcr':
+        ceRegion = 'cn-northwest-1'
+    else:
+        ceRegion = None
+    return ceRegion
+
+
+#AWS Price List Query API provides the following endpoint:
+# Global Region：
+# https://api.pricing.us-east-1.amazonaws.com
+# https://api.pricing.ap-south-1.amazonaws.com
+# GCR Region:
+# https://api.pricing.us-east-1.amazonaws.com
+# https://api.pricing.ap-south-1.amazonaws.com
+
+def query_price_region(account_type):
+    if account_type == 'global':
+        priceRegion = 'us-east-1'
+    elif account_type == 'gcr':
+        priceRegion = None
+
+    return priceRegion    

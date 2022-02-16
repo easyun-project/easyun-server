@@ -39,11 +39,11 @@ def list_eip_detail(param):
             Filters=[
                 {'Name': 'tag:Flag', 'Values': [dcName]},             
             ]
-        )
+        )['Addresses']
 
         eipList = []    
 
-        for eip in eips['Addresses']:
+        for eip in eips:
             nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag["Key"] == 'Name'), None)
             eipItem = {
                 'pubIp': eip['PublicIp'],
@@ -136,11 +136,11 @@ def list_eip_brief(param):
             Filters=[
                 { 'Name': 'tag:Flag', 'Values': [dcName] },             
             ]
-        )
+        )['Addresses']
 
         eipList = []
 
-        for eip in eips['Addresses']:
+        for eip in eips:
             # nameTag = [tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name']
             nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name'), None)
             eipItem = {

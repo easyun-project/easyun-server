@@ -72,12 +72,12 @@ def list_disks(dcName):
 
 # 在lambda_handle() 调用以上方法   
 def lambda_handler(event, context):
+    # 设置 boto3 接口默认 region_name
+    boto3.setup_default_session(region_name = Deploy_Region)
+
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table('easyun-inventory-stblock')    
     dcList = get_dc_list()
-
-    # 设置 boto3 接口默认 region_name
-    boto3.setup_default_session(region_name = This_Region )
 
     for dc in dcList:
         invtList = list_disks(dc)

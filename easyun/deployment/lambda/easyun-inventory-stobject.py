@@ -9,8 +9,8 @@ import boto3
 import datetime
 from dateutil.tz import tzlocal
 
-deploy_region = 'us-east-1'
-this_region = 'us-east-1'
+Deploy_Region = 'us-east-1'
+This_Region = 'us-east-1'
 Inventory_Table = 'easyun-inventory-all'
 
 # 从ddb获取当前datacenter列表
@@ -79,6 +79,9 @@ def list_buckets(dcName):
 
 # 在lambda_handle() 调用以上方法
 def lambda_handler(event, context):
+    # 设置 boto3 接口默认 region_name
+    boto3.setup_default_session(region_name = Deploy_Region)
+
     resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table("easyun-inventory-stobject")
     dcList = get_dc_list()

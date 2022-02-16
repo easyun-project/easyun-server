@@ -9,13 +9,13 @@ import boto3
 import datetime
 from dateutil.tz import tzlocal
 
-deploy_region = 'us-east-1'
+Deploy_Region = 'us-east-1'
 this_region = 'us-east-1'
 Inventory_Table = 'easyun-inventory-all'
 
 # 从ddb获取当前datacenter列表
 def get_dc_list():
-    resource_ddb = boto3.resource('dynamodb', region_name=deploy_region)
+    resource_ddb = boto3.resource('dynamodb')
     table = resource_ddb.Table(Inventory_Table)
     dcList = table.get_item(
         Key={'dc_name': 'all', 'invt_type': 'dclist'}
@@ -37,7 +37,7 @@ def get_subnet_type(subnet):
 
 
 def list_subnets(dcName):
-    client_ec2 = boto3.client('ec2', region_name=this_region)
+    client_ec2 = boto3.client('ec2')
 
     subnets = client_ec2.describe_subnets(
         Filters=[
@@ -70,8 +70,11 @@ def list_subnets(dcName):
 
 # 在lambda_handle() 调用以上方法
 def lambda_handler(event, context):
+    # 设置 boto3 接口默认 region_name
+    boto3.setup_default_session(region_name = Deploy_Region)
+
     resource_ddb = boto3.resource('dynamodb')
-    table = resource_ddb.Table("easyun-inventory-stobject")
+    table = resource_ddb.Table("easyun-inventory-subnet")
     dcList = get_dc_list()
     for dc in dcList:
         invtList = list_subnets(dc)
