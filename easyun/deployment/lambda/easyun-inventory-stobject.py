@@ -56,7 +56,7 @@ def get_bucket_encryption(s3_client, name):
 
 
 def list_buckets(dcName):
-    s3_client = boto3.client('s3', region_name=this_region)
+    s3_client = boto3.client('s3')
     s3_resource = boto3.resource('s3')
     bucket_list = []
     for b in s3_resource.buckets.filter(
