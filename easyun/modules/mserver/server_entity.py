@@ -59,7 +59,7 @@ class DetailOut(Schema):
 
 @bp.get('/detail/<svr_id>')
 @auth_required(auth_token)
-@output(DetailOut, description='Server detail info')
+# @output(DetailOut, description='Server detail info')
 def get_server_detail(svr_id):
     '''获取指定云服务器详情信息'''
     CLIENT = boto3.client('ec2')
@@ -92,8 +92,68 @@ def get_server_detail(svr_id):
         instance_res['PublicIpAddress'] = instance_res1.public_ip_address
         instance_res['Tenancy'] = 'default'
         instance_res['TerminalProtection'] = 'disabled' if protection else 'enabled'
+        svrProperty = {
+            "instanceType":instance_res["InstanceType"],
+            "vCpu":instance_res["VCpu"],
+            "memory":instance_res["Memory"],
+            "privateIp":instance_res["PrivateIpAddress"],
+            "publicIp":instance_res["PublicIpAddress"],
 
-        res = Result(detail = instance_res, status_code=200)
+            "status":instance_res["ServerState"],
+
+            # "":instance_res[""],
+            "instanceId":instance_res['InstanceId'],
+            "launchTime":instance_res["LaunchTime"].isoformat(),
+            "privateIpv4Dns":instance_res["PrivateDnsName"],
+            "publicIpv4Dns":instance_res["PublicDnsName"],
+
+
+            "platformDetails":instance_res["PlatformDetails"],
+            "virtualization":instance_res["VirtualizationType"],
+            "tenancy":instance_res["Tenancy"],
+            "usageOperation":instance_res["UsageOperation"],
+            "monitoring":instance_res["Monitoring"],
+            "terminationProtection":instance_res["TerminalProtection"],
+            
+            "amiId":instance_res["ImageId"],
+            "amiName":instance_res["ImageName"],
+            "amiPath":instance_res["ImagePath"],
+            "keyPairName":instance_res["KeyName"],
+            "iamRole":instance_res["IamInstanceProfile"],
+        }
+        svrConfig = {
+
+        }
+        svrDisk = {
+            "volumeIds": [v["Ebs"]['VolumeId'] for v in instance_res["BlockDeviceMappings"]]
+        }
+        svrNetworking = {
+            "privateIp":instance_res["PrivateIpAddress"],
+            "publicIp":instance_res["PublicIpAddress"],
+        } 
+        svrSecurity = {
+            "sgId":[g['GroupId'] for g in instance_res["SecurityGroups"]],
+            "sgName":[g['GroupName'] for g in instance_res["SecurityGroups"]],
+        }
+        svrTags = {
+            # "":instance_res[""],
+            "tags":instance_res["Tags"],
+            # "":instance_res[""],
+        }
+        svrConnect = {
+            "userName":['ec2-user'],
+            "publicIp":instance_res["PublicIpAddress"],
+        }
+        detail = {
+            "svrProperty":svrProperty,
+            "svrConfig":svrConfig,
+            "svrDisk":svrDisk,
+            "SvrNetworking":svrNetworking,
+            "svrSecurity":svrSecurity,
+            "svrTags":svrTags,
+            "svrConnect":svrConnect,
+        }
+        res = Result(detail , status_code=200)
         return res.make_resp()
     except Exception as e:
         response = Result(
