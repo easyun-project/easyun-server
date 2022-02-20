@@ -38,7 +38,7 @@ class SvrParmIn(Schema):
                     "DeleteOnTermination": True,
                     "VolumeType": "gp2",
                     "VolumeSize": 16,
-                    "Encrypted": true
+                    "Encrypted": False
                 }
             }
         ),

@@ -30,15 +30,22 @@ class DiskOut(Schema):
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(DiskOut)
-def get_server_detail(vol_id, parm):
+def get_volume_detail(vol_id, parm):
     '''获取指定块存储(Volume)详细信息'''
     dcName=parm.get('dc')
     try:
         dcRegion =  query_dc_region(dcName)
-        resource_ec2 = boto3.resource('ec2', region_name=dcRegion)
+        # 设置 boto3 接口默认 region_name
+        boto3.setup_default_session(region_name = dcRegion )
+        
+        resource_ec2 = boto3.resource('ec2')
         thisDisk = resource_ec2.Volume(vol_id)
         # nameTag = [tag['Value'] for tag in thisDisk.tags if tag.get('Key') == 'Name']
-        nameTag = next((tag['Value'] for tag in thisDisk.tags if tag['Key'] == 'Name'), None)
+        # 加一个判断，避免tags为空时报错
+        if thisDisk.tags:
+            nameTag = next((tag['Value'] for tag in thisDisk.tags if tag['Key'] == 'Name'), None)
+        else:
+            nameTag = None
         attach = thisDisk.attachments
         if attach:
             attachPath = attach[0].get('Device')
