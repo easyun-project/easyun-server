@@ -37,7 +37,8 @@ class SvrParmIn(Schema):
                 "Ebs": {
                     "DeleteOnTermination": True,
                     "VolumeType": "gp2",
-                    "VolumeSize": 16
+                    "VolumeSize": 16,
+                    "Encrypted": true
                 }
             }
         ),
