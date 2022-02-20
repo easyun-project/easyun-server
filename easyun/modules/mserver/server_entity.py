@@ -161,10 +161,6 @@ def get_server_detail(svr_id):
         )
         response.err_resp()
 
-class DiskInfoIn(Schema):
-    svrId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
-    diskPath = String(required=True, example='/dev/sdg')
-
 
 @bp.get('/instype/<svr_id>')
 @auth_required(auth_token)
@@ -195,24 +191,75 @@ def get_ins_types(svr_id):
         )
         response.err_resp()
 
+class DiskInfoIn(Schema):
+    svrId = String(required=True, example='i-03b15ba2fbe4f3a14')  #云服务器ID
+    diskPath = String(required=True, example='/dev/sdg')
+    volumeId = String(required=True, example='vol-0bd70f2001d6fb8bc')  #volumn ID
 
 @bp.put('/attach/disk')
 @auth_required(auth_token)
+@input(DiskInfoIn)
 def attach_disk(parm):
-    '''云服务器关联磁盘(volume)'''
-    pass
+    '''云服务器关联磁盘(volume)'''  
+    try:
+        CLIENT = boto3.client('ec2')
+        RESOURCE = boto3.resource('ec2')
+        server =RESOURCE.Instance(parm["svrId"])
+        # volume1 = RESOURCE.Volume(volume['VolumeId'])
+        # waiter = CLIENT.get_waiter('volume_available')
+        # waiter.wait(
+        #     VolumeIds=[
+        #         volume1.id,
+        #     ]
+        # )
+        # volume1.attach_to_instance(
+        #     Device=NewDiskIn["Device"],
+        #     InstanceId=NewDiskIn["InstanceId"]
+        # )
+        from time import sleep 
+        while True:
+            volume1 = RESOURCE.Volume(parm['volumeId'])
+            print(volume1.state)
+            if volume1.state == 'available':
+                
+                volume1.attach_to_instance(
+                    Device=parm["diskPath"],
+                    InstanceId=parm["svrId"]
+                )
+                break
+            sleep(0.5)
+            
+        response = Result(
+            detail={'msg':'attach disk success'},
+            status_code=200
+            )
+        # response = Result(
+        #     detail={'VolumeId':volume['VolumeId'],
+        #     "State" : volume["State"],
+        #     },
+        #     status_code=200
+        #     )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
 
+class DiskDetachInfoIn(Schema):
+    svrId = String(required=True, example='i-03b15ba2fbe4f3a14')  #云服务器ID
+    diskPath = String(required=True, example='/dev/sdg')
 
 @bp.put('/detach/disk')
 @auth_required(auth_token)
-@input(DiskInfoIn)
+@input(DiskDetachInfoIn)
 # @output()
 def detach_disk(parm):
     '''云服务器分离磁盘(volume)'''
     try:
         CLIENT = boto3.client('ec2')
         RESOURCE = boto3.resource('ec2')
-        server =RESOURCE.Instance(parm['svrId'])
+        # server =RESOURCE.Instance(parm['svrId'])
         disks = CLIENT.describe_instances(InstanceIds=[parm['svrId']])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
         vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == parm['diskPath']]
         print(vid)
@@ -241,21 +288,10 @@ def detach_disk(parm):
             sleep(0.5)
         
         response = Result(
-            detail={'msg':'delete {} success'.format(parm['diskPath'])},
+            detail={'msg':'detach {} success'.format(parm['diskPath'])},
             status_code=200
             )   
-        # response = Result(
-        #     detail={'VolumeId':volume1.volume_id,
-        #     "State" : volume1.state,
-        #     },
-        #     status_code=200
-        #     )
-        # response = Result(
-        #     detail={'VolumeId':volume['VolumeId'],
-        #     "State" : volume["State"],
-        #     },
-        #     status_code=200
-        #     )
+
         return response.make_resp()
     except Exception as e:
         response = Result(
