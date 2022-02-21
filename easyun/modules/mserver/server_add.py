@@ -74,6 +74,10 @@ def add_server(parm):
                 {
                 "ResourceType":"instance",
                 "Tags": [flagTag, nameTag]
+                },
+                {
+                "ResourceType":"volume",
+                "Tags": [flagTag, nameTag]
                 }
             ] 
         )
