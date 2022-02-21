@@ -41,31 +41,38 @@ def operate_svr(operate):
             InstanceIds=operate["svr_ids"]
             )
         operation_results = []
-        for server in servers:
-            # print(server)
-            if operate["action"] == 'start':
-                operation_result = server.start()
-            elif operate["action"] == 'stop':
-                operation_result = server.stop()
-            else:
-                operation_result = server.restart()
-            key = [i for i in operation_result.keys() if i !="ResponseMetadata"][0]
-            res = operation_result[key][0]
-            tmp = {
-                'svrId':res.get('InstanceId'),
-                'currState':res['CurrentState'].get('Name'),
-                'preState':res['PreviousState'].get('Name')
-            }
-            operation_results.append(tmp)
+        if operate["action"] == 'restart':
+            for server in servers:
+                if server.state['Name'] == "running":
+                    server.reboot()
+                else:
+                    raise ValueError('server state is not running')
+            operation_results = "restart server success"
+        else:
+            for server in servers:
+                # print(server)
+                if operate["action"] == 'start':
+                    operation_result = server.start()
+                elif operate["action"] == 'stop':
+                    operation_result = server.stop()
+                key = [i for i in operation_result.keys() if i !="ResponseMetadata"][0]
+                res = operation_result[key][0]
+                tmp = {
+                    'svrId':res.get('InstanceId'),
+                    'currState':res['CurrentState'].get('Name'),
+                    'preState':res['PreviousState'].get('Name')
+                }
+                operation_results.append(tmp)
         print(operation_results)
         resp = Result(
             detail=operation_results,
             status_code=200,
         )
         return resp.make_resp()
-    except Exception:
+    except Exception as e:
         resp = Result(
-            message='{} server failed'.format(operate["action"]), 
+            message=str(e), 
+            # message='{} server failed'.format(operate["action"]), 
             status_code=3004,
             http_status_code=400
         )
