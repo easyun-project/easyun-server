@@ -131,15 +131,16 @@ def get_server_detail(svr_id):
             "privateIp":instance_res["PrivateIpAddress"],
             "publicIp":instance_res["PublicIpAddress"],
         } 
-        svrSecurity = {
-            "sgId":[g['GroupId'] for g in instance_res["SecurityGroups"]],
-            "sgName":[g['GroupName'] for g in instance_res["SecurityGroups"]],
-        }
-        svrTags = {
-            # "":instance_res[""],
-            "tags":instance_res["Tags"],
-            # "":instance_res[""],
-        }
+        svrSecurity = [{"sgId":g['GroupId'],"sgName":g['GroupName']} for g in instance_res["SecurityGroups"]]        # {
+        #     "sgId":[g['GroupId'] for g in instance_res["SecurityGroups"]],
+        #     "sgName":[g['GroupName'] for g in instance_res["SecurityGroups"]],
+        # }
+        svrTags = [t for t in instance_res["Tags"] if t['Key'] not in ["Flag","Name"]]
+        # {
+        #     # "":instance_res[""],
+        #     "tags":instance_res["Tags"],
+        #     # "":instance_res[""],
+        # }
         svrConnect = {
             "userName":['ec2-user'],
             "publicIp":instance_res["PublicIpAddress"],
@@ -148,7 +149,7 @@ def get_server_detail(svr_id):
             "svrProperty":svrProperty,
             "svrConfig":svrConfig,
             "svrDisk":svrDisk,
-            "SvrNetworking":svrNetworking,
+            "svrNetworking":svrNetworking,
             "svrSecurity":svrSecurity,
             "svrTags":svrTags,
             "svrConnect":svrConnect,
