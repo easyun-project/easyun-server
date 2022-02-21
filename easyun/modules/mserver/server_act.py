@@ -11,8 +11,8 @@ from apiflask.validators import Length, OneOf
 from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from . import bp, REGION
-from os import abort
+from .schemas import SvrIdList, SvrOperateOut
+from . import bp
 
 
 class OperateIn(Schema):
@@ -26,13 +26,12 @@ class OperateIn(Schema):
         )   
 
 
-class OperateOut(Schema):
-    svr_ids = List(String) 
+
 
 @bp.post('/action')
 @auth_required(auth_token)
 @input(OperateIn)
-@output(OperateOut, description='Operation finished !')
+# @output(SvrOperateOut, description='Operation finished !')
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
     # print(operate)
@@ -74,16 +73,10 @@ def operate_svr(operate):
 
 
 
-class DeleteIn(Schema):
-    svrIds = List(         #云服务器ID
-        String(),
-        required=True,
-        example=["i-0710xxxxxxxxxxxxx"]
-    )
-
 @bp.delete('')
 @auth_required(auth_token)
-@input(DeleteIn)
+@input(SvrIdList)
+# @output(SvrOperateOut, description='Operation finished !')
 def delete_svr(parm):
     '''删除(Terminate)云服务器'''
     try:

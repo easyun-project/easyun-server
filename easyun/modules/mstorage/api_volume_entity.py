@@ -37,16 +37,16 @@ def get_volume_detail(vol_id, parm):
         dcRegion =  query_dc_region(dcName)
         # 设置 boto3 接口默认 region_name
         boto3.setup_default_session(region_name = dcRegion )
-        
+
         resource_ec2 = boto3.resource('ec2')
-        thisDisk = resource_ec2.Volume(vol_id)
-        # nameTag = [tag['Value'] for tag in thisDisk.tags if tag.get('Key') == 'Name']
+        thisVol = resource_ec2.Volume(vol_id)
+        # nameTag = [tag['Value'] for tag in thisVol.tags if tag.get('Key') == 'Name']
         # 加一个判断，避免tags为空时报错
-        if thisDisk.tags:
-            nameTag = next((tag['Value'] for tag in thisDisk.tags if tag['Key'] == 'Name'), None)
+        if thisVol.tags:
+            nameTag = next((tag['Value'] for tag in thisVol.tags if tag['Key'] == 'Name'), None)
         else:
             nameTag = None
-        attach = thisDisk.attachments
+        attach = thisVol.attachments
         if attach:
             attachPath = attach[0].get('Device')
             insId = attach[0].get('InstanceId')
@@ -58,13 +58,13 @@ def get_volume_detail(vol_id, parm):
         diskType = 'system' if attachPath in SystemDisk else 'user'
 
         volBasic = {
-                'volumeId': thisDisk.volume_id,
+                'volumeId': thisVol.volume_id,
                 # 'tagName': nameTag[0] if len(nameTag) else None,
                 'tagName' : nameTag,
-                'volumeState': thisDisk.state,
-                'createTime': thisDisk.create_time.isoformat(),
+                'volumeState': thisVol.state,
+                'createTime': thisVol.create_time.isoformat(),
                 'attachPath': attachPath,
-                'volumeAz': thisDisk.availability_zone,  
+                'volumeAz': thisVol.availability_zone,  
         }
         volAttach = {
                 'attachSvr': attachSvr,
@@ -72,12 +72,12 @@ def get_volume_detail(vol_id, parm):
                 'diskType': diskType,              
         }
         volConfig = {
-                'volumeType': thisDisk.volume_type,
-                'volumeSize': thisDisk.size,
+                'volumeType': thisVol.volume_type,
+                'volumeSize': thisVol.size,
     #             'usedSize': none,
-                'volumeIops': thisDisk.iops,
-                'volumeThruput': thisDisk.throughput,
-                'isEncrypted': thisDisk.encrypted,                
+                'volumeIops': thisVol.iops,
+                'volumeThruput': thisVol.throughput,
+                'isEncrypted': thisVol.encrypted,                
         }
 
         response = Result(
