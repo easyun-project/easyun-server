@@ -35,22 +35,33 @@ class OperateOut(Schema):
 @output(OperateOut, description='Operation finished !')
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
-    print(operate)
+    # print(operate)
     try:
         resource_ec2 = boto3.resource('ec2')
         servers = resource_ec2.instances.filter(
             InstanceIds=operate["svr_ids"]
             )
-        print(servers)
-        servers.stop()
-        if operate["action"] == 'start':
-            operation_result = servers.start()
-        elif operate["action"] == 'stop':
-            operation_result = servers.stop()
-        else:
-            operation_result = servers.restart()
+        operation_results = []
+        for server in servers:
+            # print(server)
+            if operate["action"] == 'start':
+                operation_result = server.start()
+            elif operate["action"] == 'stop':
+                operation_result = server.stop()
+            else:
+                operation_result = server.restart()
+            key = [i for i in operation_result.keys() if i !="ResponseMetadata"][0]
+            res = operation_result[key][0]
+            tmp = {
+                'svrId':res.get('InstanceId'),
+                'currState':res['CurrentState'].get('Name'),
+                'preState':res['PreviousState'].get('Name')
+            }
+            operation_results.append(tmp)
+        print(operation_results)
         resp = Result(
-            detail={'svr_ids':[i.InstanceId for i in operation_result]},status_code=200,
+            detail=operation_results,
+            status_code=200,
         )
         return resp.make_resp()
     except Exception:
