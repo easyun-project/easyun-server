@@ -301,20 +301,60 @@ def detach_disk(parm):
         response.err_resp()
 
 
-class EipInfoIn(Schema):
-    InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
-    Device = String(required=True, example='/dev/sdg')
+class EipAttachInfoIn(Schema):
+    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
+    publicIp = String(required=True, example='52.70.138.156')
 
 
 @bp.put('/attach/eip')
 @auth_required(auth_token)
-def attach_eip(svr_id):
+@input(EipAttachInfoIn)
+def attach_eip(param):
     '''云服务器关联静态IP(eip)'''
-    pass
+    try:
+        CLIENT = boto3.client('ec2')
+        response = CLIENT.associate_address(
+        InstanceId=param['svrId'],
+        PublicIp=param['publicIp'],
+        )
+        response = Result(
+            detail={'msg':'attach eip success'},
+            status_code=200
+            )   
 
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+class EipDetachInfoIn(Schema):
+    publicIp = String(required=True, example='52.70.138.156')
 
 @bp.put('/detach/eip')
 @auth_required(auth_token)
-def detach_eip(svr_id):
+@input(EipDetachInfoIn)
+def detach_eip(param):
     '''云服务器分离静态IP(eip)'''
-    pass
+    try:
+        CLIENT = boto3.client('ec2')
+        publicIp = CLIENT.describe_addresses(
+            PublicIps = [param['publicIp']],
+        )
+        associationId = publicIp['Addresses'][0]['AssociationId']
+        CLIENT.disassociate_address(
+            AssociationId=associationId,
+            )
+        response = Result(
+            detail={'msg':'detach eip success'},
+            status_code=200
+            )   
+
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
