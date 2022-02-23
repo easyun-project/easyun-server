@@ -358,3 +358,54 @@ def detach_eip(param):
         )
         response.err_resp()
 
+class SgAttachInfoIn(Schema):
+    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
+    secgroupId = String(required=True, example='sg-0bb69bb599b303a1e')
+
+
+@bp.put('/attach/secgroup')
+@auth_required(auth_token)
+@input(SgAttachInfoIn)
+def attach_secgroup(param):
+    '''云服务器关联安全组(secgroup)'''
+    try:
+        ec2 = boto3.resource('ec2')
+        for network_interface in ec2.Instance(param['svrId']).network_interfaces:
+            group_ids = [group['GroupId'] for group in network_interface.groups]
+            group_ids.append(param['secgroupId'])
+            network_interface.modify_attribute(Groups=group_ids)
+        response = Result(
+            detail={'msg':'attach secgroup success'},
+            status_code=200
+            )   
+
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+@bp.put('/detach/secgroup')
+@auth_required(auth_token)
+@input(SgAttachInfoIn)
+def detach_secgroup(param):
+    '''云服务器解绑安全组(secgroup)'''
+    try:
+        ec2 = boto3.resource('ec2')
+        for network_interface in ec2.Instance(param['svrId']).network_interfaces:
+            group_ids = [group['GroupId'] for group in network_interface.groups]
+            if param['secgroupId'] in group_ids:
+                network_interface.modify_attribute(Groups=[group_id for group_id in group_ids if group_id !=param['secgroupId']])
+        response = Result(
+            detail={'msg':'detach secgroup success'},
+            status_code=200
+            ) 
+        return response.make_resp() 
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+
+
