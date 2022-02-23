@@ -1,0 +1,19 @@
+{
+  "name": "easyun_deployment_config",
+  "version": "1.0",
+  "stages": {
+    "dev": {
+      "inventory_tables": {
+        "all": "easyun-inventory-all",
+        "server": "easyun-inventory-server",
+        "database": "easyun-inventory-database",
+        "st_block": "easyun-inventory-stblock",
+        "st_object": "easyun-inventory-stobject",
+        "st_file": "easyun-inventory-stfiles",
+        "nw_subnet": "easyun-inventory-subnet",
+        "nw_secgroup": "easyun-inventory-secgroup",
+        "nw_gateway": "easyun-inventory-gateway"
+      }
+    }
+  }
+}

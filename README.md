@@ -72,24 +72,26 @@ $ flask db upgrade # 运行更新脚本迁移数据库
     │  ├─common                 通用组件
     │  │  ├─auth.py             认证模块
     │  │  ├─models.py           模型定义
+    │  │  ├─schema.py           Schema定义
+    │  │  ├─utils.py            公共组件
     │  │  └─result.py           返回响应体定义
-    │  ├─modules                功能组件
-    │  │  ├─account             账户管理BP
-    │  │  ├─dashboard           监控面板BP
-    │  │  ├─datacenter          数据中心管理BP
-    │  │  ├─mbackup             备份管理BP
-    │  │  ├─mnetwork            网络管理BP
-    │  │  ├─mserver             服务器管理BP
-    │  │  └─mstorage            存储管理BP
-    │  ├─templates          
-    │  │    └─no_need
-    │  └─base.db              数据库文件         
-    ├─keys                      KeyPair缓存   
+    │  ├─libs                   通用组件
+    │  ├─cloud                  云平台功能组件
+    │  ├─base.db                数据库文件       
+    │  └─modules                功能组件
+    │     ├─account             账户管理BP
+    │     ├─dashboard           监控面板BP
+    │     ├─datacenter          数据中心管理BP
+    │     ├─mbackup             备份管理BP
+    │     ├─mnetwork            网络管理BP
+    │     ├─mserver             服务器管理BP
+    │     ├─mstorage            存储管理BP
+    │     └─mdatabase           数据库管理BP      
+    ├─deployment                应用部署   
     ├─logs                      运行日志
     ├─requirements              环境依赖
-    ├─tests
+    ├─migrations                数据库migration文件 
     ├─demo.py                   APIFlask演示项目
     ├─config.py                 配置文件
     └─run.py                    启动脚本
 ```
-
