@@ -27,17 +27,24 @@ def get_object_list(parm):
         boto3.setup_default_session(region_name = dcRegion )
 
         client_s3 = boto3.client('s3') 
-        objects = client_s3.list_objects_v2(Bucket=parm.get('bktName'))['Contents']
-        objectList = []
-        for obj in objects:
-            objDict = {
-                'name' : obj['Key'],
-                'size' : obj['Size'],
-                'storageClass' : obj['StorageClass'],
-                'lastModified' : obj['LastModified'].isoformat()
-            }
-            objectList.append(objDict)
-
+        response = client_s3.list_objects_v2(Bucket=parm.get('bktName'))
+        if 'Contents' in response :
+            objectList = []
+            objects = response['Contents']
+            for obj in objects:
+                objDict = {
+                    'name' : obj['Key'],
+                    'size' : obj['Size'],
+                    'storageClass' : obj['StorageClass'],
+                    'lastModified' : obj['LastModified'].isoformat()
+                }
+                objectList.append(objDict)
+        else :
+            response = Result(
+                detail= 'nullBucket',
+                status_code=200
+            )
+            return response.make_resp()
         response = Result(
             detail= objectList,
             status_code=200
