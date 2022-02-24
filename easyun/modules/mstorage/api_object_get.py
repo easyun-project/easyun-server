@@ -17,17 +17,17 @@ from . import bp
 
 @bp.get('/bucket/object/list')
 #@auth_required(auth_token)
-@input(ObjectListQuery)
+@input(ObjectListQuery, location='query')
 def get_object_list(parm):
     '''获取指定存储桶(Bucket)内对象列表的详细信息'''
-    dcName=parm.get('dc')
+    dcName=parm.get('dcName')
     try:
         dcRegion =  query_dc_region(dcName)
         # 设置 boto3 接口默认 region_name
         boto3.setup_default_session(region_name = dcRegion )
 
         client_s3 = boto3.client('s3') 
-        objects = client_s3.list_objects_v2(Bucket=parm['bktName'])['Contents']
+        objects = client_s3.list_objects_v2(Bucket=parm.get('bktName'))['Contents']
         objectList = []
         for obj in objectList:
             objDict = {
