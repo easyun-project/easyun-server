@@ -16,7 +16,7 @@ from .schemas import ObjectListQuery
 from . import bp
 
 @bp.get('/bucket/object/list')
-#@auth_required(auth_token)
+@auth_required(auth_token)
 @input(ObjectListQuery, location='query')
 def get_object_list(parm):
     '''获取指定存储桶(Bucket)内对象列表的详细信息'''
