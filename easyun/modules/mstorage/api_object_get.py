@@ -28,7 +28,7 @@ def get_bkt_detail(bkt_id, parm):
         boto3.setup_default_session(region_name = dcRegion )
 
         client_s3 = boto3.client('s3') 
-        objects = client_s3.list_objects_v2()['Contents']
+        objects = client_s3.list_objects_v2(Bucket=parm['bktName'])['Contents']
         objectList = []
         for obj in objectList:
             objDict = {
