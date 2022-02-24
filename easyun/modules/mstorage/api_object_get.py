@@ -15,7 +15,7 @@ from easyun.common.result import Result, make_resp, error_resp, bad_request
 from .schemas import ObjectListQuery
 from . import bp
 
-@bp.get('/bucket/object/<bkt_id>')
+@bp.get('/bucket/object/list')
 #@auth_required(auth_token)
 @input(ObjectListQuery)
 def get_object_list(parm):
