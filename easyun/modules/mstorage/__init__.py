@@ -14,4 +14,4 @@ FLAG = "Easyun"
 
 REGION = "us-east-1"
 
-from . import api_mock, api_bucket_get, api_bucket_mgt, api_bucket_entity ,api_object_mgt ,api_volume_get, api_volume_mgt, api_volume_entity
+from . import api_mock, api_bucket_get, api_bucket_mgt, api_bucket_entity ,api_object_mgt ,api_object_get ,api_volume_get, api_volume_mgt, api_volume_entity
