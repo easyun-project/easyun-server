@@ -29,7 +29,7 @@ def get_object_list(parm):
         client_s3 = boto3.client('s3') 
         objects = client_s3.list_objects_v2(Bucket=parm.get('bktName'))['Contents']
         objectList = []
-        for obj in objectList:
+        for obj in objects:
             objDict = {
                 'name' : obj['Key'],
                 'size' : obj['Size'],
