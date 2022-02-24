@@ -17,8 +17,7 @@ class BktNameQuery(Schema):
     )
 class ObjectListQuery(Schema):
     bktName = String(
-        required=True, 
-        validate=Length(0, 30)
+        required=True
     )
     dcName = String(
         required=True,
