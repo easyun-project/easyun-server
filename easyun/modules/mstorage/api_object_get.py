@@ -12,14 +12,13 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.utils import len_iter, query_dc_region
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun.common.schemas import DcNameQuery
-from .schemas import BktNameQuery
+from .schemas import ObjectListQuery
 from . import bp
 
 @bp.get('/bucket/object/<bkt_id>')
 #@auth_required(auth_token)
-@input(BktNameQuery)
-def get_object_list(bkt_id, parm):
+@input(ObjectListQuery)
+def get_object_list(parm):
     '''获取指定存储桶(Bucket)内对象列表的详细信息'''
     dcName=parm.get('dc')
     try:
@@ -28,7 +27,7 @@ def get_object_list(bkt_id, parm):
         boto3.setup_default_session(region_name = dcRegion )
 
         client_s3 = boto3.client('s3') 
-        objects = client_s3.list_objects_v2(Bucket=bkt_id)['Contents']
+        objects = client_s3.list_objects_v2(Bucket=parm['bktName'])['Contents']
         objectList = []
         for obj in objectList:
             objDict = {

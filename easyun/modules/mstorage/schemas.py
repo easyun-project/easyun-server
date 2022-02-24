@@ -15,7 +15,15 @@ class BktNameQuery(Schema):
         required=True, 
         validate=Length(0, 30)
     )
-
+class ObjectListQuery(Schema):
+    bktName = String(
+        required=True, 
+        validate=Length(0, 30)
+    )
+    dcName = String(
+        required=True,
+        example='Easyun'
+    )
     
 class newVolume(Schema):
     az = String(required=True)
