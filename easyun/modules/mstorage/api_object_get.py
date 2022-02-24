@@ -16,10 +16,10 @@ from easyun.common.schemas import DcNameQuery
 from .schemas import BktNameQuery
 from . import bp
 
-@bp.get('/bucket/object/<bkt_id>')
+@bp.get('/bucket/object/list')
 #@auth_required(auth_token)
-@input(DcNameQuery, location='query')
-def get_bkt_detail(bkt_id, parm):
+@input(BktNameQuery)
+def get_bkt_detail(parm):
     '''获取指定存储桶(Bucket)内对象列表的详细信息'''
     dcName=parm.get('dc')
     try:
