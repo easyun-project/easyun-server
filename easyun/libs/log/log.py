@@ -36,7 +36,7 @@ class EasyunLogging:
         """初始化应用的根logger"""
         if not os.path.exists('logs'):
             os.mkdir('logs')
-        file_handler = RotatingFileHandler(Main_API_Log, maxBytes=10240, backupCount=10)
+        file_handler = RotatingFileHandler(Main_API_Log, maxBytes=1024*1000*1000*10, backupCount=10)
         file_handler.setFormatter(self.formatter)
         file_handler.setLevel(Level_Dict[level])
 
