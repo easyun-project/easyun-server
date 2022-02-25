@@ -31,8 +31,8 @@ cors = CORS()
 migrate = Migrate()
 celery = FlaskCelery(
         __name__,
-        backend=Config.CELERY_RESULT_BACKEND,
-        broker=Config.CELERY_BROKER_URL
+        broker=Config.CELERY_broker_url,
+        backend=Config.result_backend
     )
 log = EasyunLogging()
 
@@ -100,7 +100,7 @@ def register_extensions(app: APIFlask):
     log.init_app(app)
 
     with app.app_context():
-        #先建表避免account 数据写入失败
+        # 初始化数据库
         from easyun.common.models import User, Account, Datacenter
         db.create_all()
         if db.engine.url.drivername == 'sqlite':

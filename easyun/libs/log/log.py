@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-  @author:  shui
   @file:    log.py
-  @time:    2022/1/22 21:42
   @desc:
+  @time:    2022/1/22 21:42
+  @author:  shui
 """
 import os
 import logging
@@ -12,6 +12,8 @@ from logging.handlers import RotatingFileHandler
 from flask.logging import default_handler
 from functools import wraps
 
+
+Main_API_Log = 'logs/easyun_api.log'
 Formatter = '%(asctime)s %(name)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 Level_Dict = {
     'debug': logging.DEBUG,
@@ -23,7 +25,7 @@ Level_Dict = {
 
 class EasyunLogging:
     """
-    易云公共日志模块，支持flask初始化
+    易云公共日志模块, 支持flask初始化
     """
     def __init__(self, app_name='easyun', formatter=Formatter):
         """初始化"""
@@ -34,7 +36,7 @@ class EasyunLogging:
         """初始化应用的根logger"""
         if not os.path.exists('logs'):
             os.mkdir('logs')
-        file_handler = RotatingFileHandler('logs/easyun_api.log', maxBytes=10240, backupCount=10)
+        file_handler = RotatingFileHandler(Main_API_Log, maxBytes=10240, backupCount=10)
         file_handler.setFormatter(self.formatter)
         file_handler.setLevel(Level_Dict[level])
 
@@ -68,7 +70,7 @@ class EasyunLogging:
 
 
     def api_logger(self, logger, level='error'):
-        """记录api的进出口日志的装饰器，默认error级别"""
+        """记录api的进出口日志的装饰器, 默认error级别"""
         def decorate(func):
             @wraps(func)
             def wrapper(*args, **kwargs):

@@ -10,6 +10,14 @@ from datetime import date, datetime
 from .models import Datacenter, Account
 
 
+def gen_dc_tag(dc, type='flag'):
+    '''生成dcName对应的tag标签'''
+    if type == 'flag':
+        dcTag = {"Key": "Flag", "Value": dc}
+    elif type == 'filter':
+        dcTag = {'Name': 'tag:Flag', 'Values': [dc]}
+    return dcTag
+
 def query_dc_list():
     '''从本地数据库查询datacenter名单'''
     try:
@@ -29,7 +37,18 @@ def query_dc_region(dc):
     except Exception as ex:
         return 'Datacenter not existed, kindly create it first!'
 
-   
+
+def set_boto3_region(dc):
+    '''设置Boto3会话默认region,返回region name'''
+    try:
+        thisDC:Datacenter = Datacenter.query.filter_by(name = dc).first()
+        # 设置 boto3 接口默认 region_name
+        boto3.setup_default_session(region_name = thisDC.region )   
+        return thisDC.region
+    except Exception as ex:
+        return 'Datacenter not existed, kindly create it first!'
+
+
 def query_svr_name(svr_id):
     '''通过instanceID 查询服务器 tag:Name '''
     resource_ec2 = boto3.resource('ec2')

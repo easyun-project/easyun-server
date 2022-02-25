@@ -5,39 +5,6 @@
   @auth:    aleck
 """
 
-import boto3
-
-
-'''支持的Instance Tpyes列表'''
-# 临时使用，后续可删除
-# Instance_Types = [
-#     {
-#         'useCases': 'general',
-#         'catdesCode': 'GP',    # General Purpose
-#         'familyList': ['t2', 't3', 't3a', 'm4', 'm5', 'm5a', 'm6', 'm6a', 't4g', 'm6g', 'a1']
-#     }, 
-#     {
-#         'useCases': 'compute',
-#         'catdesCode': 'CO',    # Compute Optimized
-#         'familyList': ['c4', 'c5', 'c5a', 'c6i', 'c6g', 'c7g']
-#     }, 
-#     {
-#         'useCases': 'memory',
-#         'catdesCode': 'MO',    # Memory Optimized
-#         'familyList': ['r4', 'r5', 'r5a', 'r5b', 'r5n', 'r5dn', 'r6i', 'x1', 'z1d', 'x2idn', 'x2iedn', 'x2iezn', 'R6g','X2g']
-#     }, 
-#     {
-#         'useCases': 'storage',
-#         'catdesCode': 'SO',    # Storage Optimized
-#         'familyList': ['d2', 'd3', 'd3en', 'i3', 'i3en', 'i4i', 'Is4gen', 'Im4gn', 'h1']
-#     },    
-#     {
-#         'useCases': 'accelerate',
-#         'catdesCode': 'AC',    # Accelerated Computing
-#         'familyList': ['p2', 'p3', 'p4', 'dl1', 'inf1', 'g3', 'g4dn', 'g4ad', 'g5', 'g5g', 'f1', 'vt1']
-#     }
-# ]
-
 
 '''EC2 Instance Family 列表'''
 # 后续放在配置文件中便于维护
@@ -151,4 +118,3 @@ def get_familyDes(parm):
             return familyDes[0]
     if not familyDes:
         return parm+' Instance'
-

@@ -20,8 +20,12 @@ Easyun api docs:
     '''
 
     # celery for async
-    CELERY_BROKER_URL = 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+    # CELERY_broker_url = 'redis://localhost:6379/0'
+    # result_backend = 'redis://localhost:6379/1'
+
+    # Using SQLAlchemy Broker for local development
+    CELERY_broker_url = 'sqla+sqlite:///celery/borker.db'
+    result_backend = 'db+sqlite:///celery/results.db'
 
     # openapi.servers
     SERVERS = [

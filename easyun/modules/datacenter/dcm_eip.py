@@ -13,6 +13,7 @@ from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
+from easyun.common.utils import gen_dc_tag
 from .schemas import DataCenterEIPIn,DataCenterNewEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
 
@@ -27,7 +28,8 @@ def list_eip_detail(param):
     # dc_name=request.args.get("vpc_idp")
     # dcTag = {"Key": "Flag", "Value": dcName}
 
-    dcName=param.get('dc')  
+    dcName=param.get('dc')
+    
     thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
     # if (thisDC is None):
     #         response = Result(detail ={'Result' : 'Errors'}, message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
@@ -37,7 +39,7 @@ def list_eip_detail(param):
     try:
         eips = client_ec2.describe_addresses(
             Filters=[
-                {'Name': 'tag:Flag', 'Values': [dcName]},             
+                gen_dc_tag(dcName, 'filter'),
             ]
         )['Addresses']
 
@@ -85,7 +87,7 @@ def get_eip_detail(pub_ip, param):
         client_ec2 = boto3.client('ec2', region_name= thisDC.region)
         eips = client_ec2.describe_addresses(
             Filters=[
-                { 'Name': 'tag:Flag', 'Values': [dcName] },             
+                gen_dc_tag(dcName, 'filter'),
             ],
             PublicIps = [pub_ip],
             # AllocationIds=[ eip_id ]

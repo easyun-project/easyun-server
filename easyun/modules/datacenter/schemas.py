@@ -1,17 +1,163 @@
-#!/usr/bin/env python
 # encoding: utf-8
 """
-  @author:  shui
-  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited. 
-  @file:    schemas.py
-  @desc:
+  @module:  Datacenter module Schema
+  @desc:    Datacenter Input/output schema
+  @author:  shui, aleck
+  @license: (C) Copyright 2021, Node Supply Chain Manager Corporation Limited.    
 """
+
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
-from apiflask.fields import Integer, String, List, Dict
+from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean, Nested
 from apiflask.validators import Length, OneOf
-from marshmallow.fields import Nested
 
 
+# 定义VPC 参数的格式
+class VpcParm(Schema):
+    cidrBlock = String(               #VPC IPv4 address range
+        required=True, validate=Length(0, 20),
+        example="10.15.1.0/24"
+    )
+    cidrBlockv6 = String(             #VPC IPv6 address range
+        required=False, validate=Length(0, 128),
+    )
+    vpcTenancy = String(
+        required=False, validate=OneOf('Default', 'Dedicated'),
+    )
+
+# 定义Security Group参数的格式
+class SecGroupParm(Schema):
+    tagName = String(
+        required=True,
+        validate=Length(0, 20)
+    )
+    enablePing = Boolean(required=True, example=False)
+    enableSSH = Boolean(required=True, example=False)
+    enableRDP = Boolean(required=True, example=False)
+
+
+# 定义Subnet参数的格式 (just for test)
+class SubnetParm(Schema):
+    tagName = String(
+        required=True,
+        validate=Length(0, 40),
+        example="Public subnet 1"
+    )
+    cidrBlock = String(
+        required=True,
+        validate=Length(0, 20),
+        example="10.15.1.0/24"
+    )
+    azName = String(
+        required=True,
+        validate=Length(0, 20),
+        example="us-east-1a"
+    )    
+    gwName = String(
+        required=True,
+        validate=Length(0, 20),
+        example="easyun-igw"
+    )
+    routeTable = String(
+        required=True,
+        validate=Length(0, 30),
+        example="easyun-rtb-igw"
+    )
+    # subnetType = String(
+    #     validate=OneOf(['public', 'private']),
+    #     example="public"
+    # )
+
+# 定义新建Datacenter 传参格式
+class CreateDcParms(Schema):
+    dcName = String(required=True,   #Datacenter name
+        validate=Length(0, 60),
+        example="Easyun"
+    )
+    dcRegion = String(required=True, 
+        validate=Length(0, 20),
+        example="us-east-1"
+    )
+             
+    vpcCidr = Nested(VpcParm,      #VPC IP address range
+        required=True,
+        example={
+            "cidrBlock": "10.15.0.0/16",
+        }
+    )
+    
+    pubSubnet1 = Nested(SubnetParm, required=True,
+        example={
+            "tagName": "Public subnet 1",
+            "azName": "us-east-1b",
+            "cidrBlock": "10.15.1.0/24",
+            "gwName": "easyun-igw",            
+            "routeTable": "easyun-rtb-igw"
+        }
+    )
+    pubSubnet2 = Nested(SubnetParm, required=True,
+        example={
+            "tagName": "Public subnet 2",
+            "azName": "us-east-1c",
+            "cidrBlock": "10.15.2.0/24",
+            "gwName": "easyun-igw",                
+            "routeTable": "easyun-rtb-igw"
+        }
+    )
+    priSubnet1 = Nested(SubnetParm, required=True,
+        example={
+            "tagName": "Private subnet 1",
+            "azName": "us-east-1c",
+            "cidrBlock": "10.15.21.0/24",
+            "gwName": "easyun-natgw",
+            "routeTable": "easyun-rtb-nat"
+        }
+    )
+    priSubnet2 = Nested(SubnetParm, required=True,
+        example={
+            "tagName": "Private subnet 2",
+            "azName": "us-east-1c",
+            "cidrBlock": "10.15.22.0/24",
+            "gwName": "easyun-natgw",                
+            "routeTable": "easyun-rtb-nat"
+        }
+    )
+
+    securityGroup0 = Nested(SecGroupParm, required=True,
+        example={   
+            "tagName": "easyun-sg-default",
+            "enablePing": True,
+            "enableSSH": True,
+            "enableRDP": False
+        }
+    )
+    securityGroup1 = Nested(SecGroupParm, required=True,
+        example={   
+            "tagName": "easyun-sg-webapp",
+            "enablePing": True,
+            "enableSSH": True,
+            "enableRDP": False
+        }
+    )
+    securityGroup2 = Nested(SecGroupParm, required=True,
+        example={   
+            "tagName": "easyun-sg-database",
+            "enablePing": True,
+            "enableSSH": True,
+            "enableRDP": False
+        }
+    )
+
+
+# 定义api返回数据格式
+class CreateDcResult(Schema):
+    name = String()
+    cloud= String()     
+    region = String()
+    vpc_id = String()
+    create_date = DateTime()
+
+
+# ------------------------------------------------------ #
 class AddDatacenter(Schema):
     region = String(required=True, validate=Length(0, 20))     #VPC name
     vpc_cidr = String(required=True, validate=Length(0, 20))     #IP address range
@@ -29,9 +175,9 @@ class DcParmSubnetSchema(Schema):
     """
     DcParm嵌套Schema
     {
-                "az": "us-east-1a",
-                "cidr": "10.10.1.0/24",
-                "gateway": "easyun-igw",
+                "azName": "us-east-1a",
+                "cidrBlock": "10.10.1.0/24",
+                "gwName": "easyun-igw",
                 "name": "Public subnet 1",
                 "routeTable": "easyun-route-igw"
                 }

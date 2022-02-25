@@ -1,414 +1,553 @@
 # -*- coding: utf-8 -*-
 """
-  @Description: DataCenter Management - action: start, restart, stop, delete; and get status
-  @LastEditors: 
-  @file:    datacenter_add.py
-  @desc:    DataCenter Creation module
+  @module:  DataCenter Creation
+  @desc:    create some datacenter basic service, like vpc, subnet, securitygroup, etc.
+  @auth:    aleck
 """
 
-from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
-from apiflask.fields import Integer, String, List, Dict
-from apiflask.validators import Length, OneOf
-from celery.result import AsyncResult
-from flask import current_app, jsonify, request
-from datetime import date, datetime
-from easyun.common.auth import auth_token
-from easyun.common.models import Datacenter, Account
-from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun import db, FLAG, celery
+import imp
 import boto3
 import os, time
-import json
-from . import bp, bp, DC_REGION, DC_NAME, VERBOSE,TagEasyun,DryRun
-from  .datacenter_sdk import datacentersdk,app_log
-from .tasks import add_datacenter_task
-
-# from . import vpc_act
-from .schemas import DcParmIn, AddDatacenter, DataCenterResultOut
-
-# from logging.handlers import RotatingFileHandler
-import logging
-from logging.handlers import RotatingFileHandler
-from flask import current_app
-
-
-
-# logger = logging.getLogger('test')
-
-logger = logging.getLogger()
-formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
-#formatter='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-file_handler = RotatingFileHandler('logs/easyun_api1.log', maxBytes=10240, backupCount=10)
-file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.INFO)
-
-# logger = logging.getLogger('test')
-# logger.setLevel(logging.DEBUG)
-# #logger.setLevel(logging.DEBUG)
-# formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
-file_handler1 = logging.FileHandler('logs/easyun_api3.log')
-file_handler1.setLevel(logging.INFO)
-file_handler1.setFormatter(formatter)
-
-# define RotatingFileHandler，max 7 files with 100K per file
-
-logger.addHandler(file_handler1)
-logger.addHandler(file_handler)
-
-a = datacentersdk()
-# 云服务器参数定义
-NewDataCenter = {
-    'region': 'us-east-2',
-    'vpc_cidr' : '10.10.0.0/16',
-     "priSubnet1": {
-        "az": "ap-northeast-1a",
-        "cidr": "10.10.21.0/24",
-        "gateway": "easyun-nat",
-        "name": "Private subnet 1",
-        "routeTable": "easyun-route-nat"
-      },
-      "priSubnet2": {
-        "az": "ap-northeast-1b",
-        "cidr": "10.10.22.0/24",
-        "gateway": "easyun-nat",
-        "name": "Private subnet 2",
-        "routeTable": "easyun-route-nat"
-      },
-      "pubSubnet1": {
-        "az": "ap-northeast-1a",
-        "cidr": "10.10.1.0/24",
-        "gateway": "easyun-igw",
-        "name": "Public subnet 1",
-        "routeTable": "easyun-route-igw"
-      },
-      "pubSubnet2": {
-        "az": "ap-northeast-1b",
-        "cidr": "10.10.2.0/24",
-        "gateway": "easyun-igw",
-        "name": "Public subnet 2",
-        "routeTable": "easyun-route-igw"
-      },
-    'key' : "key_easyun_dev",
-    "securityGroup1": {
-        "eanbleRDP": "true",
-        "enablePing": "true",
-        "enableSSH": "true",
-        "name": "easyun-sg-default"
-      },
-      "securityGroup2": {
-        "eanbleRDP": "true",
-        "enablePing": "true",
-        "enableSSH": "true",
-        "name": "easyun-sg-webapp"
-      },
-      "securityGroup3": {
-        "eanbleRDP": "true",
-        "enablePing": "true",
-        "enableSSH": "true",
-        "name": "easyun-sg-database"
-      },
-    'tag_spec' : [
-        {
-        "ResourceType":"instance",
-        "Tags": [
-                {"Key": "Flag", "Value": 'Easyun'},
-                {"Key": "Name", "Value": 'test-from-api'}
-            ]
-        }
-        ]
-}
+from datetime import date, datetime
+from flask import current_app,jsonify, request
+from apiflask import Schema, input, output, doc, abort, auth_required
+from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean
+from apiflask.validators import Length, OneOf
+from celery.result import ResultBase, AsyncResult
+from easyun import db, log, celery
+from easyun.common.auth import auth_token
+from easyun.common.models import Datacenter, Account
+from easyun.common.utils import gen_dc_tag
+from easyun.common.result import Result, make_resp, error_resp, bad_request
+from .schemas import CreateDcParms, CreateDcResult
+from . import bp, DC_REGION, DC_NAME, DryRun
 
 
+logger = log.create_logger('dcm')
 
-class DcResultOut(Schema):
-    region_name = String()
-    vpc_id = String()
-
-@bp.post('/add_dc')
-#@auth_required(auth_token)
-@input(DcParmIn)
-# @output(DcResultOut, 201, description='add A new Datacenter')
-def add_datacenter(data):
-    '''新增 Datacenter'''
-    # create easyun vpc
-    # create 2 x pub-subnet
-    # create 2 x pri-subnet
-    # create 1 x easyun-igw (internet gateway)
-    # create 1 x easyun-nat (nat gateway)
-    # create 1 x easyun-route-igw
-    # create 1 x easyun-route-nat
-    # create 3 x easyun-sg-xxx
-    # create 1 x key-easyun-user (默认keypair)
-    # print(data)
-    # logger.debug(data)
-    region = data["region"]
-    vpc_cidr = data["vpc_cidr"]
-    public_subnet_1 = data["pubSubnet1"]
-    public_subnet_2 = data["pubSubnet2"]
-    private_subnet_1 = data["priSubnet1"]
-    private_subnet_2 = data["priSubnet2"]
-    keypair = data["keypair"]
-
-    #a = datacentersdk()
-
-    vpc_resource = boto3.resource('ec2', region_name=region)
-    ec2 = boto3.client('ec2', region_name=region)
-    # step 1: create VPC
-    # TagEasyunVPC= [{'ResourceType':'vpc','Tags': TagEasyun}]
-
-    # query account id from DB (only one account for both phase 1 and 2) ????
-    
-    TagEasyunVPC= [ 
-        {'ResourceType':'vpc', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": 'Easyun-vpc'}
-            ]
-        }
-    ]
-   
-    try:
-        vpc = vpc_resource.create_vpc(CidrBlock=vpc_cidr, TagSpecifications=TagEasyunVPC,DryRun=DryRun)
-        logger.info('VPC ID= '+ vpc.id )
-        svc = {
-        'region_name': DC_REGION,
-        'vpc_id': vpc.id,
-        }
-
-        if datacentersdk.add_VPC_db(vpc.id,DC_REGION) == True:
-            logger.info('db operation is ok') 
-        else:
-            logger.info('db operation failed') 
-            response = Result(message='DB Insert failed', status_code=2001,http_status_code=400)
-            response.err_resp()   
+@bp.post('')
+@auth_required(auth_token)
+@input(CreateDcParms)
+@output(CreateDcResult)
+@log.api_logger(logger)
+def create_dc_sync(parm):
+    '''创建 Datacenter 及基础资源'''
+    newDc = create_dc_task.apply_async(args=[parm, ])
+    resp = Result(
+        detail=newDc, 
+        status_code=200
+    )
+    return resp.make_resp()
 
 
-        logger.info('create_vpc1' + str(svc))
-        # response = Result(detail = svc, status_code=3001)
-        # return response.make_resp()
-    except Exception as e:
-        # response = Result(message='Datacenter VPC creation failed, maximum VPC reached', status_code=2001,http_status_code=400)
-        response = Result(message=str(e), status_code=2001, http_status_code=400)
-        logger.error('Datacenter VPC creation failed, maximum VPC reached')
-        response.err_resp()   
- 
-    # step 2: create Internet Gateway
-    # Create and Attach the Internet Gateway
-    # TagEasyunIG= [{'ResourceType':'internet-gateway','Tags': TagEasyun}]
-
-    TagEasyunIG= [ 
-        {'ResourceType':'internet-gateway', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": data["pubSubnet1"][0]['gateway']}
-            ]
-        }
-    ]
-    try:
-        igw = ec2.create_internet_gateway(TagSpecifications=TagEasyunIG,DryRun=DryRun)
-        logger.info(f'Internet gateway created with: {json.dumps(igw, indent=4)}')
-        vpc.attach_internet_gateway(InternetGatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun)
-        logger.info('Internet Gateway ID= '+ igw['InternetGateway']['InternetGatewayId'])
-        
-    except Exception:
-        response = Result(message='Datacenter internet-gateway creation failed, maximum  reached', status_code=2001,http_status_code=400)
-        logger.error('Datacenter internet-gateway creation failed, maximum  reached')
-        response.err_resp()  
-        return
-
-    # Create a route table and a public route to Internet Gateway for public subnet
-    # TagEasyunRouteTable= [{'ResourceType':'route-table','Tags': TagEasyun}]
-    TagEasyunRouteTable= [ 
-        {'ResourceType':'route-table', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": data["pubSubnet1"][0]['routeTable']}
-            ]
-        }
-    ]
-    try:
-        igw_route_table = vpc.create_route_table(TagSpecifications=TagEasyunRouteTable,DryRun=DryRun)
-        route = igw_route_table.create_route(
-            DestinationCidrBlock='0.0.0.0/0',
-            GatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun
-        )
-        logger.info('Route Table ID= '+ igw_route_table.id)
-    except Exception:
-        response = Result(message='Datacenter igw_route_table creation failed, maximum  reached', status_code=2001,http_status_code=400)
-        logger.error('Datacenter igw_route_table creation failed, maximum  reached')
-        response.err_resp() 
-        return
-
-    # step 3: create 2 pub-subnet
-
-    datacentersdk.add_subnet(ec2,vpc,igw_route_table,data["pubSubnet1"])
-    datacentersdk.add_subnet(ec2,vpc,igw_route_table,data["pubSubnet2"])
-
-# Create a route table and a public route to NAT Gateway for private subnet
-    TagEasyunRouteTable= [ 
-        {'ResourceType':'route-table', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": data["priSubnet1"][0]['routeTable']}
-            ]
-        }
-    ]
-    try:
-        nat_route_table = vpc.create_route_table(TagSpecifications=TagEasyunRouteTable,DryRun=DryRun)
-        route = nat_route_table.create_route(
-            DestinationCidrBlock='0.0.0.0/0',
-            GatewayId=igw['InternetGateway']['InternetGatewayId'],DryRun=DryRun
-        )
-        logger.info('Route Table ID= '+ nat_route_table.id)
-    except Exception:
-        response = Result(message='Datacenter nat_route_table creation failed', status_code=2001,http_status_code=400)
-        logger.error('Datacenter nat_route_table creation failed')
-        response.err_resp() 
-        return
-
-    # create 2 private subnet
-    
-    natSubnetId=datacentersdk.add_subnet(ec2,vpc,nat_route_table,data["priSubnet1"])
-
-    datacentersdk.add_subnet(ec2,vpc,nat_route_table,data["priSubnet2"])
-
-
-  # step 2: create NAT Gateway and allocate EIP
-    # allocate IPV4 address for NAT gateway
-
-    TagEasyunEIP= [ 
-        {'ResourceType':'elastic-ip', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": "Easyun-EIP"}
-            ]
-        }
-    ]
-
-    try:
-        # Allocate EIP
-        logger.info('Entering applying EIP')
-        eip = ec2.allocate_address(Domain='vpc',DryRun=DryRun)
-        logger.info(eip['PublicIp'])
-    except Exception as e:
-        response = Result(message='Datacenter allocate EIP failed', status_code=2001,http_status_code=400)
-        logger.error(e)
-        response.err_resp()   
-        return
-
-    TagEasyunNATGateway= [ 
-        {'ResourceType':'natgateway', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": data["priSubnet1"][0]['gateway']}
-            ]
-        }
-    ]
-        # TagEasyunNATGateway= [{'ResourceType':'natgateway','Tags': TagEasyun}]
-    
-    try:    
-        logger.info('Entering applying NAT Gateway and it will take about 1 min, Be patient!!!')
-
-        response = ec2.create_nat_gateway(
-            AllocationId=eip['AllocationId'],
-            SubnetId=natSubnetId,
-            TagSpecifications=TagEasyunNATGateway,
-            ConnectivityType='public',
-            DryRun=DryRun)
-
-        nat_gateway_id = response['NatGateway']['NatGatewayId']
-        logger.info(nat_gateway_id)
-        
-        # wait until the NAT gateway is available
-        waiter = ec2.get_waiter('nat_gateway_available')
-        waiter.wait(NatGatewayIds=[nat_gateway_id])
-    except Exception:
-        response = Result(message='Datacenter NAT creation failed', status_code=2001,http_status_code=400)
-        logger.error('Datacenter NAT creation failed')
-        response.err_resp()   
-
-    # Step 5-1:  create security group easyun-sg-default
-    # create security group allow SSH inbound rule through the VPC enable ssh/rdp/ping
-
-    TagEasyunSecurityGroup= [{'ResourceType':'security-group','Tags': TagEasyun}]
-
-
-    logger.info('Entering applying security group'+data["securityGroup1"][0]['name'])
-    secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,data["securityGroup1"][0])
-    logger.info('secure_group1= '+secure_groupid)
-
-    secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,data["securityGroup2"][0])
-    logger.info('secure_group1= '+secure_groupid)
-
-    secure_groupid=datacentersdk.add_VPC_security_group(ec2,vpc,data["securityGroup3"][0])
-    logger.info('secure_group1= '+secure_groupid)
-
-    # secure_group1 = ec2.create_security_group(GroupName=sg, Description=sg_dict[sg], VpcId=vpc.id,TagSpecifications=TagEasyunSecurityGroup)
-    # ec2.authorize_security_group_ingress(
-    #     GroupId=secure_group1['GroupId'],
-    #     IpPermissions=IpPermissions1)
-    # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=22, ToPort=22)
-    # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=3389, ToPort=3389)
-    # secure_group1.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='icmp', FromPort=-1, ToPort=-1)
-    
-
-    # create key pairs
-    # TagEasyunKeyPair= [{'ResourceType':'key-pair','Tags': TagEasyun}]
-
-    TagEasyunKeyPair= [ 
-        {'ResourceType':'key-pair', 
-            "Tags": [
-            {"Key": "Flag", "Value": "Easyun"},
-            {"Key": "Name", "Value": data['keypair']}
-            ]
-        }
-    ]
-    
-    logger.info('Entering applying key pairs')
-
-    try:
-        new_keypair = vpc_resource.create_key_pair(KeyName=keypair,TagSpecifications=TagEasyunKeyPair,DryRun=DryRun)
-        # keypair = 'key-easyun-user'
-        if not os.path.exists('keys'):
-            os.mkdir('keys')
-        
-        keypairfilename=keypair+'.pem'
-        
-        with open(os.path.join('./keys/',keypairfilename)) as file:
-            file.write(new_keypair.key_material)
-    except Exception as e:
-        response = Result( message='Create key pairs failed due to already existed', status_code=2001,http_status_code=400)
-        logger.info(e)
-        
-
-    # a.add_VPC_db(vpc,REGION)
-    logger.info('create_vpc completion' + str(svc))
-    # svc = {
-    #     'region_name': REGION,
-    #     'vpc_id': 'easyrun'
-    # }
-    response = Result(detail = svc, status_code=200)
-    return response.make_resp()
-
-@bp.post('/add-dc-async')
-#@auth_required(auth_token)
-@input(DcParmIn)
-def add_datacenter_async(data):
-    res = add_datacenter_task.apply_async(args=[data, ])
-    return Result(detail=res.id, status_code=2001).make_resp()
-
-@bp.get('/add-dc-ret')
-def get_result():
-    celery_id = request.args.get('id')
-    res = AsyncResult(celery_id, app=celery)
-    if res.ready():
-        ret = res.result
+@bp.get('/result')
+@auth_required(auth_token)
+def fetch_task_state():
+    '''获取创建 Datacenter 任务执行状态'''
+    request_id = request.args.get('id')
+    task = AsyncResult(request_id, app=celery)
+    if task.ready():
+        state = task.result
         return Result(
-            detail=ret.get('msg'),
-            status_code=ret.get('code')
+            detail=state.get('msg'),
+            status_code=state.get('code')
         ).make_resp()
     else:
         return Result(
-            detail='处理中。。。',
+            detail='Creating ...',
             status_code=2000
         ).make_resp()
+
+
+@celery.task()
+def create_dc_task(parm):
+    '''创建 Datacenter 异步任务
+    :return {msg: code: http_code:默认200}    
+    '''
+    
+    # Datacenter basic attribute difine
+    dcName = parm['dcName']
+    dcRgeion = parm['dcRegion']
+    # Mandatory tag:Flag for all resource
+    flagTag = gen_dc_tag(dcName)
+    
+    resource_ec2 = boto3.resource('ec2', region_name = dcRgeion)
+    client_ec2 = boto3.client('ec2', region_name = dcRgeion)
+
+    # Step 0:  Check DC existed or not, if DC existed, need reject
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+    if (thisDC is not None):
+        resp = Result(
+            message='Datacenter already existed',
+            status_code=2001,
+            http_status_code=400
+        )
+        resp.err_resp()   
+
+
+    # Step 1: create easyun vpc, including:
+    # 1* main route table
+    # 1* default security group
+    # 1* default Network ACLs
+    try:
+        nameTag = {"Key": "Name", "Value": "VPC-"+dcName}
+        vpc = resource_ec2.create_vpc(
+            CidrBlock= parm['cidrBlock'],
+            TagSpecifications = [
+                {
+                    'ResourceType':'vpc', 
+                    "Tags": [flagTag, nameTag]
+                }
+            ]
+        )
+        stage = vpc.id+' created'
+        logger.info(stage)
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2010)
+        resp.err_resp()
+        
+    
+    # step 2: create Internet Gateway
+    try:
+        nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['gateway']}
+        igw = resource_ec2.create_internet_gateway(
+            DryRun = DryRun,
+            TagSpecifications = [
+                {
+                    'ResourceType':'internet-gateway', 
+                    'Tags': [flagTag, nameTag]
+                }
+            ]
+        )
+        # waiter = client_ec2.get_waiter('internet_gateway_exists')
+        # waiter.wait(InternetGatewayIds=[igw.id])   
+        # got Error：ValueError: Waiter does not exist: internet_gateway_exists 
+        stage = igw.id+' created'
+        logger.info(stage)
+
+        # and Attach the igw to vpc
+        igw.attach_to_vpc(
+            DryRun = DryRun,
+            VpcId = vpc.id
+        )
+        stage = igw.id+" attached to "+vpc.id
+        logger.info(stage)
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2020)
+        resp.err_resp()
+
+
+    # step 3: create 2x Public Subnets
+    try:
+        nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['tagName']}
+        pubsbn1 = resource_ec2.create_subnet(
+            DryRun=DryRun,
+            CidrBlock= parm['pubSubnet1']['cidr'],
+            AvailabilityZone = parm['pubSubnet1']['az'],
+            VpcId = vpc.id,
+            TagSpecifications = [
+                {
+                    'ResourceType':'subnet', 
+                    'Tags': [flagTag, nameTag]
+                }
+            ]
+        )
+        stage = pubsbn1.id+' created'
+        logger.info(stage)
+        
+        nameTag = {"Key": "Name", "Value": parm['pubSubnet2']['tagName']}
+        pubsbn2 = resource_ec2.create_subnet(
+            DryRun=DryRun,
+            CidrBlock= parm['pubSubnet2']['cidr'],
+            AvailabilityZone = parm['pubSubnet2']['az'],
+            VpcId = vpc.id,
+            TagSpecifications = [
+                {
+                    'ResourceType':'subnet', 
+                    'Tags': [flagTag, nameTag]
+                }
+            ]
+        )
+        stage = pubsbn2.id+' created'
+        logger.info(stage)
+        
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2030)
+        resp.err_resp()
+
+
+    # step 4: update main route table （route-igw）
+    try:
+        nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['routeTable']}
+        rtbs = vpc.route_tables.all()
+        for rtb in rtbs:
+            if rtb.associations_attribute[0]['Main']:  
+                #添加tag:Name
+                rtb.create_tags(
+                    DryRun=DryRun,
+                    Tags=[flagTag, nameTag]
+                )
+                print(rtb.tags)
+                
+                #添加到 igw的路由
+                irt = rtb.create_route(
+                    DryRun=DryRun,
+                    DestinationCidrBlock='0.0.0.0/0',            
+                    GatewayId= igw.id
+        #             NatGatewayId='string',
+        #             NetworkInterfaceId='string',
+                )
+                stage = irt.destination_cidr_block+' created'
+                logger.info(stage)
+                
+                #associate the route table with the pub subnets
+                rtba1 = rtb.associate_with_subnet(
+                    DryRun= DryRun,
+                    SubnetId= pubsbn1.id            
+                )
+
+                rtba2 = rtb.associate_with_subnet(
+                    DryRun= DryRun,
+                    SubnetId= pubsbn2.id,
+                )
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2040)
+        resp.err_resp()
+
+
+    # step 5: create 2x Private Subnets
+    try:
+        nameTag = {"Key": "Name", "Value": parm['priSubnet1']['tagName']}
+        prisbn1 = resource_ec2.create_subnet(
+            DryRun=DryRun,
+            CidrBlock= parm['priSubnet1']['cidr'],
+            AvailabilityZone = parm['priSubnet1']['az'],
+            VpcId = vpc.id,
+            TagSpecifications = [
+                {
+                    'ResourceType':'subnet', 
+                    'Tags': [flagTag, nameTag]
+                }
+            ]
+        )
+        stage = prisbn1.id+' created'
+        logger.info(stage)
+        
+        nameTag = {"Key": "Name", "Value": parm['priSubnet2']['tagName']}
+        prisbn2 = resource_ec2.create_subnet(
+            DryRun=DryRun,
+            CidrBlock= parm['priSubnet2']['cidr'],
+            AvailabilityZone = parm['priSubnet2']['az'],
+            VpcId = vpc.id,
+            TagSpecifications = [
+                {
+                    'ResourceType':'subnet', 
+                    'Tags': [flagTag, nameTag]
+                }
+            ]
+        )
+        stage = prisbn2.id+' created'
+        logger.info(stage)
+        
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2050)
+        resp.err_resp()
+
+
+    # step 6: create NAT Gateway with EIP
+    # 6-1: Allocate EIP for NAT Gateway
+    try:
+        nameTag = {"Key": "Name", "Value": dcName.lower()+"natgw-eip"}
+        eip = client_ec2.allocate_address(
+        # eip = resource_ec2.meta.client.allocate_address(
+            DryRun=DryRun,
+            Domain='vpc',
+            TagSpecifications = [
+                {
+                    'ResourceType':'elastic-ip', 
+                    "Tags": [flagTag, nameTag]
+                }
+            ]
+        )
+        stage = eip['PublicIp']+' created'
+        logger.info(stage)
+  
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2061)
+        resp.err_resp()
+
+    # 6-2: create nat gateway
+    try:
+        nameTag = {"Key": "Name", "Value": parm['priSubnet1']['gateway']}
+        natgw = client_ec2.create_nat_gateway(
+            DryRun = DryRun,
+            ConnectivityType='public',
+            AllocationId=eip['AllocationId'],
+            SubnetId = pubsbn1.id,
+            TagSpecifications = [
+                {
+                    'ResourceType':'natgateway', 
+                    "Tags": [flagTag, nameTag]
+                }
+            ]
+        )
+        natgwID = natgw['NatGateway']['NatGatewayId']
+        stage = natgwID+' creating'
+        logger.info(stage)
+
+        # waite natgw created
+        try:    
+            waiter = client_ec2.get_waiter('nat_gateway_available')
+            waiter.wait(NatGatewayIds=[natgwID])            
+            stage = natgwID+' created'
+            logger.info(stage)
+        except Exception as ex:
+            resp = Result(detail=str(ex) , status_code=2062)
+            resp.err_resp()
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2060)
+        resp.err_resp()
+
+
+    # step 7: create NAT route table and route to natgw
+    # 7-1 create route table for natgw
+    try:
+        nameTag = {"Key": "Name", "Value": parm['priSubnet1']['routeTable']}
+        nrtb = vpc.create_route_table(
+            DryRun=DryRun,
+            TagSpecifications=[
+                {
+                    'ResourceType':'route-table', 
+                    "Tags": [flagTag, nameTag]
+                }
+            ]
+        )
+
+        # add a route to natgw
+        nrt = nrtb.create_route(
+            DryRun=DryRun,
+            DestinationCidrBlock='0.0.0.0/0',            
+            # GatewayId= igw.id,
+            NatGatewayId= natgwID
+#             NetworkInterfaceId='string',        
+        )
+        stage = nrt.destination_cidr_block+' created'
+        logger.info(stage)
+
+        # associate the route table with the pri subnets
+        rtba3 = nrtb.associate_with_subnet(
+            DryRun= DryRun,
+            SubnetId= prisbn1.id            
+        )
+        rtba4 = nrtb.associate_with_subnet(
+            DryRun= DryRun,
+            SubnetId= prisbn2.id,
+        )
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2070)
+        resp.err_resp()
+
+
+    # step 8: update and create Security Groups
+    webPerm = [
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 80,
+            'ToPort': 80,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 443,
+            'ToPort': 443,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        }
+    ]
+    dbPerm = [
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 3306,
+            'ToPort': 3306,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 5432,
+            'ToPort': 5432,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 1521,
+            'ToPort': 1521,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },
+        {
+            'IpProtocol': 'tcp',
+            'FromPort': 1443,
+            'ToPort': 1443,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        },                
+    ]
+
+    # 8-1: update default security group
+    try:
+        nameTag = {"Key": "Name", "Value": parm['securityGroup0']['tagName']}
+        basePerm = check_perm(parm['securityGroup0'])
+        for sg in vpc.security_groups.all():
+            if sg.group_name == 'default':
+                #添加tag:Name
+                sg.create_tags(
+                    DryRun=DryRun,
+                    Tags=[flagTag, nameTag]
+                )
+                #更新default sg inbound规则
+                sg.authorize_ingress(
+                    DryRun=DryRun,
+                    IpPermissions= basePerm,                
+                )
+                break
+        stage = sg.group_name+' updated'
+        logger.info(stage)
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2081)
+        resp.err_resp()
+
+    # 8-2: create webapp security group
+    try:
+        nameTag = {"Key": "Name", "Value": parm['securityGroup1']['tagName']}
+        basePerm = check_perm(parm['securityGroup1'])
+        sgWeb = resource_ec2.create_security_group(
+            DryRun=DryRun,
+            GroupName=nameTag['Value'],
+            Description='allow http access to web server',
+            VpcId=vpc.id,
+            TagSpecifications = [ 
+                {'ResourceType':'security-group', 
+                "Tags": [flagTag, nameTag]
+                }
+            ]
+        )
+        #更新sgWeb inbound规则
+        webPerm.extend(basePerm)
+        sgWeb.authorize_ingress(
+            DryRun=DryRun,
+    #         SourceSecurityGroupName='string',
+    #         SourceSecurityGroupOwnerId='string'
+            IpPermissions= webPerm
+        )
+        stage = sgWeb.group_name+' created'
+        logger.info(stage)        
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2082)
+        resp.err_resp()
+
+    # 8-3: create database security group
+    try:
+        nameTag = {"Key": "Name", "Value": parm['securityGroup2']['tagName']}
+        basePerm = check_perm(parm['securityGroup2'])
+        sgDb = resource_ec2.create_security_group(
+            DryRun=DryRun,
+            GroupName=nameTag['Value'],
+            Description='allow tcp access to database server',
+            VpcId=vpc.id,
+            TagSpecifications = [ 
+                {'ResourceType':'security-group', 
+                "Tags": [flagTag, nameTag]
+                }
+            ]
+        )
+        #更新sgWeb inbound规则
+        dbPerm.extend(basePerm)
+        sgDb.authorize_ingress(
+            DryRun=DryRun,
+    #         SourceSecurityGroupName='string',
+    #         SourceSecurityGroupOwnerId='string'
+            IpPermissions= dbPerm
+        )
+        stage = sgWeb.group_name+' created'
+        logger.info(stage)           
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2083)
+        resp.err_resp()
+
+
+   # step 9: Write Datacenter metadata to local database
+    try:
+        curr_account:Account = Account.query.first()
+        curr_user = auth_token.current_user.username
+        # curr_user = 'test-user'
+        newDC = Datacenter(
+            name=dcName,
+            cloud='AWS', 
+            account_id = curr_account.account_id, 
+            region = dcRgeion,
+            vpc_id = vpc.id,
+            create_date = datetime.utcnow(),
+            create_user = curr_user
+        )
+        db.session.add(newDC)
+        db.session.commit()
+
+        stage = newDC.name+' metadata updated'
+        logger.info(stage)
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2092)
+        resp.err_resp()
+
+# step 10: Update Datacenter name list to DynamoDB
+    try:
+        # 待補充
+
+        stage = newDC.name+' created successfully !'
+        logger.info(stage)
+
+        return newDC
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2092)
+        resp.err_resp()
+
+
+# 根據勾選狀態匹配Security group IP規則
+def check_perm(sg):
+    sgpermList = []
+    if sg["enableRDP"]:
+        sgpermList.append({
+            'IpProtocol': 'tcp',
+            'FromPort': 3389,
+            'ToPort': 3389,
+#             'Ipv6Ranges': [], 
+#             'PrefixListIds': [], 
+#             'UserIdGroupPairs': [],            
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        })
+
+    if sg["enableSSH"]:
+        sgpermList.append({
+            'IpProtocol': 'tcp',
+            'FromPort': 22,
+            'ToPort': 22,
+#             'Ipv6Ranges': [], 
+#             'PrefixListIds': [], 
+#             'UserIdGroupPairs': [],            
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        })
+
+    if sg["enablePing"]:
+        sgpermList.append({
+            'IpProtocol': 'icmp',
+            'FromPort': 8,
+            'ToPort': -1,
+#             'Ipv6Ranges': [], 
+#             'PrefixListIds': [], 
+#             'UserIdGroupPairs': [],            
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        })
+    return sgpermList

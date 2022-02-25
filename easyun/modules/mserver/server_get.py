@@ -11,6 +11,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from easyun.common.models import Datacenter
 from easyun.common.schemas import DcNameQuery
+from easyun.common.utils import set_boto3_region, gen_dc_tag
 # from easyun.common.utils import query_svr_name
 from datetime import date, datetime
 from . import bp
@@ -38,11 +39,10 @@ def list_server_detail(parm):
     # dcName = request.args.get('dc', 'Easyun')  #获取查询参数 ?dc=xxx ,默认值‘Easyun’
     # thisDC = Datacenter(name = dcName)
     dcName = parm['dc']
-    thisDC = Datacenter.query.filter_by(name = dcName).first()
-    dcRegion = thisDC.get_region()
-
-    # 设置 boto3 接口默认 region_name
-    boto3.setup_default_session(region_name = dcRegion )
+    # thisDC = Datacenter.query.filter_by(name = dcName).first()
+    # dcRegion = thisDC.get_region()
+    dcRegion = set_boto3_region(dcName)
+    filterTag = gen_dc_tag(dcName, 'filter')
 
     try:
         # vpc = resource_ec2.Vpc(dcVPC)
@@ -51,9 +51,7 @@ def list_server_detail(parm):
         # 通过 ec2.instances.filter() 接口获取 instance 对象列表
         resource_ec2 = boto3.resource('ec2')       
         svrIterator = resource_ec2.instances.filter(
-            Filters=[
-                {'Name': 'tag:Flag', 'Values': [dcName]},
-            ],
+            Filters=[filterTag],
         )        
         svrList = []
         
