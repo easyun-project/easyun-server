@@ -12,7 +12,7 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from . import bp
-
+from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
 
 class DetailOut(Schema):
     # ins_id = String()
@@ -75,6 +75,7 @@ def get_server_detail(svr_id):
         Memory = instance_type['InstanceTypes'][0]["MemoryInfo"]["SizeInMiB"]/1024
 
         images = CLIENT.describe_images(ImageIds=[instance_res['ImageId']])
+        arch = images['Images'][0]['Architecture']
         protection = CLIENT.describe_instance_attribute(InstanceId = instance_res['InstanceId'],Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
         # print(images["Images"][0]["ImageLocation"])
         # print(images["Images"][0]["Name"])
@@ -86,6 +87,11 @@ def get_server_detail(svr_id):
         instance_res['Memory'] = Memory
         instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile']['Arn'].split('/')[-1]
         instance_res['ImageName'] = images["Images"][0]["Name"].split('/')[-1]
+        instance_res['ImageFullName'] = images["Images"][0]["Name"]
+        print(instance_res['ImageFullName'])
+        AMI = AMI_Win[arch] + AMI_Lnx[arch]
+        amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']][0]
+        # print(amitmp)
         # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
         instance_res['ImagePath'] = '/'.join(images["Images"][0]["ImageLocation"].split('/')[1:])
         instance_res['ServerState'] = instance_res['State']['Name']
@@ -93,6 +99,7 @@ def get_server_detail(svr_id):
         instance_res['Tenancy'] = 'default'
         instance_res['TerminalProtection'] = 'disabled' if protection else 'enabled'
         svrProperty = {
+            "instanceName":[t for t in instance_res["Tags"] if t['Key'] == "Name"][0]['Value'],
             "instanceType":instance_res["InstanceType"],
             "vCpu":instance_res["VCpu"],
             "memory":instance_res["Memory"],
@@ -122,7 +129,8 @@ def get_server_detail(svr_id):
             "iamRole":instance_res["IamInstanceProfile"],
         }
         svrConfig = {
-
+            "arch":arch,
+            "os":amitmp['osCode']
         }
         svrDisk = {
             "volumeIds": [v["Ebs"]['VolumeId'] for v in instance_res["BlockDeviceMappings"]]
@@ -142,7 +150,7 @@ def get_server_detail(svr_id):
         #     # "":instance_res[""],
         # }
         svrConnect = {
-            "userName":['ec2-user'],
+            "userName":amitmp['userName'],
             "publicIp":instance_res["PublicIpAddress"],
         }
         detail = {
