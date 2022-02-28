@@ -53,7 +53,7 @@ def list_datacenter_detail():
 
     except Exception as ex:
         response = Result(
-            message="get datacebter list failed", 
+            message=str(ex), 
             status_code=2001,
             http_status_code=400)
         response.err_resp()

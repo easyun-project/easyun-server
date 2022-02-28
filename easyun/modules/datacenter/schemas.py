@@ -78,8 +78,7 @@ class CreateDcParms(Schema):
         example="us-east-1"
     )
              
-    vpcCidr = Nested(VpcParm,      #VPC IP address range
-        required=True,
+    dcVPC = Nested(VpcParm, required=True,
         example={
             "cidrBlock": "10.15.0.0/16",
         }
@@ -90,7 +89,7 @@ class CreateDcParms(Schema):
             "tagName": "Public subnet 1",
             "azName": "us-east-1b",
             "cidrBlock": "10.15.1.0/24",
-            "gwName": "easyun-igw",            
+            "gwName": "easyun-igw",
             "routeTable": "easyun-rtb-igw"
         }
     )

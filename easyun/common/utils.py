@@ -10,13 +10,25 @@ from datetime import date, datetime
 from .models import Datacenter, Account
 
 
-def gen_dc_tag(dc, type='flag'):
+def gen_dc_tag(dc_name, type='flag'):
     '''生成dcName对应的tag标签'''
     if type == 'flag':
-        dcTag = {"Key": "Flag", "Value": dc}
+        dcTag = {"Key": "Flag", "Value": dc_name}
     elif type == 'filter':
-        dcTag = {'Name': 'tag:Flag', 'Values': [dc]}
+        dcTag = {'Name': 'tag:Flag', 'Values': [dc_name]}
     return dcTag
+
+
+def get_hash_tag(dc_name, type='flag'):
+    '''查询并生成dcName对应的tag标签'''
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
+    flagCode = thisDC.get_hash()
+    if type == 'flag':
+        dcTag = {"Key": "Flag", "Value": flagCode}
+    elif type == 'filter':
+        dcTag = {'Name': 'tag:Flag', 'Values': [flagCode]}
+    return dcTag
+
 
 def query_dc_list():
     '''从本地数据库查询datacenter名单'''
@@ -29,19 +41,19 @@ def query_dc_list():
         return str(ex)
 
 
-def query_dc_region(dc):
+def query_dc_region(dc_name):
     '''通过dcName查询Region信息'''
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dc).first()
+        thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
         return thisDC.region
     except Exception as ex:
         return 'Datacenter not existed, kindly create it first!'
 
 
-def set_boto3_region(dc):
+def set_boto3_region(dc_name):
     '''设置Boto3会话默认region,返回region name'''
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dc).first()
+        thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
         # 设置 boto3 接口默认 region_name
         boto3.setup_default_session(region_name = thisDC.region )   
         return thisDC.region

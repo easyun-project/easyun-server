@@ -7,14 +7,16 @@
 
 import os
 import base64
+import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, List
+from pyparsing import nullDebugAction
 from sqlalchemy.sql.expression import true
 from werkzeug.security import check_password_hash, generate_password_hash
-from easyun import db
 import sqlalchemy as sa
-
+from easyun import db
 from easyun.common.exception.model_errs import KeyPairsRepeat
+
 
 def universal_update_dict(obj, d: Dict):
     """批量更新数据库
@@ -156,12 +158,21 @@ class Datacenter(db.Model):
     region = db.Column(                 # Deployed Region
         db.String(120))          
     vpc_id = db.Column(                 # VPC ID
-        db.String(120))    
+        db.String(120))
+    hash = db.Column(                   # Hash code for tag:Flag
+        db.String(32), 
+        nullable=True)
     create_date = db.Column(            # Create date
         db.DateTime)
     create_user = db.Column(            # Cteated by easyun user
         db.String(30), 
         nullable=True)
+    
+    def set_hash(self, name):
+        """
+        Generate a hash code
+        """
+        self.hash = hashlib.md5(name.encode(encoding='UTF-8')).hexdigest()
 
     def get_region(self):
         return (self.region)
@@ -169,8 +180,14 @@ class Datacenter(db.Model):
     def get_vpc(self):
         return (self.vpc_id)
 
+    def get_hash(self):
+        if self.hash is None:
+            self.hash = hashlib.md5(self.name.encode(encoding='UTF-8')).hexdigest()
+        return (self.hash)
+
     def update_dict(self, items: Dict):
         universal_update_dict(self, items)
+
 
 class KeyPairs(db.Model):
     id = sa.Column(sa.Integer, primary_key=True)

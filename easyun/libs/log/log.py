@@ -47,11 +47,11 @@ class EasyunLogging:
         app.logger.addHandler(default_handler)
         app.logger.addHandler(file_handler)
 
-    def create_logger(self, module_name="default", level='info', console=True, file=True):
+    def create_logger(self, module_name="default", level='info', console=False, file=True):
         """创建logger"""
         # log_name = f"{self.app_name}.{module_name}"
         log_name = f"{module_name}"
-        file_name = f"logs/{self.app_name}_{module_name}.log"
+        log_file = f"logs/{self.app_name}_{module_name}.log"
 
         logger = logging.getLogger(log_name)
         logger.setLevel(Level_Dict[level])
@@ -62,14 +62,14 @@ class EasyunLogging:
             logger.addHandler(console_handler)
 
         if file:
-            file_handler = logging.FileHandler(file_name)
+            file_handler = logging.FileHandler(log_file)
             file_handler.setFormatter(self.formatter)
             logger.addHandler(file_handler)
 
         return logger
 
 
-    def api_logger(self, logger, level='error'):
+    def api_error(self, logger, level='error'):
         """记录api的进出口日志的装饰器, 默认error级别"""
         def decorate(func):
             @wraps(func)

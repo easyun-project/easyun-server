@@ -5,6 +5,7 @@
   @auth:    aleck
 """
 
+import os, time, imp
 import boto3
 from datetime import date, datetime
 from flask import current_app,jsonify, request
@@ -15,72 +16,20 @@ from celery.result import ResultBase, AsyncResult
 from easyun import db, log, celery
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
-from easyun.common.utils import gen_dc_tag, get_hash_tag
+from easyun.common.utils import gen_dc_tag
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from .schemas import CreateDcParms, CreateDcResult, DcParmIn
+from .schemas import CreateDcParms, CreateDcResult
 from . import bp, logger, DC_REGION, DC_NAME, DryRun
-from easyun.common.schemas import DcNameQuery
 
 
-@bp.post('')
+@bp.post('/add')
 @auth_required(auth_token)
 @input(CreateDcParms)
 @output(CreateDcResult)
 @log.api_error(logger)
-def create_dc_async(parm):
-    '''创建 Datacenter 及基础资源[异步]'''
-    task = create_dc_task.apply_async(args=[parm, ])
-    resp = Result(
-        detail=task.id,
-        status_code=200
-    )
-    return resp.make_resp()
-
-
-class TaskIdQuery(Schema):
-    '''Task UUID for celery query parm '''
-    id = String(
-        required=True, 
-        validate=Length(0, 36),
-        example='1603a978-e5a0-4e6a-b38c-4c751ff5fff8'
-    )
-
-
-@bp.get('/result')
-@auth_required(auth_token)
-@input(TaskIdQuery,location='query')
-# @output(CreateDcResult)
-def fetch_task_result(parm):
-    '''获取创建 Datacenter 任务执行结果'''
-    # celery_id = request.args.get('id')
-    task = AsyncResult(parm.get('id'), app=celery)
-    if task.ready():
-        result = task.result
-        resp = Result(
-            detail=result.get('detail'),
-            status_code=result.get('status_code'))
-
-        return resp.make_resp()
-    else:
-        resp = Result(
-            detail='creating',
-            status_code=2000
-        )
-        return resp.make_resp()
-
-
-@bp.get('/state')
-@auth_required(auth_token)
-@input(TaskIdQuery,location='query')
-# @output(CreateDcResult)
-def fetch_task_state(parm):
-    '''获取创建 Datacenter 任务执行状态【TBD】'''
-    pass
-
-
-@celery.task()
-def create_dc_task(parm):
-    '''执行创建 Datacenter 任务'''
+def create_dc_sync(parm):
+    '''创建 Datacenter 及基础资源'''
+    
     # Datacenter basic attribute difine
     dcName = parm['dcName']
     dcRgeion = parm['dcRegion']
@@ -119,7 +68,6 @@ def create_dc_task(parm):
         stage = vpc.id+' created'
         logger.info('[VPC]'+stage)
     except Exception as ex:
-        logger.error('[VPC]'+str(ex))
         resp = Result(detail=str(ex), status_code=2010)
         resp.err_resp()
         
@@ -520,7 +468,7 @@ def create_dc_task(parm):
 
 # step 10: Update Datacenter name list to DynamoDB
     try:
-        # 待实现
+        # 待補充
 
         stage = '[DataCenter]'+newDC.name+' created successfully !'
         logger.info(stage)
