@@ -32,7 +32,7 @@ def universal_update_dict(obj, d: Dict):
 
 class User(db.Model):
     """
-    Create a User table
+    Create User table
     """
     __tablename__ = 'users'
     id = db.Column('user_id', db.Integer, primary_key=True)
@@ -100,7 +100,7 @@ class User(db.Model):
 
 class Account(db.Model):
     """
-    Create a Account table
+    Create Cloud Account table
     """
     __tablename__ = 'account'
     id = db.Column(db.Integer, primary_key=True)
@@ -139,7 +139,7 @@ class Account(db.Model):
 
 class Datacenter(db.Model):
     """
-    Create a Account table
+    Create DataCenter table
     """
     __tablename__ = 'datacenter'
     id = db.Column(
@@ -189,6 +189,25 @@ class Datacenter(db.Model):
         universal_update_dict(self, items)
 
 
+
+class KeyStore(db.Model):
+    """
+    Create Keypair store table
+    """
+    __tablename__ = 'key_store'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    dc_name = db.Column(db.String(255), nullable=False)
+    material = db.Column(db.String(2048))
+    format = db.Column(db.String(10), default='pem')
+
+    def get_material(self):
+        if self.material:
+            return (self.material)
+        else:
+            return None
+
+
 class KeyPairs(db.Model):
     id = sa.Column(sa.Integer, primary_key=True)
     region = sa.Column(sa.String(120))
@@ -208,7 +227,7 @@ class KeyPairs(db.Model):
 
         return KeyPairs(**kwargs)
 
-    def delet(region = None, name = None):
+    def delete(region = None, name = None):
         pass
 
     def update(self, **kwargs):

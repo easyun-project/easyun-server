@@ -13,10 +13,10 @@ from .models import Datacenter, Account
 def gen_dc_tag(dc_name, type='flag'):
     '''生成dcName对应的tag标签'''
     if type == 'flag':
-        dcTag = {"Key": "Flag", "Value": dc_name}
+        flagTag = {"Key": "Flag", "Value": dc_name}
     elif type == 'filter':
-        dcTag = {'Name': 'tag:Flag', 'Values': [dc_name]}
-    return dcTag
+        flagTag = {'Name': 'tag:Flag', 'Values': [dc_name]}
+    return flagTag
 
 
 def get_hash_tag(dc_name, type='flag'):
@@ -24,10 +24,10 @@ def get_hash_tag(dc_name, type='flag'):
     thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
     flagCode = thisDC.get_hash()
     if type == 'flag':
-        dcTag = {"Key": "Flag", "Value": flagCode}
+        flagTag = {"Key": "Flag", "Value": flagCode}
     elif type == 'filter':
-        dcTag = {'Name': 'tag:Flag', 'Values': [flagCode]}
-    return dcTag
+        flagTag = {'Name': 'tag:Flag', 'Values': [flagCode]}
+    return flagTag
 
 
 def query_dc_list():

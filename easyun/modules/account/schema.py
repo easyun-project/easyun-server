@@ -7,7 +7,47 @@
 '''
 
 from apiflask import Schema
-from apiflask.fields import String, Integer, Date, Boolean
+from apiflask.fields import String, Integer, Date, Boolean, List, Dict
+from apiflask.validators import Length, OneOf
+
+
+class KeypairParms(Schema):
+    dcName = String(required=True,   #Datacenter name
+        validate=Length(0, 60),
+        example="Easyun"
+    )
+    keyName = String(required=True,  #Keypair name
+        validate=Length(0, 255),
+        example='easyun-dev-key'
+    )
+    keyType = String(required=False,  #Keypair type
+        validate=OneOf('rsa', 'ed25519'),
+        example='rsa'
+    )
+
+
+class KeyPairDelIn(Schema):
+    dcName = String(required=True,   #Datacenter name
+        validate=Length(0, 60),
+        example="Easyun"
+    )
+    keyName = String(required=True,  #Keypair name
+        validate=Length(0, 255),
+        example='easyun-dev-key'
+    )
+
+
+class KeypairOut(Schema):
+    keyName = String(required=True,  #Keypair name
+        example='easyun-dev-key'
+    )
+    keyType = String(required=False,  #Keypair type
+        example='rsa'
+    )    
+    keyFile = String()
+    keyFingerprint = String()
+    keyTags = List(Dict())
+    keyRegion = String()
 
 
 class CreateSSHKeySchema(Schema):
