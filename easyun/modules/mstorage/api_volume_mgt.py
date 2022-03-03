@@ -30,13 +30,13 @@ class NewDiskIn(Schema):
     dcName = String(required=True, example="Easyun")
     volumeSize = Integer(required=True, example=10)
     volumeType = String(required=True, example='gp3')
-    attachPath = String(required=True, example='/dev/sdg')
     isEncrypted = Boolean(required=True, example = False) 
     volumeIops = Integer(example=3000)
     volumeThruput = Integer( example=500) 
     tagName = String(example='disk_test')
     azName = String(example='us-east-1a')
-    svrId = String(example='i-0ac436622e8766a13')  #云服务器ID    
+    svrId = String(example='i-0ac436622e8766a13')  #云服务器ID  
+    attachPath = String(example='/dev/sdg')  
 
 
 @bp.post('/volume')
@@ -48,8 +48,12 @@ def add_disk(parms):
     dcName = parms['dcName']
     try:
         CLIENT = boto3.client('ec2')
-        RESOURCE = boto3.resource('ec2')
-        server =RESOURCE.Instance(parms.get("svrId"))
+        resource_ec2 = boto3.resource('ec2')
+        if parms.get("svrId"):
+            thisSvr = resource_ec2.Instance(parms.get("svrId"))
+            azName = resource_ec2.Subnet(thisSvr.subnet_id).availability_zone,
+        else:
+            azName = parms.get('azName')
         TagSpecifications = [
             {
                 "ResourceType":"volume",
@@ -64,7 +68,7 @@ def add_disk(parms):
 
         if volumeIops and not volumeThruput:
             volume = CLIENT.create_volume(
-                AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
+                AvailabilityZone = azName,
                 Encrypted= parms['isEncrypted'],
                 Size=parms['volumeSize'],
                 VolumeType=parms['volumeType'],             
@@ -73,7 +77,7 @@ def add_disk(parms):
             )
         elif not volumeIops and volumeThruput:
             volume = CLIENT.create_volume(
-                AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
+                AvailabilityZone = azName,
                 Encrypted= parms['isEncrypted'],
                 Size=parms['volumeSize'],
                 VolumeType=parms['volumeType'],             
@@ -82,7 +86,7 @@ def add_disk(parms):
             )
         else:
             volume = CLIENT.create_volume(
-                AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
+                AvailabilityZone = azName,
                 Encrypted= parms['isEncrypted'],
                 Size=parms['volumeSize'],
                 VolumeType=parms['volumeType'],             
@@ -103,21 +107,20 @@ def add_disk(parms):
         #     InstanceId=parms["InstanceId"]
         # )
         from time import sleep 
-        while True:
-            volume1 = RESOURCE.Volume(volume['VolumeId'])
-            print(volume1.state)
-            if volume1.state == 'available':
-                
-                volume1.attach_to_instance(
-                    Device=parms["Device"],
-                    InstanceId=parms["InstanceId"]
+        if parms.get("attachPath"):
+            thisDisk = resource_ec2.Volume(volume['VolumeId'])
+            if thisDisk.state == 'available':
+                thisDisk.attach_to_instance(
+                    Device=parms["attachPath"],
+                    InstanceId=parms["SvrId"]
                 )
-                break
+                
             sleep(0.5)
             
         response = Result(
-            detail={'VolumeId':volume1.volume_id,
-            "State" : volume1.state,
+            detail={
+                'volumeId':thisDisk.volume_id,
+                'volueState' : thisDisk.state,
             },
             status_code=200
             )
