@@ -2,12 +2,9 @@
 """dashboard model views."""
 
 import boto3
-# 导入boto错误类型
 from botocore.exceptions import ClientError
-from datetime import date, timedelta
 from apiflask import auth_required, Schema
 from apiflask.decorators import output, input
-from apiflask.validators import Length
 from flask import send_file
 from io import BytesIO
 from easyun import db
@@ -16,7 +13,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyStore
 from easyun.common.schemas import DcNameQuery
 from easyun.common.utils import set_boto3_region, gen_dc_tag, query_dc_region
-from .schema import FreeTierInputSchema, FreeTierOutputSchema, AWSInfoOutSchema, KeypairParms, KeypairOut, KeyPairDelIn
+from .schema import KeypairParms, KeypairOut, KeyPairDelIn
 from . import bp
 
 
@@ -115,11 +112,9 @@ def get_keypair(key_name, parm):
     try:
         dcRegion = query_dc_region(dcName)
         resource_ec2 = boto3.resource('ec2', region_name=dcRegion)
-        # session = boto3._get_default_session()
-        # dcRegion = session.region_name
-        thisKey = resource_ec2.KeyPair(key_name)
         # thisKeyinfo = resource_ec2.KeyPairInfo(key_name)
         # explain: https://github.com/boto/boto3/issues/1945#issuecomment-492803349
+        thisKey = resource_ec2.KeyPair(key_name)        
         keyTags = [t for t in thisKey.tags if t['Key'] != 'Flag']
         #生成 keypair下载链接
         # keyFile = gen_key_file(key_name)
@@ -257,37 +252,32 @@ def del_keypair(parm):
         return resp.make_resp()
 
 
-@bp.get('/keypair/file/<key_name>')
+@bp.get('/keypair/store/<key_name>')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
-def get_file(key_name, parm):
+def get_keystore(key_name, parm):
     '''获取指定的 keypair 文件下载'''
     dcName = parm['dc']
-    try: 
-        storeItem:KeyStore = KeyStore.query.filter_by(name = key_name, dc_name = dcName).first()
-        keyFile = send_file(
-            BytesIO(bytes(storeItem.get_material(), encoding='utf-8')),
-            download_name=f"{storeItem.name}.{storeItem.format}",
-            as_attachment=True
-        )
-        return keyFile
-    except Exception as ex:
-        return str(ex)
+    keyFile = send_keysotre(key_name, dcName)
+    return keyFile
 
 
-def gen_key_file(key_name, format='pem'):
-    '''生成 keypair 文件下载'''
+def send_keysotre(key_name, dc_name, format='pem'):
+    '''生成 keypair 文件链接'''
     try:
-        storeItem:KeyStore = KeyStore.query.filter_by(name = key_name).first()
-        if format == 'pem':
+        storeItem:KeyStore = KeyStore.query.filter_by(name = key_name, dc_name = dc_name).first()
+        keyMaterial = BytesIO(bytes(storeItem.get_material(), encoding='utf-8'))
+        if format == 'pem':            
             keyFile = send_file(
-                BytesIO(bytes(storeItem.get_material(), encoding='utf-8')),
-                download_name=f"{storeItem.name}.{storeItem.format}",
-                as_attachment=True
+                keyMaterial,
+                # mimetype='application/pem',
+                #作为下载附件参数
+                as_attachment=True,      
+                attachment_filename=f"{storeItem.name}.{storeItem.format}"
             )
         elif format == 'ppk':
             # 转换为ppk格式后返回(TBD)
             pass
         return keyFile
     except Exception as ex:
-        return str(ex)        
+        return str(ex)
