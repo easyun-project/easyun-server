@@ -13,7 +13,7 @@ from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
-from . import bp
+from . import bp, DeployRegion
 
 
 # 定义各资源的表格名称
@@ -23,7 +23,7 @@ RESOURCE_NAME = [
     'database',  # 数据库(RDS)
     'st_block',  # 块存储(EBS)
     'st_object',  # 对象存储(S3)
-    'st_file',  # 文件存储(EFS,FSx)
+    'st_files',  # 文件存储(EFS,FSx)
     'nw_subnet',  # 子网(Subnet)
     'nw_secgroup',  # 安全组(SecurityGroup)
     'nw_gateway',  # 网关(IGW，NatGW)
@@ -35,7 +35,7 @@ INVENTORY_TABLE = {
     'database': 'easyun-inventory-database',
     'st_block': 'easyun-inventory-stblock',
     'st_object': 'easyun-inventory-stobject',
-    'st_file': 'easyun-inventory-stfiles',
+    'st_files': 'easyun-inventory-stfiles',
     'nw_subnet': 'easyun-inventory-subnet',
     'nw_secgroup': 'easyun-inventory-secgroup',
     'nw_gateway': 'easyun-inventory-gateway'
@@ -55,20 +55,19 @@ def get_inventory(resource, parm):
             http_status_code=400
         )
         return resp.err_resp()
-
+    #获取查询参数 ?dc=xxx ,默认值‘Easyun’
+    dcName = parm.get('dc')
     try:
-        # dcName = request.args.get('dc', 'Easyun')  #获取查询参数 ?dc=xxx ,默认值‘Easyun’
-        dcName = parm.get('dc')
-        thisDC = Datacenter.query.filter_by(name=dcName).first()
-        dcRegion = thisDC.get_region()
+        # thisDC = Datacenter.query.filter_by(name=dcName).first()
+        # dcRegion = thisDC.get_region()
         # 设置 boto3 接口默认 region_name
-        boto3.setup_default_session(region_name=dcRegion)
+        boto3.setup_default_session(region_name = DeployRegion)
 
         inventoryList = [
             query_inventory('server', dcName),
-            query_inventory('st_block', dcName),
             query_inventory('st_object', dcName),
-            query_inventory('st_file', dcName),
+            query_inventory('st_block', dcName),
+            query_inventory('st_files', dcName),
             query_inventory('database', dcName),
             query_inventory('nw_subnet', dcName),
             query_inventory('nw_secgroup', dcName),
@@ -117,6 +116,6 @@ def query_inventory(resource, dcName):
     except Exception as ex:
         return {
             'type': resource,
-            'data': []
+            'data': [],
+            'msg': str(ex)
         }
-

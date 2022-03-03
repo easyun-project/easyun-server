@@ -17,7 +17,7 @@ INVENTORY_TABLE = {
     'database': 'easyun-inventory-database',
     'st_block': 'easyun-inventory-stblock',
     'st_object': 'easyun-inventory-stobject',
-    'st_file': 'easyun-inventory-stfiles',
+    'st_files': 'easyun-inventory-stfiles',
     'nw_subnet': 'easyun-inventory-subnet',
     'nw_secgroup': 'easyun-inventory-secgroup',
     'nw_gateway': 'easyun-inventory-gateway'
