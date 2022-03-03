@@ -27,67 +27,68 @@ SystemDisk = ['/dev/xvda','/dev/sda1']
 
    
 class NewDiskIn(Schema):
-    InstanceId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
-    Encrypted = Boolean(required=True, example = False)
-    Iops = Integer(example=3000)  
-    # Iops = Integer(required=True, example=3000)
-    Size = Integer(required=True, example=10)
-    VolumeType = String(required=True, example='gp3')
-    Throughput = Integer( example=500)
-    # Throughput = Integer(required=True, example=500)
-    Tag = String(required=True, example='disk_test')
-    Device = String(required=True, example='/dev/sdg')
+    dcName = String(required=True, example="Easyun")
+    volumeSize = Integer(required=True, example=10)
+    volumeType = String(required=True, example='gp3')
+    attachPath = String(required=True, example='/dev/sdg')
+    isEncrypted = Boolean(required=True, example = False) 
+    volumeIops = Integer(example=3000)
+    volumeThruput = Integer( example=500) 
+    tagName = String(example='disk_test')
+    azName = String(example='us-east-1a')
+    svrId = String(example='i-0ac436622e8766a13')  #云服务器ID    
 
 
 @bp.post('/volume')
 @auth_required(auth_token)
 @input(NewDiskIn)
 # @output()
-def add_disk(NewDiskIn):
+def add_disk(parms):
     '''新增磁盘(EBS Volume)'''
+    dcName = parms['dcName']
     try:
         CLIENT = boto3.client('ec2')
         RESOURCE = boto3.resource('ec2')
-        server =RESOURCE.Instance(NewDiskIn["InstanceId"])
+        server =RESOURCE.Instance(parms.get("svrId"))
         TagSpecifications = [
-        {
-        "ResourceType":"volume",
-        "Tags": [
-                {"Key": "Flag", "Value": "Easyun"},
-                {"Key": "Name", "Value": NewDiskIn['Tag']}
-            ]
-        }
+            {
+                "ResourceType":"volume",
+                "Tags": [
+                        {"Key": "Flag", "Value": dcName},
+                        {"Key": "Name", "Value": parms.get('tagName')}
+                    ]
+            }
         ]
-        iops = 'Iops' in NewDiskIn.keys()
-        throughput = 'Throughput' in NewDiskIn.keys()
-        print(iops,throughput)
-        if iops and not throughput:
+        volumeIops = parms.get('volumeIops')
+        volumeThruput = parms.get('volumeThruput')
+
+        if volumeIops and not volumeThruput:
             volume = CLIENT.create_volume(
                 AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
-                Encrypted= NewDiskIn['Encrypted'],
-                Iops=NewDiskIn['Iops'],
-                Size=NewDiskIn['Size'],
-                VolumeType=NewDiskIn['VolumeType'],
+                Encrypted= parms['isEncrypted'],
+                Size=parms['volumeSize'],
+                VolumeType=parms['volumeType'],             
                 TagSpecifications=TagSpecifications,
+                Iops = volumeIops                
             )
-        elif not iops and throughput:
+        elif not volumeIops and volumeThruput:
             volume = CLIENT.create_volume(
                 AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
-                Encrypted= NewDiskIn['Encrypted'],
-                Size=NewDiskIn['Size'],
-                VolumeType=NewDiskIn['VolumeType'],
+                Encrypted= parms['isEncrypted'],
+                Size=parms['volumeSize'],
+                VolumeType=parms['volumeType'],             
                 TagSpecifications=TagSpecifications,
-                Throughput=NewDiskIn['Throughput'],
+                Throughput= volumeThruput,
             )
         else:
             volume = CLIENT.create_volume(
                 AvailabilityZone = RESOURCE.Subnet(server.subnet_id).availability_zone,
-                Encrypted= NewDiskIn['Encrypted'],
-                Iops=NewDiskIn['Iops'],
-                Size=NewDiskIn['Size'],
-                VolumeType=NewDiskIn['VolumeType'],
+                Encrypted= parms['isEncrypted'],
+                Size=parms['volumeSize'],
+                VolumeType=parms['volumeType'],             
                 TagSpecifications=TagSpecifications,
-                Throughput=NewDiskIn['Throughput'],
+                Iops = volumeIops,
+                Throughput= volumeThruput,
             )
         # print(dir(volume))
         # volume1 = RESOURCE.Volume(volume['VolumeId'])
@@ -98,8 +99,8 @@ def add_disk(NewDiskIn):
         #     ]
         # )
         # volume1.attach_to_instance(
-        #     Device=NewDiskIn["Device"],
-        #     InstanceId=NewDiskIn["InstanceId"]
+        #     Device=parms["Device"],
+        #     InstanceId=parms["InstanceId"]
         # )
         from time import sleep 
         while True:
@@ -108,8 +109,8 @@ def add_disk(NewDiskIn):
             if volume1.state == 'available':
                 
                 volume1.attach_to_instance(
-                    Device=NewDiskIn["Device"],
-                    InstanceId=NewDiskIn["InstanceId"]
+                    Device=parms["Device"],
+                    InstanceId=parms["InstanceId"]
                 )
                 break
             sleep(0.5)
