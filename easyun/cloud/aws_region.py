@@ -29,7 +29,7 @@ AWS_Regions = [
         "countryCode": "USA",
         "regionName": {
             "eng": "US West (Northern California)",
-            "chs": "美国西部（加利福尼亚北部）    "
+            "chs": "美国西部（加利福尼亚北部）"
         }
     },
     {
@@ -45,7 +45,7 @@ AWS_Regions = [
         "countryCode": "ZAF",
         "regionName": {
             "eng": "Africa (Cape Town)",
-            "chs": " 非洲（开普敦）    "
+            "chs": " 非洲（开普敦）"
         }
     },
     {
@@ -53,7 +53,7 @@ AWS_Regions = [
         "countryCode": "HKG",
         "regionName": {
             "eng": "Asia Pacific (Hong Kong)",
-            "chs": "亚太地区（香港）    "
+            "chs": "亚太地区（香港）"
         }
     },
     {
@@ -61,7 +61,7 @@ AWS_Regions = [
         "countryCode": "IND",
         "regionName": {
             "eng": "Asia Pacific (Mumbai)",
-            "chs": "亚太地区（孟买）    "
+            "chs": "亚太地区（孟买）"
         }
     },
     {
@@ -69,7 +69,7 @@ AWS_Regions = [
         "countryCode": "JPN",
         "regionName": {
             "eng": "Asia Pacific (Osaka)",
-            "chs": "亚太地区（大阪）    "
+            "chs": "亚太地区（大阪）"
         }
     },
     {
@@ -77,7 +77,7 @@ AWS_Regions = [
         "countryCode": "KOR",
         "regionName": {
             "eng": "Asia Pacific (Seoul)",
-            "chs": "亚太地区（首尔）    "
+            "chs": "亚太地区（首尔）"
         }
     },
     {
@@ -85,7 +85,7 @@ AWS_Regions = [
         "countryCode": "SGP",
         "regionName": {
             "eng": "Asia Pacific (Singapore)",
-            "chs": "亚太地区（新加坡）    "
+            "chs": "亚太地区（新加坡）"
         }
     },
     {
@@ -93,7 +93,7 @@ AWS_Regions = [
         "countryCode": "AUS",
         "regionName": {
             "eng": "Asia Pacific (Sydney)",
-            "chs": "  亚太地区（悉尼）    "
+            "chs": "  亚太地区（悉尼）"
         }
     },
     {
@@ -101,7 +101,7 @@ AWS_Regions = [
         "countryCode": "IDN",
         "regionName": {
             "eng": "Asia Pacific (Jakarta)",
-            "chs": " 亚太地区（雅加达）    "
+            "chs": " 亚太地区（雅加达）"
         }
     },
     {
@@ -109,7 +109,7 @@ AWS_Regions = [
         "countryCode": "JPN",
         "regionName": {
             "eng": "Asia Pacific (Tokyo)",
-            "chs": "亚太地区（东京）    "
+            "chs": "亚太地区（东京）"
         }
     },
     {
@@ -117,7 +117,7 @@ AWS_Regions = [
         "countryCode": "CAN",
         "regionName": {
             "eng": "Canada (Central)",
-            "chs": "加拿大（中部）    "
+            "chs": "加拿大（中部）"
         }
     },
     {
@@ -125,7 +125,7 @@ AWS_Regions = [
         "countryCode": "DEU",
         "regionName": {
             "eng": "Europe (Frankfurt)",
-            "chs": "欧洲（法兰克福）    "
+            "chs": "欧洲（法兰克福）"
         }
     },
     {
@@ -133,7 +133,7 @@ AWS_Regions = [
         "countryCode": "IRL",
         "regionName": {
             "eng": "Europe (Ireland)",
-            "chs": "欧洲（爱尔兰）    "
+            "chs": "欧洲（爱尔兰）"
         }
     },
     {
@@ -141,7 +141,7 @@ AWS_Regions = [
         "countryCode": "GBR",
         "regionName": {
             "eng": "Europe (London)",
-            "chs": "欧洲（伦敦）    "
+            "chs": "欧洲（伦敦）"
         }
     },
     {
@@ -149,7 +149,7 @@ AWS_Regions = [
         "countryCode": "ITA",
         "regionName": {
             "eng": "Europe (Milan)",
-            "chs": "欧洲（米兰）    "
+            "chs": "欧洲（米兰）"
         }
     },
     {
@@ -157,7 +157,7 @@ AWS_Regions = [
         "countryCode": "FRA",
         "regionName": {
             "eng": "Europe (Paris)",
-            "chs": "欧洲（巴黎）    "
+            "chs": "欧洲（巴黎）"
         }
     },
     {
@@ -165,7 +165,7 @@ AWS_Regions = [
         "countryCode": "SWE",
         "regionName": {
             "eng": "Europe (Stockholm)",
-            "chs": "欧洲（斯德哥尔摩）    "
+            "chs": "欧洲（斯德哥尔摩）"
         }
     },
     {
@@ -173,7 +173,7 @@ AWS_Regions = [
         "countryCode": "BHR",
         "regionName": {
             "eng": "Middle East (Bahrain)",
-            "chs": "中东（巴林）    "
+            "chs": "中东（巴林）"
         }
     },
     {
@@ -181,7 +181,7 @@ AWS_Regions = [
         "countryCode": "BRA",
         "regionName": {
             "eng": "South America (Sao Paulo)",
-            "chs": "南美洲（圣保罗）    "
+            "chs": "南美洲（圣保罗）"
         }
     },
     {
@@ -189,7 +189,7 @@ AWS_Regions = [
         "countryCode": "USA",
         "regionName": {
             "eng": "AWS GovCloud (US-East)",
-            "chs": "AWS GovCloud（美国东部）    "
+            "chs": "AWS GovCloud（美国东部）"
         }
     },
     {
@@ -197,7 +197,7 @@ AWS_Regions = [
         "countryCode": "USA",
         "regionName": {
             "eng": "AWS GovCloud (US-West)",
-            "chs": "  AWS GovCloud（美国西部）    "
+            "chs": "  AWS GovCloud（美国西部）"
         }
     },
     {
@@ -205,7 +205,7 @@ AWS_Regions = [
         "countryCode": "CHN",
         "regionName": {
             "eng": "China (Beijing)",
-            "chs": "  中国（北京）    "
+            "chs": "  中国（北京）"
         }
     },
     {
@@ -236,7 +236,9 @@ def query_region_name(region):
 
 
 
-# AWS API Service endpoint
+'''
+AWS API Service endpoint
+'''
 #The Cost Explorer API provides the following endpoint:
 # Global Region：
 # https://ce.us-east-1.amazonaws.com
@@ -251,20 +253,3 @@ def query_ce_region(account_type):
     else:
         ceRegion = None
     return ceRegion
-
-
-#AWS Price List Query API provides the following endpoint:
-# Global Region：
-# https://api.pricing.us-east-1.amazonaws.com
-# https://api.pricing.ap-south-1.amazonaws.com
-# GCR Region:
-# https://api.pricing.us-east-1.amazonaws.com
-# https://api.pricing.ap-south-1.amazonaws.com
-
-def query_price_region(account_type):
-    if account_type == 'global':
-        priceRegion = 'us-east-1'
-    elif account_type == 'gcr':
-        priceRegion = None
-
-    return priceRegion    

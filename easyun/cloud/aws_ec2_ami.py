@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  AWS ec2 images
+  @module:  AWS EC2 Images (AMI)
   @desc:    Define basic attributes of AWS EC2 in this file.  
   @auth:    aleck
 """
 
 import boto3
+from easyun.cloud.aws_price import get_attribute_values
+
+
+'''全部受支持的 AMI Operating System 列表'''
+ALL_OperatingSystem = get_attribute_values('AmazonEC2','operatingSystem')
 
 
 '''预定义支持的AMI列表'''
@@ -157,19 +162,3 @@ AMI_Lnx = {
         }
     ]
 }
-
-
-
-'''支持的Instance OS列表'''
-# AWS Price API only support us-east-1, ap-south-1
-priceRegion = 'us-east-1'
-try:
-    client_price = boto3.client('pricing', region_name= priceRegion )
-    response = client_price.get_attribute_values(
-        ServiceCode='AmazonEC2',
-        AttributeName='operatingSystem'
-    )
-    os_values = response['AttributeValues']
-    Instance_OS = [os['Value'] for os in os_values]
-except Exception:
-    pass

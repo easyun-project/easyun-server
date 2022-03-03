@@ -8,12 +8,10 @@
 import os
 import base64
 import hashlib
+import sqlalchemy as sa
 from datetime import datetime, timedelta
 from typing import Dict, List
-from pyparsing import nullDebugAction
-from sqlalchemy.sql.expression import true
 from werkzeug.security import check_password_hash, generate_password_hash
-import sqlalchemy as sa
 from easyun import db
 from easyun.common.exception.model_errs import KeyPairsRepeat
 

@@ -71,6 +71,21 @@ def query_svr_name(svr_id):
     return nameTag
 
 
+def filter_list_by_key(full_list:list,key:str):
+    '''过滤列表:按指定字段筛选'''
+    filtedList = [i.get(key) for i in full_list]
+    return filtedList
+
+
+def filter_list_by_value(full_list:list,key:str,value:str):
+    '''过滤列表:按指定字段取值筛选'''
+    filtedList = [i for i in full_list if i.get(key) == value]
+    return {
+        'countNum':len(filtedList),
+        'countList':filtedList
+    }
+
+
 def len_iter(iterator):
     '''获取迭代器(Colleciton)列表长度'''
     # 相比 len(list(iterator)) 方式消耗更少内存
