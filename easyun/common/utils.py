@@ -22,11 +22,11 @@ def gen_dc_tag(dc_name, type='flag'):
 def get_hash_tag(dc_name, type='flag'):
     '''查询并生成dcName对应的tag标签'''
     thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
-    flagCode = thisDC.get_hash()
+    flagHash = thisDC.get_hash()
     if type == 'flag':
-        flagTag = {"Key": "Flag", "Value": flagCode}
+        flagTag = {"Key": "Flag", "Value": flagHash}
     elif type == 'filter':
-        flagTag = {'Name': 'tag:Flag', 'Values': [flagCode]}
+        flagTag = {'Name': 'tag:Flag', 'Values': [flagHash]}
     return flagTag
 
 
@@ -65,10 +65,10 @@ def query_svr_name(svr_id):
     '''通过instanceID 查询服务器 tag:Name '''
     resource_ec2 = boto3.resource('ec2')
     server = resource_ec2.Instance(svr_id)
-    nameTag = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
+    tagName = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
     # nameTag = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
     # svrName = nameTag[0] if len(nameTag) else None
-    return nameTag
+    return tagName
 
 
 def filter_list_by_key(full_list:list,key:str):
@@ -100,3 +100,4 @@ def datetime_serializer(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError ("Type %s not serializable" % type(obj))
+    

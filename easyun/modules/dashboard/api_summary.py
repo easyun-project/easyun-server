@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import auth_required, Schema
 from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.result import Result
@@ -24,7 +24,7 @@ from . import bp, DeployRegion
 
 @bp.get("/summary/datacenter")
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def summary_dc(parm):
     '''获取数据中心 Summary信息'''
     thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
@@ -81,7 +81,7 @@ def summary_dc(parm):
 
 @bp.get("/summary/health")
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def summary_health(parm):
     '''获取健康状态 Summary信息'''
     thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
@@ -112,7 +112,7 @@ def summary_health(parm):
 
 @bp.get("/summary/resource")
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def summary_resource(parm):
     '''获取所有IaaS资源 Summary信息'''
     dcName = parm['dc']

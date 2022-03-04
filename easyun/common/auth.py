@@ -56,7 +56,7 @@ class UserInSchema(Schema):
 
 
 @bp.post('/auth')
-@input(UserInSchema)
+@bp.input(UserInSchema)
 def post_auth_token(user):
     '''用户登录 (auth_token，Post方法获取token)'''
     if 'username' not in user or 'password' not in user:
@@ -104,7 +104,7 @@ class NewPassword(Schema):
 
 @bp.put('/password')
 @auth_required(auth_token)
-@input(NewPassword)
+@bp.input(NewPassword)
 def change_passowrd(newpwd):
     '''修改当前用户密码'''
     auth_token.current_user.set_password(newpwd['password'])
@@ -130,8 +130,8 @@ class NewUserIn(Schema):
 
 
 @bp.post('/adduser')
-@input(NewUserIn)
-@output(NewUserOut)
+@bp.input(NewUserIn)
+@bp.output(NewUserOut)
 @doc(tag='【仅限测试用】', operation_id='Add New User')
 def add_user(newuser):
     '''向数据库添加新用户'''

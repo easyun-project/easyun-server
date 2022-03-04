@@ -3,8 +3,7 @@
 
 import boto3
 from botocore.exceptions import ClientError
-from apiflask import auth_required, Schema
-from apiflask.decorators import output, input
+from apiflask import auth_required, Schema, output, input
 from flask import send_file
 from io import BytesIO
 from easyun import db
@@ -19,8 +18,8 @@ from . import bp
 
 @bp.get('/keypair')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-@output(KeypairOut(many=True))
+@bp.input(DcNameQuery, location='query')
+@bp.output(KeypairOut(many=True))
 # @log.api_error(logger)
 def list_keypair(parm):
     '''获取指定数据中心的keypair信息'''
@@ -64,8 +63,8 @@ def list_keypair(parm):
 
 @bp.get('/keypair/list')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-@output(KeypairOut(many=True))
+@bp.input(DcNameQuery, location='query')
+@bp.output(KeypairOut(many=True))
 # @log.api_error(logger)
 def list_keypair_brief(parm):
     '''获取指定数据中心的keypair列表[仅基础字段]'''
@@ -103,8 +102,8 @@ def list_keypair_brief(parm):
 
 @bp.get('/keypair/<key_name>')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-@output(KeypairOut)
+@bp.input(DcNameQuery, location='query')
+@bp.output(KeypairOut)
 # @log.api_error(logger)
 def get_keypair(key_name, parm):
     '''获取指定的keypair信息'''
@@ -142,8 +141,8 @@ def get_keypair(key_name, parm):
 
 @bp.post('/keypair')
 @auth_required(auth_token)
-@input(KeypairParms)
-@output(KeypairOut)
+@bp.input(KeypairParms)
+@bp.output(KeypairOut)
 # @log.api_error(logger)
 def add_keypair(parm):
     '''为指定数据中心添加keypair'''
@@ -207,8 +206,8 @@ def add_keypair(parm):
 
 @bp.delete('/keypair')
 @auth_required(auth_token)
-@input(KeyPairDelIn)
-# @output(SSHKeysOutputSchema(many=True))
+@bp.input(KeyPairDelIn)
+# @bp.output(SSHKeysOutputSchema(many=True))
 # @log.api_error(logger)
 def del_keypair(parm):
     '''从指定数据中心删除keypair'''
@@ -254,7 +253,7 @@ def del_keypair(parm):
 
 @bp.get('/keypair/store/<key_name>')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def get_keystore(key_name, parm):
     '''获取指定的 keypair 文件下载'''
     dcName = parm['dc']

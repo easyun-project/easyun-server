@@ -6,10 +6,9 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import auth_required, Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
-from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
@@ -21,7 +20,7 @@ from . import bp
 
 @bp.get('')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def list_database_detail(parm):
     '''获取数据中心全部数据库(RDS)信息'''
     dcName = parm['dc']
@@ -71,7 +70,7 @@ def list_database_detail(parm):
 
 @bp.get('/<rds_id>')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def get_database_detail(rds_id, parm):
     '''获取指定数据库(RDS)详细信息'''
     dcName = parm['dc']
@@ -118,8 +117,8 @@ def get_database_detail(rds_id, parm):
 
 @bp.get('/list')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-# @output(SvrListOut, description='Get Servers list')
+@bp.input(DcNameQuery, location='query')
+# @bp.output(SvrListOut, description='Get Servers list')
 def list_database_brief(parm):
     '''获取数据中心全部数据库(RDS)列表[仅基础字段]'''
 

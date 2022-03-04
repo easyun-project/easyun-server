@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import auth_required, Schema
 from apiflask.fields import String, List, Nested, Boolean, Date
 from apiflask.validators import Length, OneOf
 from easyun.common.result import Result
@@ -44,7 +44,7 @@ INVENTORY_TABLE = {
 
 @bp.get("/inventory/<resource>")
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 def get_inventory(resource, parm):
     '''获取数据中心资源明细(Inventory)'''
     if resource not in RESOURCE_NAME:
