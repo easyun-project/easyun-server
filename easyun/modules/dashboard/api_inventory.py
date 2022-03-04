@@ -71,7 +71,7 @@ def get_inventory(resource, parm):
             query_inventory('database', dcName),
             query_inventory('nw_subnet', dcName),
             query_inventory('nw_secgroup', dcName),
-            query_inventory('nw_gateway', dcName)
+            # query_inventory('nw_gateway', dcName)
         ]
 
         if resource == 'all':

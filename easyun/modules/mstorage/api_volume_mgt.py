@@ -9,267 +9,215 @@ import boto3
 from flask import send_file
 from flask.views import MethodView
 from apiflask import auth_required, Schema, input, output
-from apiflask.fields import String, Integer, Boolean
+from apiflask.fields import String, Integer, List, Boolean
 from apiflask.validators import Length
 from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import len_iter, query_dc_region, query_svr_name
+from easyun.common.utils import gen_dc_tag, len_iter, query_dc_region, query_svr_name
 from . import bp, TYPE
-from .schemas import newVolume
+from .schemas import AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
 
-# 将磁盘管理代码从服务器模块移到存储管理模块
 
 # 定义系统盘路径
 SystemDisk = ['/dev/xvda','/dev/sda1']
 
-   
-class NewDiskIn(Schema):
-    dcName = String(required=True, example="Easyun")
-    volumeSize = Integer(required=True, example=10)
-    volumeType = String(required=True, example='gp3')
-    isEncrypted = Boolean(required=True, example = False) 
-    volumeIops = Integer(example=3000)
-    volumeThruput = Integer( example=500) 
-    tagName = String(example='disk_test')
-    azName = String(example='us-east-1a')
-    svrId = String(example='i-0ac436622e8766a13')  #云服务器ID  
-    attachPath = String(example='/dev/sdg')  
-
 
 @bp.post('/volume')
 @auth_required(auth_token)
-@input(NewDiskIn)
-# @output()
-def add_disk(parms):
+@bp.input(AddVolumeParm)
+# @bp.output()
+def add_volume(parms):
     '''新增磁盘(EBS Volume)'''
     dcName = parms['dcName']
+    flagTag = gen_dc_tag(dcName)
     try:
-        CLIENT = boto3.client('ec2')
+        client_ec2 = boto3.client('ec2')
         resource_ec2 = boto3.resource('ec2')
-        if parms.get("svrId"):
-            thisSvr = resource_ec2.Instance(parms.get("svrId"))
-            azName = resource_ec2.Subnet(thisSvr.subnet_id).availability_zone,
-        else:
-            azName = parms.get('azName')
-        TagSpecifications = [
-            {
-                "ResourceType":"volume",
-                "Tags": [
-                        {"Key": "Flag", "Value": dcName},
-                        {"Key": "Name", "Value": parms.get('tagName')}
-                    ]
-            }
-        ]
+        # volume attributes
+        volumeType = parms.get('volumeType')
         volumeIops = parms.get('volumeIops')
         volumeThruput = parms.get('volumeThruput')
+        # server related attributes
+        svrId = parms.get("svrId")
+        attachPath = parms.get("attachPath")
 
-        if volumeIops and not volumeThruput:
-            volume = CLIENT.create_volume(
-                AvailabilityZone = azName,
-                Encrypted= parms['isEncrypted'],
-                Size=parms['volumeSize'],
-                VolumeType=parms['volumeType'],             
-                TagSpecifications=TagSpecifications,
-                Iops = volumeIops                
-            )
-        elif not volumeIops and volumeThruput:
-            volume = CLIENT.create_volume(
-                AvailabilityZone = azName,
-                Encrypted= parms['isEncrypted'],
-                Size=parms['volumeSize'],
-                VolumeType=parms['volumeType'],             
-                TagSpecifications=TagSpecifications,
-                Throughput= volumeThruput,
-            )
+        # 如果传入了svrID，则从该server上获取相关属性
+        if svrId:
+            thisSvr = resource_ec2.Instance(svrId)
+            # 获取 server az属性
+            volumeAz = resource_ec2.Subnet(thisSvr.subnet_id).availability_zone
+            # 获取 server tagName属性，作为卷名前缀 
+            nameTag = {"Key": "Name", "Value": query_svr_name(svrId)+'_disk' }
+        # 否则从传入的body参数上获取
         else:
-            volume = CLIENT.create_volume(
-                AvailabilityZone = azName,
+            volumeAz = parms.get('azName')
+            nameTag = {"Key": "Name", "Value": parms.get('tagName')}
+        tagSpecifications = [
+            {
+                "ResourceType":"volume",
+                "Tags": [ flagTag, nameTag ]
+            }
+        ]
+
+        # 基于voluem type执行不同的创建参数
+        if volumeType in ['gp3']:
+            newVolume = client_ec2.create_volume(
+                AvailabilityZone = volumeAz,
                 Encrypted= parms['isEncrypted'],
                 Size=parms['volumeSize'],
                 VolumeType=parms['volumeType'],             
-                TagSpecifications=TagSpecifications,
+                TagSpecifications=tagSpecifications,
                 Iops = volumeIops,
                 Throughput= volumeThruput,
             )
-        # print(dir(volume))
-        # volume1 = RESOURCE.Volume(volume['VolumeId'])
-        # waiter = CLIENT.get_waiter('volume_available')
-        # waiter.wait(
-        #     VolumeIds=[
-        #         volume1.id,
-        #     ]
-        # )
-        # volume1.attach_to_instance(
-        #     Device=parms["Device"],
-        #     InstanceId=parms["InstanceId"]
-        # )
-        from time import sleep 
-        if parms.get("attachPath"):
-            thisDisk = resource_ec2.Volume(volume['VolumeId'])
-            if thisDisk.state == 'available':
-                thisDisk.attach_to_instance(
-                    Device=parms["attachPath"],
-                    InstanceId=parms["SvrId"]
-                )
-                
-            sleep(0.5)
-            
-        response = Result(
-            detail={
-                'volumeId':thisDisk.volume_id,
-                'volueState' : thisDisk.state,
-            },
-            status_code=200
+        elif volumeType in ['io1', 'io2']:
+            newVolume = client_ec2.create_volume(
+                AvailabilityZone = volumeAz,
+                Encrypted= parms['isEncrypted'],
+                Size=parms['volumeSize'],
+                VolumeType=parms['volumeType'],             
+                TagSpecifications=tagSpecifications,
+                Iops = volumeIops,
             )
-        # response = Result(
-        #     detail={'VolumeId':volume['VolumeId'],
-        #     "State" : volume["State"],
-        #     },
-        #     status_code=200
-        #     )
+        else:   # ['gp2','sc1','st1','standard']
+            newVolume = client_ec2.create_volume(
+                AvailabilityZone = volumeAz,
+                Encrypted= parms['isEncrypted'],
+                Size=parms['volumeSize'],
+                VolumeType=parms['volumeType'],             
+                TagSpecifications=tagSpecifications,
+            )
+        volItem = {
+            'volumeId': newVolume['VolumeId'],
+            'volumeState': newVolume['State'],
+            'createTime': newVolume['CreateTime'].isoformat(),
+            'volumeAz': newVolume['AvailabilityZone']
+        }
+
+        # 如果传入了svrID和 attachPath参数，则将volume挂载到server上
+        if svrId and attachPath:
+            diskType = 'system' if attachPath in SystemDisk else 'user'
+            # wait until the volume is available
+            waiter = client_ec2.get_waiter('volume_available')
+            waiter.wait(VolumeIds=[newVolume['VolumeId']])
+
+            attachResp = thisSvr.attach_volume(
+                Device=parms["attachPath"],
+                VolumeId=newVolume['VolumeId']
+            )
+            #返回增加 volume attachment相关信息
+            volAttach = {
+                'attachSvr': query_svr_name(svrId),
+                'attachPath': attachPath,
+                'diskType': diskType,
+                # 获取 volume状态更新
+                'volumeState': attachResp['State'],
+            }
+            volItem.update(volAttach)
+
+        response = Result(
+            detail= volItem,
+            status_code=200
+        )
         return response.make_resp()
     except Exception as e:
         response = Result(
-            message=str(e), status_code=3001, http_status_code=400
+            message=str(e), 
+            status_code=5001, 
+            http_status_code=400
         )
         response.err_resp()
 
 
-
-
-@bp.post("/block/volume1")
-@auth_required(auth_token)
-@input(newVolume)
-def post(self, data):
-    '''新增磁盘(EBS Volume) 【重复】'''
-    try:
-        ec2Client = boto3.client('ec2')
-        
-        # 获取可用区信息
-        az = data.get('az')
-        # 创建EBS卷
-        volumeEncryption = data.get('encryption')
-        if volumeEncryption == 'true':
-            isEncryption = True
-        elif volumeEncryption == 'false':
-            isEncryption = False
-        
-        createResult = ec2Client.create_volume(
-            AvailabilityZone = az,
-            Encrypted = isEncryption,
-            Size = int(data.get('size')),
-            VolumeType = data.get('diskType'),
-            Iops = int(data.get('iops')),
-            Throughput = int(data.get('thruput')),
-            TagSpecifications = [{
-                'ResourceType' : 'volume',
-                'Tags' : [{ 'Key':'Flag','Value':'Easyun' }]
-            }]
-        )
-        volumeId = createResult['VolumeId']
-        
-        response = Result(
-            detail=[{
-                'VolumeId' : volumeId
-            }],
-            status_code=5001
-        )
-        return response.make_resp()
-    except Exception:
-        response = Result(
-            message='volume attach failed', status_code=5001,http_status_code=400
-        )
-        return response.err_resp()
-
-
-
-class DeleteDiskIn(Schema):
-    svrId = String(required=True, example='i-0ac436622e8766a13')  #云服务器ID
-    diskPath = String(required=True, example='/dev/sdg')
 
 
 @bp.delete('/volume')
 @auth_required(auth_token)
-@input(DeleteDiskIn)
-# @output()
-def delete_disk(DeleteDiskIn):
+@bp.input(DelVolumeParm)
+def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
-        CLIENT = boto3.client('ec2')
-        RESOURCE = boto3.resource('ec2')
-        server =RESOURCE.Instance(DeleteDiskIn["InstanceId"])
-        disks = CLIENT.describe_instances(InstanceIds=[DeleteDiskIn["InstanceId"]])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
-        vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == DeleteDiskIn["Device"]]
-        print(vid)
-        # print(dir(volume))
-        if len(vid)==0:
-            raise ValueError('invalid device')
-        volume = RESOURCE.Volume(vid[0])
+        resource_ec2 = boto3.resource('ec2')
+        deleteList = []
+        for volumeId in parm['volumeIds']: 
+            thisVol = resource_ec2.Volume(volumeId)
+            # 判断 volume state
+            if thisVol.state == 'Available': 
+                thisVol.delete() # Returns  None
+                deleteResult = {volumeId : 'success deleted'}
+            else:
+                deleteResult = {volumeId : 'failed, volume in-use'}
+            deleteList.append(deleteResult)
 
-        volume.detach_from_instance(
-            Device=DeleteDiskIn["Device"],
-            InstanceId=DeleteDiskIn["InstanceId"]
-        )
-        # waiter = CLIENT.get_waiter('volume_available')
-        # waiter.wait(
-        #     VolumeIds=[
-        #         volume.id,
-        #     ]
-        # )
-        from time import sleep 
-        while True:
-            volume1 = RESOURCE.Volume(volume.volume_id)
-            print(volume1.state)
-            if volume1.state == 'available':
-                volume1.delete()
-                break
-            sleep(0.5)
-        
         response = Result(
-            detail={'msg':'delete {} success'.format(DeleteDiskIn["Device"])},
+            detail=deleteList,
             status_code=200
-            )   
-        # response = Result(
-        #     detail={'VolumeId':volume1.volume_id,
-        #     "State" : volume1.state,
-        #     },
-        #     status_code=200
-        #     )
-        # response = Result(
-        #     detail={'VolumeId':volume['VolumeId'],
-        #     "State" : volume["State"],
-        #     },
-        #     status_code=200
-        #     )
+        )
         return response.make_resp()
     except Exception as e:
         response = Result(
-            message=str(e), status_code=3001, http_status_code=400
+            message=str(e), status_code=5001, http_status_code=400
         )
         response.err_resp()
 
 
 
-
-# class EBS_Volume(MethodView):
-    # token 验证
-    # decorators = [auth_required(auth_token)]
-    # 创建EBS卷
-
-
-
 @bp.put('/volume/attach')
+@bp.input(AttachVolParm)
 @auth_required(auth_token)
 def attach_server(parm):
-    '''块存储关联云服务器(ec2)'''
-    pass
+    '''块存储关联云服务器(ec2)【ToBeFix】'''
+    resource_ec2 = boto3.resource('ec2')
+    thisVol = resource_ec2.Volume(parm['volumeId'])
+    # 判断 volume state
+    if thisVol.state == 'Available':    
+        diskType = 'system' if parm['attachPath'] in SystemDisk else 'user'
+    if thisVol.state == 'In-use':
+        detachResult = thisVol.attach_to_instance(
+            InstanceId=parm["svrId"],
+            Device=parm["attachPath"],
+        )
+
+        #返回增加 volume attachment相关信息
+        volResp = {
+            'attachSvr': parm["svrId"],
+            'attachPath': parm["attachPath"],
+            'diskType': diskType,
+            # 获取 volume状态更新
+            'volumeState': detachResult['State'],
+        }
+    else:
+        raise
+
+    response = Result(
+        detail= volResp,
+        status_code=200
+    )
+    return response.make_resp()
+
 
 
 @bp.put('/volume/detach')
+@bp.input(DetachVolParm)
 @auth_required(auth_token)
 def detach_server(parm):
-    '''块存储分离云服务器(ec2)'''
-    pass
+    '''块存储分离云服务器(ec2)【ToBeFix】'''
+    resource_ec2 = boto3.resource('ec2')
+    thisVol = resource_ec2.Volume(parm['volumeId'])
+    # 判断 volume state
+    if thisVol.state == 'In-use':
+        detachResult = thisVol.detach_from_instance(
+            InstanceId=parm["svrId"],
+            Device=parm["attachPath"],
+        )
+    else:
+        raise
+
+    response = Result(
+        detail= detachResult,
+        status_code=200
+    )
+    return response.make_resp()
