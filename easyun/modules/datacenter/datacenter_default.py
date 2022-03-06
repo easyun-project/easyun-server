@@ -26,7 +26,7 @@ def get_default_parms(parm):
     '''获取创建云数据中心默认参数'''
     defaultName = parm['dc']
     # tag:Name prefix for all resource, eg. easyun-xxx
-    prefix = defaultName.lower()+'-'
+    prefix = defaultName.lower()
 
     # get account info from database
     curr_account:Account = Account.query.first()
@@ -48,13 +48,13 @@ def get_default_parms(parm):
     # define default igw
     defaultIgw = {
         # 这里为igw的 tag:Name，创建首个igw的时候默认该名称
-        "tagName" : prefix+"igw"
+        "tagName" : '%s-%s' %(prefix, 'igw')
     }
 
     # define default natgw
     defaultNatgw = {
         # 这里为natgw的 tag:Name ，创建首个natgw的时候默认该名称
-        "tagName" : prefix+"natgw"
+        "tagName" : '%s-%s' %(prefix, 'natgw')
     }
 
     gwList = [defaultIgw["tagName"], defaultNatgw["tagName"]]
@@ -62,13 +62,13 @@ def get_default_parms(parm):
      # define default igw route table
     defaultIrtb = {
         # 这里为igw routetable 的 tag:Name, 创建首个igw routetable 的时候默认该名称
-        "tagName" : prefix+"rtb-igw"
+        "tagName" : '%s-%s' %(prefix, 'rtb-igw')
     }
 
     # define default natgw route table
     defaultNrtb = {
         # 这里为nat routetable 的 tag:Name ，创建首个nat routetable 的时候默认该名称
-        "tagName" : prefix+"rtb-natgw"
+        "tagName" : '%s-%s' %(prefix, 'rtb-natgw')
     }
 
     rtbList = [defaultIrtb["tagName"], defaultNrtb["tagName"]]
@@ -107,20 +107,20 @@ def get_default_parms(parm):
             "routeTable": defaultNrtb["tagName"]
         },
         "securityGroup0": {
-            "tagName" : prefix+"sg-default",
+            "tagName" : '%s-%s' %(prefix, 'sg-default'),
             #该标记对应是否增加 In-bound: Ping 的安全组规则
             "enablePing": True,
             "enableSSH": True,
             "enableRDP": False
         },
         "securityGroup1": {
-            "tagName" : prefix+"sg-webapp",
+            "tagName" : '%s-%s' %(prefix, 'sg-webapp'),
             "enablePing": True,
             "enableSSH": True,
             "enableRDP": False
         },
         "securityGroup2": {
-            "tagName" : prefix+"sg-database",
+            "tagName" : '%s-%s' %(prefix, 'sg-database'),
             "enablePing": True,
             "enableSSH": True,
             "enableRDP": False
