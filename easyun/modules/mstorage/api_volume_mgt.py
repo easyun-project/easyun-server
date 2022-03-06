@@ -15,9 +15,9 @@ from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import gen_dc_tag, len_iter, query_dc_region, query_svr_name
+from easyun.common.utils import gen_dc_tag, len_iter, query_dc_region, query_svr_name, set_boto3_region
 from . import bp, TYPE
-from .schemas import AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
+from .schemas import VolumeDetail,AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
 
 
@@ -28,29 +28,32 @@ SystemDisk = ['/dev/xvda','/dev/sda1']
 @bp.post('/volume')
 @auth_required(auth_token)
 @bp.input(AddVolumeParm)
-# @bp.output()
+@bp.output(VolumeDetail)
 def add_volume(parms):
     '''新增磁盘(EBS Volume)'''
     dcName = parms['dcName']
     flagTag = gen_dc_tag(dcName)
     try:
+        dcRegion = set_boto3_region(dcName)
         client_ec2 = boto3.client('ec2')
         resource_ec2 = boto3.resource('ec2')
         # volume attributes
-        volumeType = parms.get('volumeType')
+        volumeType = parms['volumeType']
         volumeIops = parms.get('volumeIops')
         volumeThruput = parms.get('volumeThruput')
-        # server related attributes
+        # attachment related attributes
         svrId = parms.get("svrId")
         attachPath = parms.get("attachPath")
+        diskType = 'system' if attachPath in SystemDisk else 'user'
 
         # 如果传入了svrID，则从该server上获取相关属性
         if svrId:
             thisSvr = resource_ec2.Instance(svrId)
             # 获取 server az属性
             volumeAz = resource_ec2.Subnet(thisSvr.subnet_id).availability_zone
-            # 获取 server tagName属性，作为卷名前缀 
-            nameTag = {"Key": "Name", "Value": query_svr_name(svrId)+'_disk' }
+            # 以 server tagName 作为卷名前缀
+            tagName = '%s-%s' % (query_svr_name(svrId), diskType)
+            nameTag = {"Key": "Name", "Value": tagName }
         # 否则从传入的body参数上获取
         else:
             volumeAz = parms.get('azName')
@@ -93,13 +96,12 @@ def add_volume(parms):
         volItem = {
             'volumeId': newVolume['VolumeId'],
             'volumeState': newVolume['State'],
-            'createTime': newVolume['CreateTime'].isoformat(),
+            'createTime': newVolume['CreateTime'],
             'volumeAz': newVolume['AvailabilityZone']
         }
 
         # 如果传入了svrID和 attachPath参数，则将volume挂载到server上
-        if svrId and attachPath:
-            diskType = 'system' if attachPath in SystemDisk else 'user'
+        if svrId and attachPath:            
             # wait until the volume is available
             waiter = client_ec2.get_waiter('volume_available')
             waiter.wait(VolumeIds=[newVolume['VolumeId']])
@@ -110,11 +112,14 @@ def add_volume(parms):
             )
             #返回增加 volume attachment相关信息
             volAttach = {
-                'attachSvr': query_svr_name(svrId),
-                'attachPath': attachPath,
-                'diskType': diskType,
                 # 获取 volume状态更新
                 'volumeState': attachResp['State'],
+                'volumeAttach':[{
+                    'attachSvrId': svrId,
+                    'attachSvr': query_svr_name(svrId),
+                    'attachPath': attachPath,
+                    'diskType': diskType}
+                ]
             }
             volItem.update(volAttach)
 
@@ -140,6 +145,7 @@ def add_volume(parms):
 def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
+        # dcRegion = set_boto3_region(dcName)
         resource_ec2 = boto3.resource('ec2')
         deleteList = []
         for volumeId in parm['volumeIds']: 

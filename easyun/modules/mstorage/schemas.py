@@ -123,7 +123,7 @@ class VolAttachment(Schema):
         example= "2022-02-27T02:20:44+00:00")
 
 
-class VolumeListDetail(Schema):
+class VolumeDetail(Schema):
     volumeId = String(
         required=True,         
         example= "vol-0bd70f2001d6fb8bc")

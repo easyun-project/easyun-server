@@ -16,7 +16,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.common.utils import len_iter, query_dc_region, query_svr_name
-from .schemas import newVolume, VolumeListDetail
+from .schemas import newVolume, VolumeDetail
 from . import bp
 
 
@@ -28,7 +28,7 @@ SystemDisk = ['/dev/xvda','/dev/sda1']
 @bp.get('/volume')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
-@bp.output(VolumeListDetail(many=True), description='All volume list (detail)')
+@bp.output(VolumeDetail(many=True), description='All volume list (detail)')
 def list_stblock_detail(parm):
     '''获取数据中心全部块存储信息'''
     dcName=parm.get('dc')
@@ -55,6 +55,7 @@ def list_stblock_detail(parm):
                     diskType = 'system' if a['Device'] in SystemDisk else 'user'
                     attachList.append({
                         'attachPath' : a['Device'],
+                        'attachSvrId' : a['InstanceId'],
                         'attachSvr' : query_svr_name(a['InstanceId']),
                         'attachTime': a['AttachTime'],
                         'diskType': diskType,  

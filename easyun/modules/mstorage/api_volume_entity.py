@@ -53,6 +53,7 @@ def get_volume_detail(vol_id, parm):
                 diskType = 'system' if a['Device'] in SystemDisk else 'user'
                 attachList.append({
                     'attachPath' : a['Device'],
+                    'attachSvrId' : a['InstanceId'],
                     'attachSvr' : query_svr_name(a['InstanceId']),
                     'attachTime': a['AttachTime'].isoformat(),
                     'diskType': diskType,  
