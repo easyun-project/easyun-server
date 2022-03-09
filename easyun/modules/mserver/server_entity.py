@@ -11,8 +11,11 @@ from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from . import bp
 from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
+from .schemas import TagItem
+from . import bp
+
+
 
 class DetailOut(Schema):
     # ins_id = String()
@@ -437,4 +440,90 @@ def attach_secgroup(param):
 #         )
 #         response.err_resp()
 
+
+@bp.get('/tags/<svr_id>')
+@auth_required(auth_token)
+@bp.output(TagItem(many=True))
+def list_svr_tags(svr_id):
+    '''获取指定云服务器的用户Tags'''
+    try:
+        resource_ec2 = boto3.resource('ec2')
+        thisSvr = resource_ec2.Instance(svr_id)
+        userTags = [t for t in thisSvr.tags if t['Key'] not in ["Flag",]]
+        response = Result(
+            detail= userTags,
+            status_code=200
+            ) 
+        return response.make_resp() 
+    except Exception as ex:
+        response = Result(
+            message=str(ex), 
+            status_code=3031, 
+            http_status_code=400
+        )
+        response.err_resp()
+
+
+@bp.put('/tags/<svr_id>')
+@auth_required(auth_token)
+@bp.input(TagItem)
+# @bp.input(TagItem(many=True))
+def mod_svr_tags(svr_id, parm):
+    '''为指定云服务器新增/修改用户Tags'''
+    try:
+        # 禁止修改Flag tag
+        # for tag in parm:
+        #     if tag["Key"] == 'Flag':
+        if parm["Key"] == 'Flag':
+            raise ValueError('Flag tag unsupported')
+        
+        resource_ec2 = boto3.resource('ec2')
+        thisSvr = resource_ec2.Instance(svr_id)
+        newTags = thisSvr.create_tags(
+            Tags=[parm]
+        )
+        userTags = [t for t in thisSvr.tags if t['Key'] != "Flag"]
+        response = Result(
+            detail= userTags,
+            status_code=200
+            ) 
+        return response.make_resp() 
+    except Exception as ex:
+        response = Result(
+            message=str(ex), 
+            status_code=3032, 
+            http_status_code=400
+        )
+        response.err_resp()
+
+
+@bp.delete('/tags/<svr_id>')
+@auth_required(auth_token)
+@bp.input(TagItem)
+def del_svr_tags(svr_id, parm):
+    '''为指定云服务器删除用户Tags'''
+    try:
+        # 禁止删除Flag tag
+        if parm["Key"] == 'Flag':
+            raise ValueError('Flag tag unsupported')
+
+        resource_ec2 = boto3.resource('ec2')
+        thisSvr = resource_ec2.Instance(svr_id)
+        delTags = thisSvr.delete_tags(
+            Tags=[parm]
+        )
+
+        userTags = [t for t in thisSvr.tags if t['Key'] != "Flag"]
+        response = Result(
+            detail= userTags,
+            status_code=200
+            ) 
+        return response.make_resp() 
+    except Exception as ex:
+        response = Result(
+            message=str(ex), 
+            status_code=3033, 
+            http_status_code=400
+        )
+        response.err_resp()
 

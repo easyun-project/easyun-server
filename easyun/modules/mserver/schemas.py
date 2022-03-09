@@ -25,3 +25,13 @@ class SvrOperateOut(Schema):
     currState = List(String) 
     preState = List(String) 
 
+
+class TagItem(Schema):
+    Key= String(
+        required=True,
+        example='Env'
+    )
+    Value= String(
+        required=True,
+        example='Develop'
+    )
