@@ -140,11 +140,11 @@ def register_commands(app: APIFlask):
     """
     @app.cli.command()
     def initdb():
-        from easyun.common.models import User, Account, Datacenter
+        from easyun.common.models import User, Account, Datacenter, KeyStore, KeyPairs
         db.create_all()
         # 预设 admin user
-        admin = User(username='admin', email='admin@mail.com')
-        admin.set_password('admin')
+        admin = User(username='demo', email='demo@easyun.com')
+        admin.set_password('easyun')
         db.session.add(admin)
 
         db.session.commit()
