@@ -101,6 +101,7 @@ def get_server_detail(svr_id):
         instance_res['PublicIpAddress'] = instance_res1.public_ip_address
         instance_res['Tenancy'] = 'default'
         instance_res['TerminalProtection'] = 'disabled' if protection else 'enabled'
+        association = instance_res["NetworkInterfaces"][0].get("Association")
         svrProperty = {
             "instanceName":[t for t in instance_res["Tags"] if t['Key'] == "Name"][0]['Value'],
             "instanceType":instance_res["InstanceType"],
@@ -108,7 +109,7 @@ def get_server_detail(svr_id):
             "memory":instance_res["Memory"],
             "privateIp":instance_res["PrivateIpAddress"],
             "publicIp":instance_res["PublicIpAddress"],
-
+            "isEip": True if association and association["IpOwnerId"]!='amazon' else False ,
             "status":instance_res["ServerState"],
 
             # "":instance_res[""],
