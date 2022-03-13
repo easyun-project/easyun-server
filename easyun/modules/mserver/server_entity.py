@@ -93,7 +93,7 @@ def get_server_detail(svr_id):
         instance_res['ImageFullName'] = images["Images"][0]["Name"]
         print(instance_res['ImageFullName'])
         AMI = AMI_Win[arch] + AMI_Lnx[arch]
-        amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']][0]
+        amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']]
         # print(amitmp)
         # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
         instance_res['ImagePath'] = '/'.join(images["Images"][0]["ImageLocation"].split('/')[1:])
@@ -134,7 +134,7 @@ def get_server_detail(svr_id):
         }
         svrConfig = {
             "arch":arch,
-            "os":amitmp['osCode']
+            "os":amitmp[0]['osCode'] if amitmp else 'unknown'
         }
         svrDisk = {
             "volumeIds": [v["Ebs"]['VolumeId'] for v in instance_res["BlockDeviceMappings"]]
@@ -154,7 +154,7 @@ def get_server_detail(svr_id):
         #     # "":instance_res[""],
         # }
         svrConnect = {
-            "userName":amitmp['userName'],
+            "userName":amitmp[0]['userName'] if amitmp else 'unknown',
             "publicIp":instance_res["PublicIpAddress"],
         }
         detail = {
