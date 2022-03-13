@@ -38,12 +38,15 @@ def get_volume_detail(vol_id, parm):
         dcRegion =  set_boto3_region(dcName)
         resource_ec2 = boto3.resource('ec2')
         thisVol = resource_ec2.Volume(vol_id)
-        # nameTag = [tag['Value'] for tag in thisVol.tags if tag.get('Key') == 'Name']
-        # 加一个判断，避免tags为空时报错
+
+        # 加一个判断，确保volume在所指的datacenter内
         if thisVol.tags:
-            nameTag = next((tag['Value'] for tag in thisVol.tags if tag['Key'] == 'Name'), None)
+            flagTag = next((tag['Value'] for tag in thisVol.tags if tag['Key'] == 'Flag'), None)
+            if flagTag != dcName:
+                raise ValueError(f"The volume {vol_id} does not exist in datacenter {dcName}.")
+            nameTag = next((tag['Value'] for tag in thisVol.tags if tag['Key'] == 'Name'), None)                
         else:
-            nameTag = None
+            raise ValueError(f"The volume {vol_id} does not exist in datacenter {dcName}.")
         
         attachList = []
         attachs = thisVol.attachments

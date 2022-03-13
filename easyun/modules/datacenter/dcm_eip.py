@@ -12,9 +12,9 @@ from easyun.common.result import Result
 from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
-from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import gen_dc_tag
-from .schemas import DataCenterEIPIn,DataCenterNewEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
+from easyun.common.schemas import DcNameQuery, DcNameBody
+from easyun.common.utils import gen_dc_tag, set_boto3_region
+from .schemas import DelEipParm, DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
 
 @bp.get('/eip')
@@ -82,13 +82,12 @@ def get_eip_detail(pub_ip, param):
     '''获取 指定静态IP(EIP)信息'''
 
     dcName = param.get('dc')
+    filterTag = gen_dc_tag(dcName, 'filter')
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-        client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+        dcRegion = set_boto3_region(dcName)
+        client_ec2 = boto3.client('ec2', region_name= dcRegion)
         eips = client_ec2.describe_addresses(
-            Filters=[
-                gen_dc_tag(dcName, 'filter'),
-            ],
+            Filters=[ filterTag ],
             PublicIps = [pub_ip],
             # AllocationIds=[ eip_id ]
         )
@@ -120,7 +119,11 @@ def get_eip_detail(pub_ip, param):
         return resp.make_resp()
 
     except Exception as ex:
-        resp = Result(message=ex, status_code=2101,http_status_code=400)
+        resp = Result(
+            message=str(ex), 
+            status_code=2101,
+            http_status_code=400
+        )
         resp.err_resp()
 
 
@@ -163,92 +166,87 @@ def list_eip_brief(param):
         return resp.make_resp()
 
     except Exception as ex:
-        resp = Result(message=ex, status_code=2101,http_status_code=400)
-        resp.err_resp()
-
-
-@bp.delete('/eip')
-@auth_required(auth_token)
-@input(DataCenterEIPIn)
-def delete_eip(param):
-    '''删除 指定静态IP(EIP)'''
-
-    dcName=param.get('dcName')
-    alloId=param.get('alloId')
-  
-    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-  
-    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
-
-    try:
-        response = client_ec2.release_address(AllocationId=alloId,DryRun=DryRun)
-
-        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-            resp = Result(
-                # detail = [{'AllocationId': eipId}],
-                detail = alloId+' Static IP released.',
-                status_code = 200 
-            )
-            return resp.make_resp()
-        else:
-            resp = Result(detail=[], status_code=2061)
-            resp.err_resp()
-
-    except Exception as ex:
         resp = Result(
-            # message='release_address failed due to wrong AllocationId' ,
-            message=ex,
-            status_code=2061,
+            message=str(ex), 
+            status_code=2101,
             http_status_code=400)
-        # resp = Result(message=ex, status_code=2061,http_status_code=400)
         resp.err_resp()
+
 
 
 @bp.post('/eip')
 @auth_required(auth_token)
-@input(DataCenterNewEIPIn)
+@input(DcNameBody)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_eip(param):
     '''新增 静态IP(EIP)'''
     dcName=param.get('dcName') 
     thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-
-    # if (thisDC is None):
-    #         response = Result(detail ={'Result' : 'Errors'}, message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
-    #         response.err_resp() 
   
     client_ec2 = boto3.client('ec2', region_name= thisDC.region)
     
-    dcTag = {"Key": "Flag", "Value": dcName}
+    flagTag = {"Key": "Flag", "Value": dcName}
+    nameTag = {"Key": "Name", "Value": dcName.lower()+"-extra-eip"}
 
-    try:
-        nameTag = {"Key": "Name", "Value": dcName.lower()+"-extra-eip"}
+    try:        
         eip = client_ec2.allocate_address(
             DryRun=DryRun,
             Domain='vpc',
             TagSpecifications = [
                 {
                     'ResourceType':'elastic-ip', 
-                    "Tags": [dcTag, nameTag]
+                    "Tags": [flagTag, nameTag]
                 }
             ]
-        )
-        
-        eipList = [
-            {
-                'pubIp' : eip['PublicIp'],
-                'alloId' : eip['AllocationId']
-            } ]
+        )        
+        eipItem = {
+            'pubIp' : eip['PublicIp'],
+            'alloId' : eip['AllocationId']
+        }
 
         resp = Result(
-            detail = eipList,
+            detail = eipItem,
             status_code = 200 
         )
         return resp.make_resp()
 
     except Exception as ex:
         resp = Result(
-            message='EIP creation failed', 
+            message= str(ex), 
             status_code=2061,
             http_status_code=400)
+        resp.err_resp()
+
+
+@bp.delete('/eip')
+@auth_required(auth_token)
+@input(DelEipParm)
+def delete_eip(parm):
+    '''删除 指定静态IP(EIP)'''
+
+    dcName=parm.get('dcName')
+    alloId=parm.get('alloId')
+  
+    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+
+    try:
+        response = client_ec2.release_address(
+            AllocationId=alloId,
+            DryRun=DryRun
+        )
+        resp = Result(
+            # detail = [{'AllocationId': eipId}],
+            detail = f'{alloId} Static IP(EIP) released',
+            status_code = 200 
+        )
+        return resp.make_resp()
+
+
+    except Exception as ex:
+        resp = Result(
+            message=str(ex),
+            status_code=2061,
+            http_status_code=400)
+        # resp = Result(message=ex, status_code=2061,http_status_code=400)
         resp.err_resp()

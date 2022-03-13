@@ -5,21 +5,20 @@
   @auth:    aleck
 """
 
+from email import message
 import boto3
 from datetime import date, datetime
-from flask import current_app,jsonify, request
 from apiflask import Schema, input, output, doc, abort, auth_required
 from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean
 from apiflask.validators import Length, OneOf
-from celery.result import ResultBase, AsyncResult
-from easyun import db, log, celery
+from easyun import db, log
+from easyun.cloud.aws_quota import get_quota_value
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
-from easyun.common.utils import gen_dc_tag, get_hash_tag
+from easyun.common.utils import len_iter, gen_dc_tag
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from .schemas import CreateDcParms, CreateDcResult, DcParmIn
-from . import bp, logger, DC_REGION, DC_NAME, DryRun
-from easyun.common.schemas import DcNameQuery
+from .schemas import CreateDcParms, CreateDcResult
+from . import bp, logger, DryRun
 
 
 @bp.post('')
@@ -27,79 +26,42 @@ from easyun.common.schemas import DcNameQuery
 @input(CreateDcParms)
 @output(CreateDcResult)
 @log.api_error(logger)
-def create_dc_async(parm):
-    '''创建 Datacenter 及基础资源[异步]'''
-    task = create_dc_task.apply_async(args=[parm, ])
-    resp = Result(
-        detail=task.id,
-        status_code=200
-    )
-    return resp.make_resp()
-
-
-class TaskIdQuery(Schema):
-    '''Task UUID for celery query parm '''
-    id = String(
-        required=True, 
-        validate=Length(0, 36),
-        example='1603a978-e5a0-4e6a-b38c-4c751ff5fff8'
-    )
-
-
-@bp.get('/result')
-@auth_required(auth_token)
-@input(TaskIdQuery,location='query')
-# @output(CreateDcResult)
-def fetch_task_result(parm):
-    '''获取创建 Datacenter 任务执行结果'''
-    # celery_id = request.args.get('id')
-    task = AsyncResult(parm.get('id'), app=celery)
-    if task.ready():
-        result = task.result
-        resp = Result(
-            detail=result.get('detail'),
-            status_code=result.get('status_code'))
-
-        return resp.make_resp()
-    else:
-        resp = Result(
-            detail='creating',
-            status_code=2000
-        )
-        return resp.make_resp()
-
-
-@bp.get('/state')
-@auth_required(auth_token)
-@input(TaskIdQuery,location='query')
-# @output(CreateDcResult)
-def fetch_task_state(parm):
-    '''获取创建 Datacenter 任务执行状态【TBD】'''
-    pass
-
-
-@celery.task()
-def create_dc_task(parm):
-    '''执行创建 Datacenter 任务'''
-    # Datacenter basic attribute difine
+def create_datacenter(parm):
+    '''创建 Datacenter 及基础资源'''
+    
+    # Datacenter basic attribute define
     dcName = parm['dcName']
     dcRgeion = parm['dcRegion']
     # Mandatory tag:Flag for all resource
     flagTag = gen_dc_tag(dcName)
     
-    resource_ec2 = boto3.resource('ec2', region_name = dcRgeion)
-    client_ec2 = boto3.client('ec2', region_name = dcRgeion)
+    boto3.setup_default_session(region_name = dcRgeion ) 
+    resource_ec2 = boto3.resource('ec2')
+    client_ec2 = boto3.client('ec2')
 
-    # Step 0:  Check DC existed or not, if DC existed, need reject
-    thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-    if (thisDC is not None):
+    # Step 0: Check the prerequisites for creating new datacenter
+    try:
+        # Check if the DC Name is available
+        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+        if (thisDC is not None):
+            raise ValueError('DataCenter name already existed')
+        # Check if VPC quota is enough
+        vpcQuota = get_quota_value('vpc','L-F678F1CE')
+        vpcIter = resource_ec2.vpcs.all()
+        if len_iter(vpcIter)  >= int(vpcQuota):
+            raise ValueError('The VPCs per Region limit has been reached')
+        # Check if EIP quota is enough
+        eipQuota = get_quota_value('ec2','L-0263D0A3')
+        eipIter = resource_ec2.vpc_addresses.all()
+        if len_iter(eipIter) >= int(eipQuota):
+            raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
+ 
+    except Exception as ex:
         resp = Result(
-            message='Datacenter already existed',
+            message=str(ex), 
             status_code=2001,
-            http_status_code=400
-        )
-        resp.err_resp()   
-
+            http_status_code=400)
+        resp.err_resp()
 
     # Step 1: create easyun vpc, including:
     # 1* main route table
@@ -119,8 +81,7 @@ def create_dc_task(parm):
         stage = vpc.id+' created'
         logger.info('[VPC]'+stage)
     except Exception as ex:
-        logger.error('[VPC]'+str(ex))
-        resp = Result(detail=str(ex), status_code=2010)
+        resp = Result(message=str(ex), status_code=2010)
         resp.err_resp()
         
     
@@ -151,7 +112,7 @@ def create_dc_task(parm):
         logger.info('[IGW]'+stage)
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2020)
+        resp = Result(message=str(ex) , status_code=2020)
         resp.err_resp()
 
 
@@ -190,7 +151,7 @@ def create_dc_task(parm):
         logger.info('[Subnet]'+stage)
         
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2030)
+        resp = Result(message=str(ex) , status_code=2030)
         resp.err_resp()
 
 
@@ -230,7 +191,7 @@ def create_dc_task(parm):
                 )
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2040)
+        resp = Result(message=str(ex) , status_code=2040)
         resp.err_resp()
 
 
@@ -269,7 +230,7 @@ def create_dc_task(parm):
         logger.info('[Subnet]'+stage)
         
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2050)
+        resp = Result(message=str(ex) , status_code=2050)
         resp.err_resp()
 
 
@@ -292,7 +253,7 @@ def create_dc_task(parm):
         logger.info('[EIP]'+stage)
   
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2061)
+        resp = Result(message=str(ex) , status_code=2061)
         resp.err_resp()
 
     # 6-2: create nat gateway
@@ -321,11 +282,11 @@ def create_dc_task(parm):
             stage = natgwID+' created'
             logger.info('[NatGW]'+stage)
         except Exception as ex:
-            resp = Result(detail=str(ex) , status_code=2062)
+            resp = Result(message=str(ex) , status_code=2062)
             resp.err_resp()
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2060)
+        resp = Result(message=str(ex) , status_code=2060)
         resp.err_resp()
 
 
@@ -365,7 +326,7 @@ def create_dc_task(parm):
         )
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2070)
+        resp = Result(message=str(ex) , status_code=2070)
         resp.err_resp()
 
 
@@ -432,7 +393,7 @@ def create_dc_task(parm):
         logger.info(stage)
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2081)
+        resp = Result(message=str(ex) , status_code=2081)
         resp.err_resp()
 
     # 8-2: create webapp security group
@@ -461,7 +422,7 @@ def create_dc_task(parm):
         stage = '[SecGroup]'+sgWeb.group_name+' created'
         logger.info(stage)        
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2082)
+        resp = Result(message=str(ex) , status_code=2082)
         resp.err_resp()
 
     # 8-3: create database security group
@@ -490,7 +451,7 @@ def create_dc_task(parm):
         stage = '[SecGroup]'+sgWeb.group_name+' created'
         logger.info(stage)           
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2083)
+        resp = Result(message=str(ex) , status_code=2083)
         resp.err_resp()
 
 
@@ -515,12 +476,12 @@ def create_dc_task(parm):
         logger.info(stage)
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2092)
+        resp = Result(message=str(ex) , status_code=2092)
         resp.err_resp()
 
 # step 10: Update Datacenter name list to DynamoDB
     try:
-        # 待实现
+        # 待補充
 
         stage = '[DataCenter]'+newDC.name+' created successfully !'
         logger.info(stage)
@@ -531,7 +492,7 @@ def create_dc_task(parm):
         return resp.make_resp()
 
     except Exception as ex:
-        resp = Result(detail=str(ex) , status_code=2092)
+        resp = Result(message=str(ex) , status_code=2092)
         resp.err_resp()
 
 

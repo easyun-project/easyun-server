@@ -151,7 +151,7 @@ def del_volume(parm):
         for volumeId in parm['volumeIds']: 
             thisVol = resource_ec2.Volume(volumeId)
             # 判断 volume state
-            if thisVol.state == 'Available': 
+            if thisVol.state == 'available': 
                 thisVol.delete() # Returns  None
                 deleteResult = {volumeId : 'success deleted'}
             else:
