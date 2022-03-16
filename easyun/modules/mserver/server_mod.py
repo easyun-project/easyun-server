@@ -113,9 +113,9 @@ class ConfigIn(Schema):
 
 
 @bp.post('/config')
-# @auth_required(auth_token)
+@auth_required(auth_token)
 @input(ConfigIn)
-@output(UpdateOut)
+# @output(UpdateOut)
 def update_config(new):
     '''修改指定云服务器实例配置'''
     try: 
@@ -127,20 +127,18 @@ def update_config(new):
         # 判断服务器是否处于关机状态
         for server in servers:
             if server.state["Name"] != "stopped":
-                response = Result(
-                message='Server must be stopped.', status_code=3000,http_status_code=400
+                raise ValueError('Server must be stopped.')
+            else:
+                server.modify_attribute(
+                    InstanceType={
+                    'Value': new["ins_type"]
+                    }
                 )
-                response.err_resp()
-        update_result = servers.modify_attribute(
-            InstanceType={
-            'Value': new["ins_type"]
-            }
-        )
-        response = Result(
-            detail={'svr_ids':[i.InstanceId for i in update_result]},
-            status_code=3000
-            )
-        return response.make_resp()
+                response = Result(
+                    detail={'msg':'config success'},
+                    status_code=200
+                    )
+                return response.make_resp()
     except Exception as e:
         response = Result(
             message=str(e), status_code=3001, http_status_code=400
