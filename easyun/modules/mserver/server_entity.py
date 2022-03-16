@@ -131,7 +131,7 @@ def get_server_detail(svr_id):
         }
         svrConfig = {
             "arch":arch,
-            "os":amitmp[0]['osCode'] if amitmp else 'unknown'
+            "os":amitmp[0]['osCode'] if amitmp else 'amzn2'
         }
         svrDisk = {
             "volumeIds": [v["Ebs"]['VolumeId'] for v in instance_res["BlockDeviceMappings"]]
@@ -151,7 +151,7 @@ def get_server_detail(svr_id):
         #     # "":instance_res[""],
         # }
         svrConnect = {
-            "userName":amitmp[0]['userName'] if amitmp else 'unknown',
+            "userName":amitmp[0]['userName'] if amitmp else ['ec2-user'],
             "publicIp":instance_res["PublicIpAddress"],
         }
         detail = {
