@@ -67,6 +67,10 @@ def list_server_detail(parm):
             #获取内存容量            
             insType = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
             ramSize = insType['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
+            try:
+                osName = resource_ec2.Image(s.image_id).platform_details
+            except:
+                osName = 'unknown'
             svrItem = {
                 'svrId' : s.id,
                 'tagName': nameTag,
@@ -75,7 +79,7 @@ def list_server_detail(parm):
                 'vpuNum' : s.cpu_options['CoreCount'],
                 'ramSize' : ramSize/1024,
                 'volumeSize' : volumeSize, 
-                'osName' : resource_ec2.Image(s.image_id).platform_details,             
+                'osName' : osName,
                 # 'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,
                 'azName' : s.placement.get('AvailabilityZone'),
                 'pubIp' : s.public_ip_address,
