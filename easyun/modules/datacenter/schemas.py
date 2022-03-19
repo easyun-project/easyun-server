@@ -11,6 +11,7 @@ from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean, Nest
 from apiflask.validators import Length, OneOf
 
 
+
 # 定义VPC 参数的格式
 class VpcParm(Schema):
     cidrBlock = String(               #VPC IPv4 address range
@@ -78,8 +79,7 @@ class CreateDcParms(Schema):
         example="us-east-1"
     )
              
-    vpcCidr = Nested(VpcParm,      #VPC IP address range
-        required=True,
+    dcVPC = Nested(VpcParm, required=True,
         example={
             "cidrBlock": "10.15.0.0/16",
         }
@@ -90,7 +90,7 @@ class CreateDcParms(Schema):
             "tagName": "Public subnet 1",
             "azName": "us-east-1b",
             "cidrBlock": "10.15.1.0/24",
-            "gwName": "easyun-igw",            
+            "gwName": "easyun-igw",
             "routeTable": "easyun-rtb-igw"
         }
     )
@@ -156,8 +156,11 @@ class CreateDcResult(Schema):
     vpc_id = String()
     create_date = DateTime()
 
+''' 
+Schemas for Datacenter APIs
+==================================================================
+'''
 
-# ------------------------------------------------------ #
 class AddDatacenter(Schema):
     region = String(required=True, validate=Length(0, 20))     #VPC name
     vpc_cidr = String(required=True, validate=Length(0, 20))     #IP address range
@@ -263,9 +266,28 @@ class VpcListOut(Schema):
 class DataCenterListIn(Schema):
     dcName = String()
 
+
 class DataCenterListsIn(Schema):
     dcName = String()
     type = String()
+
+
+
+''' 
+Schemas for Eip APIs
+==================================================================
+'''
+
+class DelEipParm(Schema):
+    dcName = String(
+        required=True,
+        example= "Easyun")
+    alloId = String(
+        required=True,
+        example= "eipalloc-0fdb6c5e3a254c937")
+    pubIp = String(
+        required=False,
+        example= "12.34.56.78")        
 
 
 class DataCenterEIPIn(Schema):

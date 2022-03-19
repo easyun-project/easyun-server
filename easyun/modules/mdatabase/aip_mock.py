@@ -15,28 +15,6 @@ from datetime import date, datetime
 from . import bp
 
 
-class TestQuery(Schema):
-    ''' datacenter name for query parm '''
-    dc = String(
-        required=True, 
-        # validate=Length(0, 30),
-        validate=OneOf(query_dc_list()),
-        example='Easyun'
-    )
-
-@bp.get('/test/db_list')
-# @auth_required(auth_token)
-@input(TestQuery, location='query')
-def dc_list_query(rds_id, parm):
-    '''dcName参数列表测试'''
-    t = query_dc_list()
-    resp = Result(
-        detail = t,
-        status_code=200
-    )
-    return resp.make_resp()
-
-
 
 # .describe_db_instances() 
 resp = [

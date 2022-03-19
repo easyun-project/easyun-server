@@ -1,6 +1,6 @@
 # Mini needed in Development
 
-APIFlask==0.11.0
+APIFlask==0.12.0
 Flask-SQLAlchemy==2.5.1
 Flask-Migrate==3.1.0
 Flask-Cors==3.0.10

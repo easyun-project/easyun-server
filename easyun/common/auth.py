@@ -3,13 +3,13 @@
 @Description: The user auth module.
 @LastEditors: 
 '''
-from flask import jsonify, make_response
-from apiflask import APIBlueprint, HTTPTokenAuth, HTTPBasicAuth, auth_required, Schema, input, output, doc
-from apiflask.validators import Length, OneOf
-from apiflask.fields import String, Integer
-from .. import db
-from .models import User, Account
+
+from apiflask import APIBlueprint, HTTPTokenAuth, HTTPBasicAuth, auth_required, Schema, doc
+from apiflask.validators import Length, OneOf, Email
+from apiflask.fields import String, Integer, DateTime
 from .result import Result, make_resp, error_resp, bad_request
+from .models import User, Account
+from .. import db
 
 # define api version
 ver = '/api/v1'
@@ -41,41 +41,77 @@ def token_auth_error(status):
     return error_resp(status)
 
 
-class TokenOutSchema(Schema):
-    token = String(),
-    account_id = String() ,
-    aws_type = String(),
-    role = String() 
+class UserDetail(Schema):
+    id = Integer()
+    username = String()
+    email = String()
+    token = String()
+    token_expiration = DateTime()
+    #cloud account info
+    account_id = String()
+    account_type = String()
+    role = String()
+    deploy_region = String()
 
 
-class UserInSchema(Schema):
-    username = String(required=True, validate=Length(0, 20), 
-                    example="admin")
-    password = String(required=True, validate=Length(0, 30),
-                    example="admin")
+class UserBrief(Schema):
+    id = Integer()
+    username = String()
+    email = String()
+
+
+class AddUserParm(Schema):
+    username = String(
+        required=True, validate=Length(0, 20), 
+        example="user")
+    password = String(
+        required=True, validate=Length(0, 30), 
+        example="password")
+    email = String(
+        required=True, validate=Email(), 
+        example="user@mail.com")
+
+
+class NewPassword(Schema):
+    password = String(
+        required=True, validate=Length(0, 20),
+        example="Passw0rd")
+
+
+class UserLogin(Schema):
+    username = String(
+        required=True, validate=Length(0, 20), 
+        example='demo')
+    password = String(
+        required=True, validate=Length(0, 30),
+        example='easyun')
+
 
 
 @bp.post('/auth')
-@input(UserInSchema)
-def post_auth_token(user):
-    '''用户登录 (auth_token，Post方法获取token)'''
-    if 'username' not in user or 'password' not in user:
-        return bad_request('must include username and password fields')
-    inname = user["username"]
-    inpwd = user['password']
-    login_user = User.query.filter_by(username=inname).first()
-    if login_user and login_user.verify_password(inpwd):
+@bp.input(UserLogin)
+@bp.output(UserDetail)
+def login_user(user):
+    '''用户登录 (auth token)'''
+    # if 'username' not in user or 'password' not in user:
+    #     return bad_request('must include username and password fields')
+    userName = user["username"]
+    userPasswd = user['password']
+    thisUser = User.query.filter_by(username=userName).first()
+    if thisUser and thisUser.verify_password(userPasswd):
         # token = auth_token.current_user.get_token()
-        token = login_user.get_token()
+        authToken = thisUser.get_token()
         db.session.commit()
         # get account info from database
-        curr_account:Account = Account.query.first()
-        resp = Result({
-            'token': token,
-            'account_id': curr_account.account_id,
-            'account_type': curr_account.aws_type,
-            'role': curr_account.role,
-            'deploy_region': curr_account.get_region()}, 
+        cloudAccount:Account = Account.query.first()
+        resp = Result(
+            detail = {
+                'token': authToken,
+                'account_id': cloudAccount.account_id,
+                'account_type': cloudAccount.aws_type,
+                'role': cloudAccount.role,
+                'deploy_region': cloudAccount.get_region()
+            }, 
             status_code=200)    
         return resp.make_resp()
         # jsonify({'token': token})
@@ -85,73 +121,54 @@ def post_auth_token(user):
 
 @bp.delete('/logout')
 @auth_required(auth_token)
-def revoke_auth_token():
-    '''注销当前用户 (撤销token)'''
+def logout_user():
+    '''注销当前用户 (revoke token)'''
     # Headers
     # Token Bearer Authorization
     auth_token.current_user.revoke_token()
     db.session.commit()
-    resp = Result({
-            'description': 'Current user logout.'}, 
-            status_code=200)    
+    resp = Result(
+        detail={'status': 'Current user logout.' },
+        status_code=200)    
     return resp.make_resp()
 
-
-class NewPassword(Schema):
-    password = String(
-        required=True, validate=Length(0, 20),
-        example="password")
 
 @bp.put('/password')
 @auth_required(auth_token)
-@input(NewPassword)
-def change_passowrd(newpwd):
+@bp.input(NewPassword)
+def change_passowrd(parm):
     '''修改当前用户密码'''
-    auth_token.current_user.set_password(newpwd['password'])
+    auth_token.current_user.set_password(parm['password'])
     db.session.commit()
-    resp = Result({
-            'description': 'Password changed.'}, 
-            status_code=200)    
+    resp = Result(
+        detail={'status': 'Password changed.' }, 
+        status_code=200)    
     return resp.make_resp()
 
 
-class NewUserOut(Schema):
-    id = Integer()
-    username = String()
-    email = String()
-
-class NewUserIn(Schema):
-    username = String(required=True, validate=Length(0, 20), 
-                    example="user")
-    password = String(required=True, validate=Length(0, 30), 
-                    example="password")
-    email = String(required=True, validate=Length(0, 80), 
-                    example="user@mail.com")
-
-
-@bp.post('/adduser')
-@input(NewUserIn)
-@output(NewUserOut)
+# @bp.post('/adduser')
+# @auth_required(auth_token)
+@bp.input(AddUserParm)
+@bp.output(UserDetail)
 @doc(tag='【仅限测试用】', operation_id='Add New User')
-def add_user(newuser):
+def add_user(parm):
     '''向数据库添加新用户'''
-    if 'username' not in newuser or 'password' not in newuser:
+    if 'username' not in parm or 'password' not in parm:
         return bad_request('must include username and password fields')
-    if User.query.filter_by(username=newuser['username']).first():
+    if User.query.filter_by(username=parm['username']).first():
         return bad_request('please use a different username')
-    if User.query.filter_by(email=newuser['email']).first():
+    if User.query.filter_by(email=parm['email']).first():
         return bad_request('please use a different email address')
 
-    new_user = User()
-    new_user.from_dict(newuser, new_user=True)
+    newUser = User()
+    newUser.from_dict(parm, new_user=True)
     # user.from_dict(newuser, new_user=True)
-    db.session.add(new_user)
+    db.session.add(newUser)
     db.session.commit()
 
     resp = Result(
-        detail = new_user,
+        detail = newUser,
         status_code=200)
-
     return resp.make_resp()
 
 

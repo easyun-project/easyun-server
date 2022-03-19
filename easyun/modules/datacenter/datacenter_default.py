@@ -10,127 +10,147 @@ from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
-from easyun.common.models import Account
+from easyun.common.models import Account, Datacenter
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from datetime import date, datetime
-from . import bp, REGION, FLAG, TagEasyun
-from flask import jsonify
-from  .datacenter_sdk import datacentersdk
+from easyun.common.schemas import DcNameQuery
 from .schemas import DataCenterListOut
+from . import bp, REGION, FLAG, TagEasyun
 
-# define default parameters
-default_name = 'Easyun'
-# tag:Name prefix for all resource, eg. easyun-xxx
-prefix = default_name.lower()+'-'
-default_cidr = "10.10.0.0/16"
 
 @bp.get('/default')
 @auth_required(auth_token)
+@input(DcNameQuery, location='query')
 #@output(DataCenterListOut, description='Get DataCenter Info')
-def get_datacentercfg():
+def get_default_parms(parm):
     '''获取创建云数据中心默认参数'''
+    inputName = parm['dc']
+    try:
+        # Check if the DC Name is available
+        thisDC:Datacenter = Datacenter.query.filter_by(name = inputName).first()
+        if (thisDC is not None):
+            raise ValueError('DataCenter name already existed')
 
-    # get account info from database
-    curr_account:Account = Account.query.first()
-    # set deploy_region as default region
-    default_region = curr_account.get_region()
+        # tag:Name prefix for all resource, eg. easyun-xxx
+        prefix = inputName.lower()
 
-    # get az list
-    client_ec2 = boto3.client('ec2', region_name=default_region)
-    azs = client_ec2.describe_availability_zones()
-    azList = [az['ZoneName'] for az in azs['AvailabilityZones']] 
+        # get account info from database
+        curr_account:Account = Account.query.first()
+        # set deploy_region as default region
+        defaultRegion = curr_account.get_region()
 
-    # define default igw
-    default_igw = {
-        # 这里为igw的 tag:Name，创建首个igw的时候默认该名称
-        "tagName" : prefix+"igw"
-    }
+        # get az list
+        client_ec2 = boto3.client('ec2', region_name=defaultRegion)
+        azs = client_ec2.describe_availability_zones()
+        azList = [az['ZoneName'] for az in azs['AvailabilityZones']] 
 
-    # define default natgw
-    default_natgw = {
-        # 这里为natgw的 tag:Name ，创建首个natgw的时候默认该名称
-        "tagName" : prefix+"natgw"
-    }
+        # define default vpc parameters
+        defaultVPC = {
+            'cidrBlock' : '10.10.0.0/16',
+            # 'vpcCidrv6' : '',
+            # 'vpcTenancy' : 'Default',
+        }
 
-    gwList = [default_igw["tagName"], default_natgw["tagName"]]
+        # define default igw
+        defaultIgw = {
+            # 这里为igw的 tag:Name，创建首个igw的时候默认该名称
+            "tagName" : '%s-%s' %(prefix, 'igw')
+        }
 
-     # define default igw route table
-    default_irtb = {
-        # 这里为igw routetable 的 tag:Name, 创建首个igw routetable 的时候默认该名称
-        "tagName" : prefix+"rtb-igw"
-    }
+        # define default natgw
+        defaultNatgw = {
+            # 这里为natgw的 tag:Name ，创建首个natgw的时候默认该名称
+            "tagName" : '%s-%s' %(prefix, 'natgw')
+        }
 
-    # define default natgw route table
-    default_nrtb = {
-        # 这里为nat routetable 的 tag:Name ，创建首个nat routetable 的时候默认该名称
-        "tagName" : prefix+"rtb-natgw"
-    }
+        gwList = [defaultIgw["tagName"], defaultNatgw["tagName"]]
 
-    rtbList = [default_irtb["tagName"], default_nrtb["tagName"]]
+        # define default igw route table
+        defaultIrtb = {
+            # 这里为igw routetable 的 tag:Name, 创建首个igw routetable 的时候默认该名称
+            "tagName" : '%s-%s' %(prefix, 'rtb-igw')
+        }
 
-    dcParameters = {
-        # for DropDownList
-        "azList": azList,
-        "gwList" : gwList,
-        "rtbList" : rtbList,
-        # default selected parameters      
-        "dcName" : default_name,
-        "dcRegion" : default_region,
-        "vpcCidr" : default_cidr,
-        "pubSubnet1": {
-            "tagName" : "Public subnet 1",
-            "cidr" : "10.10.1.0/24",
-            "az": azList[0],            
-            "gateway": default_igw["tagName"],            
-            "routeTable": default_irtb["tagName"] 
-        },
-        "pubSubnet2": {
-            "tagName" : "Public subnet 2",
-            "cidr" : "10.10.2.0/24",
-            "az": azList[1],                
-            "gateway": default_igw["tagName"],   
-            "routeTable": default_irtb["tagName"]
-        },
-        "priSubnet1": {
-            "tagName" : "Private subnet 1",
-            "cidr" : "10.10.21.0/24",
-            "az": azList[0],            
-            "gateway": default_natgw["tagName"],             
-            "routeTable": default_nrtb["tagName"]
-        },
-        "priSubnet2": {
-            "tagName" : "Private subnet 2",
-            "cidr" : "10.10.22.0/24",
-            "az": azList[1],
-            "gateway": default_natgw["tagName"],
-            "routeTable": default_nrtb["tagName"]
-        },
-        "securityGroup0": {
-            "tagName" : prefix+"sg-default",
-            #该标记对应是否增加 In-bound: Ping 的安全组规则
-            "enablePing": True,
-            "enableSSH": True,
-            "enableRDP": False
-        },
-        "securityGroup1": {
-            "tagName" : prefix+"sg-webapp",
-            "enablePing": True,
-            "enableSSH": True,
-            "enableRDP": False
-        },
-        "securityGroup2": {
-            "tagName" : prefix+"sg-database",
-            "enablePing": True,
-            "enableSSH": True,
-            "enableRDP": False
-        },
-        # keypair 在创建页面上没有体现，但会作为参数传回给add_datacenter的api
-        "keypair" : "key_easyun_user"
-    }
+        # define default natgw route table
+        defaultNrtb = {
+            # 这里为nat routetable 的 tag:Name ，创建首个nat routetable 的时候默认该名称
+            "tagName" : '%s-%s' %(prefix, 'rtb-natgw')
+        }
 
-    response = Result(
-        detail=dcParameters, 
-        status_code=200
-        )
-    return response.make_resp()
+        rtbList = [defaultIrtb["tagName"], defaultNrtb["tagName"]]
 
+        dcParms = {    
+            # default selected parameters      
+            "dcName" : inputName,
+            "dcRegion" : defaultRegion,
+            'dcVPC' : defaultVPC,
+            "pubSubnet1": {
+                "tagName" : "Public subnet 1",
+                "cidrBlock" : "10.10.1.0/24",
+                "azName": azList[0],            
+                "gwName": defaultIgw["tagName"],            
+                "routeTable": defaultIrtb["tagName"] 
+            },
+            "pubSubnet2": {
+                "tagName" : "Public subnet 2",
+                "cidrBlock" : "10.10.2.0/24",
+                "azName": azList[1],                
+                "gwName": defaultIgw["tagName"],   
+                "routeTable": defaultIrtb["tagName"]
+            },
+            "priSubnet1": {
+                "tagName" : "Private subnet 1",
+                "cidrBlock" : "10.10.21.0/24",
+                "azName": azList[0],            
+                "gwName": defaultNatgw["tagName"],             
+                "routeTable": defaultNrtb["tagName"]
+            },
+            "priSubnet2": {
+                "tagName" : "Private subnet 2",
+                "cidrBlock" : "10.10.22.0/24",
+                "azName": azList[1],
+                "gwName": defaultNatgw["tagName"],
+                "routeTable": defaultNrtb["tagName"]
+            },
+            "securityGroup0": {
+                "tagName" : '%s-%s' %(prefix, 'sg-default'),
+                #该标记对应是否增加 In-bound: Ping 的安全组规则
+                "enablePing": True,
+                "enableSSH": True,
+                "enableRDP": False
+            },
+            "securityGroup1": {
+                "tagName" : '%s-%s' %(prefix, 'sg-webapp'),
+                "enablePing": True,
+                "enableSSH": True,
+                "enableRDP": False
+            },
+            "securityGroup2": {
+                "tagName" : '%s-%s' %(prefix, 'sg-database'),
+                "enablePing": True,
+                "enableSSH": True,
+                "enableRDP": False
+            },
+
+        }
+        dropDown = {
+            # for DropDownList
+            "azList": azList,
+            "gwList" : gwList,
+            "rtbList" : rtbList,
+        }    
+
+        response = Result(
+            detail={
+                'dcParms':dcParms, 
+                'dropDown':dropDown
+            },
+            status_code=200
+            )
+        return response.make_resp()
+
+    except Exception as ex:
+        resp = Result(
+            message=str(ex), 
+            status_code=2001,
+            http_status_code=400)
+        resp.err_resp()

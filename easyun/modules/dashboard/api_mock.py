@@ -16,97 +16,97 @@ from easyun.common.schemas import DcNameQuery
 
 
 
-@bp.get("/summary/resource")
-@auth_required(auth_token)
-@input(DcNameQuery, location='query')
-@auth_required(auth_token)
-def graph_summary(parm):
-    '''获取 IaaS资源 Summary信息[Mock]'''
-    dcName = parm['dc']
-    summaryList = [
-        {
-            "type":"server",
-            'data':{
-                "sumNum": 19,
-                "runNum": 15,
-                "stopNum": 4,
-                "vcpuNum": 76,
-                "ramSize": {
-                    'value':119,
-                    'unit':'GiB'
-                }
-            }
-        },
-        {
-            "type":"database",
-            "data":{
-                "sumNum": 7,
-                "mysqlNum": 3,
-                "mariaNum": 2,
-                "postgreNum": 1,
-                "auroraNum": 0,
-                "cacheNum": 1
-            }
-        },
-        {
-            "type":"network",
-            "data":{
-                "sumNum": 4,
-                "pubNum": 2,
-                "priNum": 2,
-                "igwNum": 1,
-                "natNum": 1,
-                "sgNum": 3
-            }
-        },
-        {
-            "type":"st_object",
-            "data":{
-                "sumNum": 6,
-                "objSize": {
-                    'value':17.1,
-                    'unit':'GiB'
-                },
-                "objNum": 502013,
-                "pubNum": 1,
-                "encNum": 5
-            }
-        },
-        {
-            "type":"st_block",
-            "data":{
-                "sumNum": 12,
-                "blcSize": {
-                    'value': 20.52,
-                    'unit':'TiB'
-                },
-                "useNum": 10,
-                "avlNum": 2,
-                "encNum": 3
-            }
-        },
-        {
-            "type":"st_file",
-            "data":{
-                "sumNum": 3,
-                "efsNum": 1,
-                "efsSize": {
-                    'value': 827.7,
-                    'unit':'MiB'
-                },
-                "fsxNum": 2,
-                "fsxSize": {
-                    'value': 3.27,
-                    'unit':'GiB'
-                }
-            }
-        }
-    ]
+# @bp.get("/summary/resource")
+# @auth_required(auth_token)
+# @input(DcNameQuery, location='query')
+# @auth_required(auth_token)
+# def graph_summary(parm):
+#     '''获取 IaaS资源 Summary信息[Mock]'''
+#     dcName = parm['dc']
+#     summaryList = [
+#         {
+#             "type":"server",
+#             'data':{
+#                 "sumNum": 19,
+#                 "runNum": 15,
+#                 "stopNum": 4,
+#                 "vcpuNum": 76,
+#                 "ramSize": {
+#                     'value':119,
+#                     'unit':'GiB'
+#                 }
+#             }
+#         },
+#         {
+#             "type":"database",
+#             "data":{
+#                 "sumNum": 7,
+#                 "mysqlNum": 3,
+#                 "mariaNum": 2,
+#                 "postgreNum": 1,
+#                 "auroraNum": 0,
+#                 "cacheNum": 1
+#             }
+#         },
+#         {
+#             "type":"network",
+#             "data":{
+#                 "sumNum": 4,
+#                 "pubNum": 2,
+#                 "priNum": 2,
+#                 "igwNum": 1,
+#                 "natNum": 1,
+#                 "sgNum": 3
+#             }
+#         },
+#         {
+#             "type":"st_object",
+#             "data":{
+#                 "sumNum": 6,
+#                 "objSize": {
+#                     'value':17.1,
+#                     'unit':'GiB'
+#                 },
+#                 "objNum": 502013,
+#                 "pubNum": 1,
+#                 "encNum": 5
+#             }
+#         },
+#         {
+#             "type":"st_block",
+#             "data":{
+#                 "sumNum": 12,
+#                 "blcSize": {
+#                     'value': 20.52,
+#                     'unit':'TiB'
+#                 },
+#                 "useNum": 10,
+#                 "avlNum": 2,
+#                 "encNum": 3
+#             }
+#         },
+#         {
+#             "type":"st_files",
+#             "data":{
+#                 "sumNum": 3,
+#                 "efsNum": 1,
+#                 "efsSize": {
+#                     'value': 827.7,
+#                     'unit':'MiB'
+#                 },
+#                 "fsxNum": 2,
+#                 "fsxSize": {
+#                     'value': 3.27,
+#                     'unit':'GiB'
+#                 }
+#             }
+#         }
+#     ]
 
-    resp = Result(
-        detail = summaryList
-        )
-    return resp.make_resp()
+#     resp = Result(
+#         detail = summaryList
+#         )
+#     return resp.make_resp()
 
 
 
@@ -199,8 +199,8 @@ st_objectList = {
     ]
 }
 
-st_fileList = {
-    "type":"st_file",
+st_filesList = {
+    "type":"st_files",
     "data":[
     ]
 }

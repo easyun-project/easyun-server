@@ -7,14 +7,14 @@
 
 import os
 import base64
+import hashlib
+import sqlalchemy as sa
 from datetime import datetime, timedelta
 from typing import Dict, List
-from sqlalchemy.sql.expression import true
 from werkzeug.security import check_password_hash, generate_password_hash
 from easyun import db
-import sqlalchemy as sa
-
 from easyun.common.exception.model_errs import KeyPairsRepeat
+
 
 def universal_update_dict(obj, d: Dict):
     """批量更新数据库
@@ -30,7 +30,7 @@ def universal_update_dict(obj, d: Dict):
 
 class User(db.Model):
     """
-    Create a User table
+    Create User table
     """
     __tablename__ = 'users'
     id = db.Column('user_id', db.Integer, primary_key=True)
@@ -98,7 +98,7 @@ class User(db.Model):
 
 class Account(db.Model):
     """
-    Create a Account table
+    Create Cloud Account table
     """
     __tablename__ = 'account'
     id = db.Column(db.Integer, primary_key=True)
@@ -137,7 +137,7 @@ class Account(db.Model):
 
 class Datacenter(db.Model):
     """
-    Create a Account table
+    Create DataCenter table
     """
     __tablename__ = 'datacenter'
     id = db.Column(
@@ -156,12 +156,21 @@ class Datacenter(db.Model):
     region = db.Column(                 # Deployed Region
         db.String(120))          
     vpc_id = db.Column(                 # VPC ID
-        db.String(120))    
+        db.String(120))
+    hash = db.Column(                   # Hash code for tag:Flag
+        db.String(32), 
+        nullable=True)
     create_date = db.Column(            # Create date
         db.DateTime)
     create_user = db.Column(            # Cteated by easyun user
         db.String(30), 
         nullable=True)
+    
+    def set_hash(self, name):
+        """
+        Generate a hash code
+        """
+        self.hash = hashlib.md5(name.encode(encoding='UTF-8')).hexdigest()
 
     def get_region(self):
         return (self.region)
@@ -169,8 +178,33 @@ class Datacenter(db.Model):
     def get_vpc(self):
         return (self.vpc_id)
 
+    def get_hash(self):
+        if self.hash is None:
+            self.hash = hashlib.md5(self.name.encode(encoding='UTF-8')).hexdigest()
+        return (self.hash)
+
     def update_dict(self, items: Dict):
         universal_update_dict(self, items)
+
+
+
+class KeyStore(db.Model):
+    """
+    Create Keypair store table
+    """
+    __tablename__ = 'key_store'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    dc_name = db.Column(db.String(255), nullable=False)
+    material = db.Column(db.String(2048))
+    format = db.Column(db.String(10), default='pem')
+
+    def get_material(self):
+        if self.material:
+            return (self.material)
+        else:
+            return None
+
 
 class KeyPairs(db.Model):
     id = sa.Column(sa.Integer, primary_key=True)
@@ -191,7 +225,7 @@ class KeyPairs(db.Model):
 
         return KeyPairs(**kwargs)
 
-    def delet(region = None, name = None):
+    def delete(region = None, name = None):
         pass
 
     def update(self, **kwargs):

@@ -67,6 +67,10 @@ def list_server_detail(parm):
             #获取内存容量            
             insType = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
             ramSize = insType['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
+            try:
+                osName = resource_ec2.Image(s.image_id).platform_details
+            except:
+                osName = 'unknown'
             svrItem = {
                 'svrId' : s.id,
                 'tagName': nameTag,
@@ -75,7 +79,7 @@ def list_server_detail(parm):
                 'vpuNum' : s.cpu_options['CoreCount'],
                 'ramSize' : ramSize/1024,
                 'volumeSize' : volumeSize, 
-                'osName' : resource_ec2.Image(s.image_id).platform_details,             
+                'osName' : osName,
                 # 'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,
                 'azName' : s.placement.get('AvailabilityZone'),
                 'pubIp' : s.public_ip_address,
@@ -114,10 +118,9 @@ def list_server_brief(parm):
     '''获取数据中心全部云服务器列表[仅基础字段]'''
     # dcName = request.args.get('dc', 'Easyun')  #获取查询参数 ?dc=xxx ,默认值‘Easyun’
     # thisDC = Datacenter(name = dcName)
+    # thisDC = Datacenter.query.filter_by(name = dcName).first()    
     dcName = parm['dc']
-    thisDC = Datacenter.query.filter_by(name = dcName).first()
-    dcRegion = thisDC.get_region()
-    dcVPC = thisDC.get_vpc()
+    dcRegion = set_boto3_region(dcName)
 
     try:
         # 通过 ec2.instances.filter() 接口获取 instance 对象列表
@@ -148,9 +151,9 @@ def list_server_brief(parm):
         )
         return resp.make_resp()
 
-    except Exception:
+    except Exception as ex:
         resp = Result(
-            message='list servers failed', 
+            message=str(ex), 
             status_code=3001,
             http_status_code=400
         )

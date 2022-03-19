@@ -6,17 +6,17 @@
 """
 
 import boto3
-import ast, random, json
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict, Nested
 from apiflask.validators import Length, OneOf
-from . import bp
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
+from easyun.cloud.aws_price import ec2_monthly_cost
 from easyun.cloud.aws_ec2_instype import Instance_Family, get_familyDes
+from . import bp
 
 
 class ImageQuery(Schema):
@@ -357,73 +357,3 @@ def list_ins_types(parm):
             message= ex, status_code=3020
         )
         return response.make_resp()
-
-
-def ec2_monthly_cost(region, instype, os):
-    '''获取EC2的月度成本(单位时间Month)'''
-    if not os:
-        return None
-    try:
-        pricelist = ec2_pricelist(region, instype, os)
-        unit = pricelist.get('unit')
-        currency = list(pricelist['pricePerUnit'].keys())[0]
-        unitePrice = pricelist['pricePerUnit'].get(currency)
-        if unit == 'Hrs':
-            # 参考AWS做法按每月730h计算
-            monthPrice = float(unitePrice)*730
-        return {
-            'value': monthPrice,
-            'currency' : currency
-        }
-    except Exception as ex:
-        return ex
-
-# 获取实例价格功能实现部分
-def ec2_pricelist(
-        region, instype, os, 
-        soft='NA', 
-        option='OnDemand',
-        tenancy='Shared'
-    ):
-    '''获取EC2的价格列表(单位时间Hrs)'''
-    # AWS Price API only support us-east-1, ap-south-1
-    priceRegion = 'us-east-1'
-
-    # 将传入的 os 匹配为 price api 支持的 operatingSystem
-    if os in ['amzn2', 'ubuntu', 'debian', 'linux']:
-        insOS = 'Linux'
-    elif os == 'rhel':
-        insOS = 'RHEL'
-    elif os == 'sles':
-        insOS = 'SUSE' 
-    elif os == 'windows':
-        insOS = 'Windows'
-    else: 
-        insOS = 'NA'
-
-    try:
-        client_price = boto3.client('pricing', region_name= priceRegion )
-        result = client_price.get_products(
-            ServiceCode='AmazonEC2',
-            Filters=[
-                {'Type': 'TERM_MATCH', 'Field': 'ServiceCode','Value': 'AmazonEC2'},
-                {'Type': 'TERM_MATCH', 'Field': 'locationType','Value': 'AWS Region'},
-                {'Type': 'TERM_MATCH', 'Field': 'capacitystatus','Value': 'UnusedCapacityReservation'},             
-                {'Type': 'TERM_MATCH', 'Field': 'RegionCode','Value': region},
-                {'Type': 'TERM_MATCH', 'Field': 'marketoption','Value': option},
-                {'Type': 'TERM_MATCH', 'Field': 'tenancy','Value': tenancy},
-                {'Type': 'TERM_MATCH', 'Field': 'instanceType','Value': instype},
-                {'Type': 'TERM_MATCH', 'Field': 'operatingSystem','Value': insOS},
-                {'Type': 'TERM_MATCH', 'Field': 'preInstalledSw','Value': soft},
-            ],
-        )
-        # 通过 ast.literal_eval()函数 对字符串进行类型转换
-        prod = ast.literal_eval(result['PriceList'][0])
-        price1 = prod['terms'].get(option)  
-        key1 = list(price1.keys())[0]
-        price2 = price1[key1]['priceDimensions']
-        key2 = list(price2.keys())[0]
-        price3 = price2[key2]
-        return price3
-    except Exception as ex:
-        return ex

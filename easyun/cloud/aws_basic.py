@@ -21,7 +21,7 @@ def get_deploy_env(cloud):
         except Exception:
             # 确保获取失败程序继续运行，下次重新获取
             account_id = 'missing'
-            role = 'missing'
+            role = 'undefined'
 
         # 获取 deploy region  
         try:
@@ -37,17 +37,18 @@ def get_deploy_env(cloud):
             aws_type = 'GCR'
         else:
             aws_type = 'Global'
-    
+
+        return {
+            'account_id': account_id,
+            'role': role,
+            'deploy_region': deploy_region,  
+            'aws_type' : aws_type
+        }
+
     else:
         # 匹配部署在其它云环境的获取方法(待实现)  
-        pass
-    
-    return {
-        'account_id': account_id,
-        'role': role,
-        'deploy_region': deploy_region,  
-        'aws_type' : aws_type
-    }
+        pass   
+
 
     
 
@@ -65,5 +66,5 @@ def get_aws_region(serviceName, account_type = 'Global'):
             regionList = None
         return regionList
     except Exception as ex:
-        return(ex)
+        return(str(ex))
 #         return(ex.args)

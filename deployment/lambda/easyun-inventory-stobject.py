@@ -6,7 +6,7 @@
 
 import json
 import boto3
-import datetime
+from datetime import datetime, timedelta
 from dateutil.tz import tzlocal
 
 Deploy_Region = 'us-east-1'
@@ -15,7 +15,7 @@ Inventory_Table = 'easyun-inventory-all'
 
 # 从ddb获取当前datacenter列表
 def get_dc_list():
-    resource_ddb = boto3.resource('dynamodb', region_name=deploy_region)
+    resource_ddb = boto3.resource('dynamodb', region_name=Deploy_Region)
     table = resource_ddb.Table(Inventory_Table)
     dcList = table.get_item(
         Key={'dc_name': 'all', 'invt_type': 'dclist'}

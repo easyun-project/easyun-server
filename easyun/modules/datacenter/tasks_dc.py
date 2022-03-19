@@ -1,34 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  DataCenter Creation
-  @desc:    create some datacenter basic service, like vpc, subnet, securitygroup, etc.
+  @module:  DataCenter Task
+  @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
   @auth:    aleck
 """
 
-from email import message
 import boto3
 from datetime import date, datetime
-from apiflask import Schema, input, output, doc, abort, auth_required
-from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean
-from apiflask.validators import Length, OneOf
-from easyun import db, log
-from easyun.cloud.aws_quota import get_quota_value
+from easyun import db, celery
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
-from easyun.common.utils import len_iter, gen_dc_tag
-from easyun.common.result import Result, make_resp, error_resp, bad_request
-from .schemas import CreateDcParms, CreateDcResult
-from . import bp, logger, DryRun
+from easyun.common.utils import len_iter, gen_dc_tag, get_hash_tag
+from easyun.cloud.aws_quota import get_quota_value
+from . import logger, DryRun
 
 
-@bp.post('')
-@auth_required(auth_token)
-@input(CreateDcParms)
-@output(CreateDcResult)
-@log.api_error(logger)
-def create_datacenter(parm):
-    '''创建 Datacenter 及基础资源'''
-    
+
+@celery.task(bind=True)
+def create_dc_task(self, parm):
+    """
+    创建 DataCenter 异步任务
+    按步骤进行，步骤失败直接返回
+    :return {message,status_code,http_code:200}    
+    """
     # Datacenter basic attribute define
     dcName = parm['dcName']
     dcRgeion = parm['dcRegion']
@@ -39,7 +33,7 @@ def create_datacenter(parm):
     resource_ec2 = boto3.resource('ec2')
     client_ec2 = boto3.client('ec2')
 
-    # Step 0: Check the prerequisites for creating new datacenter
+    # Step 0:  Check the prerequisites for creating new datacenter
     try:
         # Check if the DC Name is available
         thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
@@ -55,13 +49,18 @@ def create_datacenter(parm):
         eipIter = resource_ec2.vpc_addresses.all()
         if len_iter(eipIter) >= int(eipQuota):
             raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
+
+        # when prerequisites check Ok
+        logger.info(self.request.id)
+        self.update_state(state='READY', meta={'current': 1, 'total': 10})
  
     except Exception as ex:
-        resp = Result(
-            message=str(ex), 
-            status_code=2001,
-            http_status_code=400)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2001,
+            'http_status_code':200
+        }
+
 
     # Step 1: create easyun vpc, including:
     # 1* main route table
@@ -80,9 +79,14 @@ def create_datacenter(parm):
         )
         stage = vpc.id+' created'
         logger.info('[VPC]'+stage)
+        self.update_state(state='PROGRESS', meta={'current': 1, 'total': 10})
     except Exception as ex:
-        resp = Result(message=str(ex), status_code=2010)
-        resp.err_resp()
+        logger.error('[VPC]'+str(ex))
+        return {
+            'message':str(ex), 
+            'status_code':2010,
+            'http_status_code':200
+        }
         
     
     # step 2: create Internet Gateway
@@ -110,10 +114,14 @@ def create_datacenter(parm):
         )
         stage = igw.id+" attached to "+vpc.id
         logger.info('[IGW]'+stage)
+        self.update_state(state='PROGRESS', meta={'current': 2, 'total': 10})
 
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2020)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2020,
+            'http_status_code':200
+        }
 
 
     # step 3: create 2x Public Subnets
@@ -149,10 +157,13 @@ def create_datacenter(parm):
         )
         stage = pubsbn2.id+' created'
         logger.info('[Subnet]'+stage)
-        
+        self.update_state(state='PROGRESS', meta={'current': 3, 'total': 10})
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2030)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2030,
+            'http_status_code':200
+        }
 
 
     # step 4: update main route table （route-igw）
@@ -189,10 +200,14 @@ def create_datacenter(parm):
                     DryRun= DryRun,
                     SubnetId= pubsbn2.id,
                 )
+        self.update_state(state='PROGRESS', meta={'current': 4, 'total': 10})
 
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2040)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2040,
+            'http_status_code':200
+        }
 
 
     # step 5: create 2x Private Subnets
@@ -229,9 +244,14 @@ def create_datacenter(parm):
         stage = prisbn2.id+' created'
         logger.info('[Subnet]'+stage)
         
+        self.update_state(state='PROGRESS', meta={'current': 5, 'total': 10})
+
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2050)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2050,
+            'http_status_code':200
+        }
 
 
     # step 6: create NAT Gateway with EIP
@@ -253,8 +273,11 @@ def create_datacenter(parm):
         logger.info('[EIP]'+stage)
   
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2061)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2061,
+            'http_status_code':200
+        }
 
     # 6-2: create nat gateway
     try:
@@ -282,12 +305,20 @@ def create_datacenter(parm):
             stage = natgwID+' created'
             logger.info('[NatGW]'+stage)
         except Exception as ex:
-            resp = Result(message=str(ex) , status_code=2062)
-            resp.err_resp()
+            return {
+                'message':str(ex), 
+                'status_code':2062,
+                'http_status_code':200
+            }
+
+        self.update_state(state='PROGRESS', meta={'current': 6, 'total': 10})
 
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2060)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2060,
+            'http_status_code':200
+        }
 
 
     # step 7: create NAT route table and route to natgw
@@ -325,9 +356,14 @@ def create_datacenter(parm):
             SubnetId= prisbn2.id,
         )
 
+        self.update_state(state='PROGRESS', meta={'current': 7, 'total': 10})
+
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2070)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2070,
+            'http_status_code':200
+        }
 
 
     # step 8: update and create Security Groups
@@ -393,8 +429,11 @@ def create_datacenter(parm):
         logger.info(stage)
 
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2081)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2081,
+            'http_status_code':200
+        }
 
     # 8-2: create webapp security group
     try:
@@ -422,8 +461,11 @@ def create_datacenter(parm):
         stage = '[SecGroup]'+sgWeb.group_name+' created'
         logger.info(stage)        
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2082)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2082,
+            'http_status_code':200
+        }
 
     # 8-3: create database security group
     try:
@@ -449,10 +491,15 @@ def create_datacenter(parm):
             IpPermissions= dbPerm
         )
         stage = '[SecGroup]'+sgWeb.group_name+' created'
-        logger.info(stage)           
+        logger.info(stage)
+        self.update_state(state='PROGRESS', meta={'current': 8, 'total': 10})
+
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2083)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2083,
+            'http_status_code':200
+        }
 
 
    # step 9: Write Datacenter metadata to local database
@@ -474,26 +521,35 @@ def create_datacenter(parm):
 
         stage = '[DataCenter]'+newDC.name+' metadata updated'
         logger.info(stage)
+        self.update_state(state='PROGRESS', meta={'current': 9, 'total': 10})
 
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2092)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2090,
+            'http_status_code':200
+        }
 
 # step 10: Update Datacenter name list to DynamoDB
     try:
-        # 待補充
+        # 待实现
 
         stage = '[DataCenter]'+newDC.name+' created successfully !'
         logger.info(stage)
 
-        resp = Result(
-            detail = newDC, 
-            status_code=200)
-        return resp.make_resp()
+        self.update_state(state='SUCCESS', meta={'current': 10, 'total': 10})
 
+        return {
+            'detail': newDC,
+            'status_code':200,
+        }        
+        
     except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2092)
-        resp.err_resp()
+        return {
+            'message':str(ex), 
+            'status_code':2091,
+            'http_status_code':200
+        }
 
 
 def check_perm(sg):

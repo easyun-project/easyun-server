@@ -16,11 +16,10 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.common.utils import len_iter, query_dc_region, query_svr_name
-from . import bp, TYPE
-from .schemas import newVolume
+from .schemas import newVolume, VolumeDetail
+from . import bp
 
 
-# 将磁盘管理代码从服务器模块移到存储管理模块
 
 # 定义系统盘路径
 SystemDisk = ['/dev/xvda','/dev/sda1']
@@ -28,8 +27,8 @@ SystemDisk = ['/dev/xvda','/dev/sda1']
 
 @bp.get('/volume')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-# @output(SvrListOut, description='Get Servers list')
+@bp.input(DcNameQuery, location='query')
+@bp.output(VolumeDetail(many=True), description='All volume list (detail)')
 def list_stblock_detail(parm):
     '''获取数据中心全部块存储信息'''
     dcName=parm.get('dc')
@@ -39,45 +38,47 @@ def list_stblock_detail(parm):
         boto3.setup_default_session(region_name = dcRegion )
 
         client_ec2 = boto3.client('ec2')
-        volumeList = client_ec2.describe_volumes(
+        volumes = client_ec2.describe_volumes(
             Filters=[
                 { 'Name': 'tag:Flag',  'Values': [dcName,] },
             ]
         )['Volumes']
-        diskList = []
-        for d in volumeList:
-            # nameTag = [tag['Value'] for tag in d['Tags'] if tag.get('Key') == 'Name']
-            nameTag = next((tag['Value'] for tag in d.get('Tags') if tag["Key"] == 'Name'), None)
-            attach = d.get('Attachments')
-            if attach:
-                attachPath = attach[0].get('Device')
-                insId = attach[0].get('InstanceId')
-                attachSvr = query_svr_name(insId)
-            else:
-                attachPath = None
-                attachSvr = None
-            # 基于卷挂载路径判断disk类型是 system 还是 user
-            diskType = 'system' if attachPath in SystemDisk else 'user'
-            disk = {
-                'volumeId': d['VolumeId'],
+        volumeList = []
+        for vol in volumes:
+            # nameTag = [tag['Value'] for tag in vol['Tags'] if tag.get('Key') == 'Name']
+            nameTag = next((tag['Value'] for tag in vol.get('Tags') if tag["Key"] == 'Name'), None)
+            attachList = []
+            attachs = vol.get('Attachments')
+            if attachs:
+                for a in attachs:
+                    # 基于卷挂载路径判断disk类型是 system 还是 user
+                    diskType = 'system' if a['Device'] in SystemDisk else 'user'
+                    attachList.append({
+                        'attachPath' : a['Device'],
+                        'attachSvrId' : a['InstanceId'],
+                        'attachSvr' : query_svr_name(a['InstanceId']),
+                        'attachTime': a['AttachTime'],
+                        'diskType': diskType,  
+                    })
+                    
+            volItem = {
+                'volumeId': vol['VolumeId'],
                 'tagName': nameTag,
-                'volumeType': d['VolumeType'],
-                'volumeSize': d['Size'],
+                'volumeState': vol['State'],
+                'isEncrypted': vol['Encrypted'],
+                'volumeAz': vol['AvailabilityZone'],
+                'createTime': vol['CreateTime'],
+                'volumeType': vol['VolumeType'],
+                'volumeSize': vol['Size'],
     #             'usedSize': none,
-                'volumeIops': d.get('Iops'),
-                'volumeThruput': d.get('Throughput'),
-                'volumeState': d['State'],
-                'attachSvr': attachSvr,
-                'attachPath': attachPath,
-                'diskType': diskType,
-                'isEncrypted': d['Encrypted'],
-                'volumeAz': d['AvailabilityZone'],
-                'createTime': d['CreateTime'].isoformat(),
+                'volumeIops': vol.get('Iops'),
+                'volumeThruput': vol.get('Throughput'),
+                'volumeAttach': attachList
             }
-            diskList.append(disk)
+            volumeList.append(volItem)
 
         resp = Result(
-            detail = diskList,
+            detail = volumeList,
             status_code=200
         )
         return resp.make_resp()        
@@ -93,8 +94,8 @@ def list_stblock_detail(parm):
 
 @bp.get('/volume/list')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-# @output(SvrListOut, description='Get Servers list')
+@bp.input(DcNameQuery, location='query')
+# @bp.output(SvrListOut, description='Get Servers list')
 def list_stblock_brief(parm):
     '''获取数据中心全部块存储列表[仅基础字段]'''
     dcName=parm.get('dc')
@@ -104,7 +105,7 @@ def list_stblock_brief(parm):
         boto3.setup_default_session(region_name = dcRegion )
 
         client_ec2 = boto3.client('ec2')
-        volumeList = client_ec2.describe_volumes(
+        volumes = client_ec2.describe_volumes(
             Filters=[
                 {
                     'Name': 'tag:Flag',
@@ -112,22 +113,22 @@ def list_stblock_brief(parm):
                 },
             ]
         )['Volumes']
-        diskList = []
-        for d in volumeList:
-            nameTag = next((tag['Value'] for tag in d.get('Tags') if tag['Key'] == 'Name'), None)
-            disk = {
-                'volumeId': d['VolumeId'],
+        volumeList = []
+        for vol in volumes:
+            nameTag = next((tag['Value'] for tag in vol.get('Tags') if tag['Key'] == 'Name'), None)
+            volItem = {
+                'volumeId': vol['VolumeId'],
                 'tagName': nameTag,
-                'volumeType': d['VolumeType'],
-                'volumeSize': d['Size'],
-                'volumeAz': d['AvailabilityZone'],
-                'volumeState': d['State'],
-                'isAvailable': True if d['State'] == 'available' else False
+                'volumeType': vol['VolumeType'],
+                'volumeSize': vol['Size'],
+                'volumeAz': vol['AvailabilityZone'],
+                'volumeState': vol['State'],
+                'isAvailable': True if vol['State'] == 'available' else False
             }
-            diskList.append(disk)
+            volumeList.append(volItem)
 
         resp = Result(
-            detail = diskList,
+            detail = volumeList,
             status_code=200
         )
         return resp.make_resp()        

@@ -4,6 +4,11 @@
   @desc:    Define basic attributes of AWS EC2 in this file.  
   @auth:    aleck
 """
+from easyun.cloud.aws_price import get_attribute_values
+
+
+'''全部受支持的Instance Tpye列表'''
+ALL_InstanceType = get_attribute_values('AmazonEC2','instanceType')
 
 
 '''EC2 Instance Family 列表'''

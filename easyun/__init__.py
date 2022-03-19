@@ -70,7 +70,7 @@ def create_app(run_env=None):
         app.logger.info('Easyun API Start')
 
     # 初始化AWS云环境账号基础信息
-    register_aws_account(app)
+    register_cloud_account(app)
 
     return app
 
@@ -113,66 +113,43 @@ def register_extensions(app: APIFlask):
             migrate.init_app(app, db, compare_type=True)
 
 
-def register_aws_account(app: APIFlask):
+def register_cloud_account(app: APIFlask):
     """注册后端服务器部署的云账号信息"""
     from easyun.common.models import Account
     from easyun.cloud.aws_basic import get_deploy_env
     # 获取 AWS云环境信息
-    awsEnv = get_deploy_env('aws')
+    cloudEvn = get_deploy_env('aws')
     # 数据写入 database
     with app.app_context():
-        exist_account:Account = Account.query.filter_by(cloud='aws').first()
-        if exist_account:
-            exist_account.update_dict(awsEnv)
+        existAccount:Account = Account.query.filter_by(cloud='aws').first()
+        if existAccount:
+            existAccount.update_dict(cloudEvn)
         else:
-            aws_account = Account(
+            thisAccount = Account(
                 cloud='aws', 
-                account_id = awsEnv.get('account_id'), 
-                role = awsEnv.get('role'),  
-                deploy_region = awsEnv.get('deploy_region'), 
-                aws_type = awsEnv.get('aws_type'), 
+                account_id = cloudEvn.get('account_id'), 
+                role = cloudEvn.get('role'),  
+                deploy_region = cloudEvn.get('deploy_region'), 
+                aws_type = cloudEvn.get('aws_type'), 
                 )
-            db.session.add(aws_account)
+            db.session.add(thisAccount)
         db.session.commit()
 
 
 def register_commands(app: APIFlask):
     """注册自定义命令
-
     Args:
         app (APIFlask): application实例
     """
     @app.cli.command()
     def initdb():
-        from easyun.common.models import User, Account, Datacenter
+        from easyun.common.models import User, Account, Datacenter, KeyStore, KeyPairs
         db.create_all()
-        # 预设user
-        admin = User(username='admin', email='admin@mail.com')
-        admin.set_password('admin')
+        # 预设 admin user
+        admin = User(username='demo', email='demo@easyun.com')
+        admin.set_password('easyun')
         db.session.add(admin)
 
-        # 预设datacenter
-        # center = Datacenter(**{
-        #     "id": "1",
-        #     "name": "Easyun",
-        #     "cloud": "aws",
-        #     "account_id": "666621994060",
-        #     "region": "us-east-1",
-        #     "vpc_id": "vpc-057f0e3d715c24147"
-        # })
-        # db.session.add(center)
-
-        # 预设account
-        # account = Account(**{
-        #     "id": "1",
-        #     "cloud": "aws",
-        #     "account_id": "567820214060",
-        #     "role": "easyun-service-control-role",
-        #     "aww_type": "Global",
-        #     "active_date": datetime.now(),
-        #     "remind": True
-        # })
-        # db.session.add(account)
         db.session.commit()
         click.echo("init dev database.")
 

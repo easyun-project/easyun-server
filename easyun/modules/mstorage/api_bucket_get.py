@@ -5,8 +5,8 @@
   @auth:    
 """
 
-from email import message
 import boto3
+from datetime import datetime, timedelta
 from apiflask import Schema, input, output, auth_required
 from apiflask.schemas import EmptySchema 
 from apiflask.fields import Integer, String, List, Dict
@@ -44,6 +44,7 @@ def list_bkt_detail(parm):
                     'bktName' : bktName,
                     'stType' : 'storage bucket',
                     'bktRegion' : query_bkt_region(bktName),
+                    # 'bktSize' : query_bkt_size(bktName),
                     # 'pubStatus' : 'private',
                     # 'statusMsg' : 'All objects are private',
                 }
@@ -128,6 +129,36 @@ def query_bkt_region(bktName):
     return bktRegion
 
 
+def query_bkt_size(bktName):
+    '''查询存储桶(bucket)总容量'''
+    client_cw = boto3.client('cloudwatch')
+    nowDtime = datetime.now()
+
+    bktMetric = client_cw.get_metric_statistics(
+        Namespace='AWS/S3',
+        MetricName='BucketSizeBytes',
+        Dimensions=[
+            {'Name': 'BucketName','Value': bktName},
+            {'Name': 'StorageType','Value': 'StandardStorage'},        
+        ],
+    #   Statistics=['SampleCount'|'Average'|'Sum'|'Minimum'|'Maximum',]
+        Statistics=['Average'],
+        EndTime= nowDtime,        
+        StartTime= nowDtime + timedelta(hours=-36),
+        Period=86400,    #one day(24h)
+    #     Unit='Bytes'|'Kilobytes'|'Megabytes'|'Gigabytes'|'Terabytes'|'None'
+    ).get('Datapoints')
+    metricItem = bktMetric.pop()
+    if metricItem:
+        bktSize = {
+            'value':metricItem['Average'],
+            'unit':metricItem['Unit']    
+        }
+        return bktSize
+    else:
+        raise
+
+
 def query_bkt_public(bktName):
     '''查询存储桶(bucket)公开状态'''
     priMsg = 'All objects are private'
@@ -175,7 +206,6 @@ def query_bkt_public(bktName):
         return {
             'error':str(ex)
         }
-
 
 def check_bkt_public(config):
     '''检查PublicAccessBlock配置对应公开状态'''

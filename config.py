@@ -35,7 +35,7 @@ Easyun api docs:
         },
         {
             'name': 'Testing Server',
-            'url': 'http://54.156.105.123:6660'
+            'url': 'http://35.76.66.98:6660'
         }
         ]
     
