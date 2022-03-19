@@ -15,7 +15,7 @@ from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from easyun import db, FLAG, celery
+from easyun import db, FLAG, celery, redis_client
 import boto3
 import os, time
 import json
@@ -33,27 +33,7 @@ from flask import current_app
 
 
 
-# logger = logging.getLogger('test')
-
-logger = logging.getLogger()
-formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
-#formatter='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-file_handler = RotatingFileHandler('logs/easyun_api1.log', maxBytes=10240, backupCount=10)
-file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.INFO)
-
-# logger = logging.getLogger('test')
-# logger.setLevel(logging.DEBUG)
-# #logger.setLevel(logging.DEBUG)
-# formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
-file_handler1 = logging.FileHandler('logs/easyun_api3.log')
-file_handler1.setLevel(logging.INFO)
-file_handler1.setFormatter(formatter)
-
-# define RotatingFileHandler，max 7 files with 100K per file
-
-logger.addHandler(file_handler1)
-logger.addHandler(file_handler)
+logger = logging.getLogger('dc')
 
 a = datacentersdk()
 # 云服务器参数定义
@@ -408,7 +388,11 @@ def get_result():
             status_code=ret.get('code')
         ).make_resp()
     else:
+        flag = redis_client.get(celery_id)
         return Result(
-            detail='处理中。。。',
+            detail={
+                'flag': flag if flag else 1,
+                'msg': '正在处理中。。。'
+            },
             status_code=2000
         ).make_resp()

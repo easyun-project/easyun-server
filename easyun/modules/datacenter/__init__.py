@@ -32,4 +32,4 @@ VERBOSE = 1
 DryRun=False
 
 
-from . import datacenter_default, datacenter_add, datacenter_get, datacenter_del, datacenter_sdk,  dcm_overview, dcm_eip, dcm_secgroup, dcm_subnet
+from . import datacenter_default, datacenter_add, datacenter_get, datacenter_del, datacenter_sdk,  dcm_overview, dcm_eip, dcm_secgroup, dcm_subnet, test
