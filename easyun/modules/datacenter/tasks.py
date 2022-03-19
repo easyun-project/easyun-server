@@ -11,36 +11,9 @@ import os
 import json
 from . import DC_REGION, TagEasyun, DryRun
 from .datacenter_sdk import datacentersdk
-from easyun import celery
+from easyun import celery, log, redis_client
 
-
-import logging
-from logging.handlers import RotatingFileHandler
-from flask import current_app
-
-# logger = logging.getLogger('test')
-
-logger = logging.getLogger()
-formatter = logging.Formatter(
-    '%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
-# formatter='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-file_handler = RotatingFileHandler('logs/easyun_api1.log', maxBytes=10240, backupCount=10)
-file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.INFO)
-
-# logger = logging.getLogger('test')
-# logger.setLevel(logging.DEBUG)
-# #logger.setLevel(logging.DEBUG)
-# formatter = logging.Formatter('%(asctime)s - %(filename)s - %(funcName)s - %(lineno)d - %(threadName)s - %(thread)d - %(levelname)s - \n - %(message)s')
-file_handler1 = logging.FileHandler('logs/easyun_api3.log')
-file_handler1.setLevel(logging.INFO)
-file_handler1.setFormatter(formatter)
-
-# define RotatingFileHandler，max 7 files with 100K per file
-
-logger.addHandler(file_handler1)
-logger.addHandler(file_handler)
-
+logger = log.create_logger('dc')
 
 def format_res(msg, code, http_code=200):
     return {
@@ -48,8 +21,8 @@ def format_res(msg, code, http_code=200):
         'code': code,
         'http_code': http_code
     }
-@celery.task()
-def add_datacenter_task(data):
+@celery.task(bind=True)
+def add_datacenter_task(self, data):
     """
     新增 Datacenter 异步任务
     按步骤进行，步骤失败直接返回
@@ -76,6 +49,7 @@ def add_datacenter_task(data):
     vpc_resource = boto3.resource('ec2', region_name=region)
     ec2 = boto3.client('ec2', region_name=region)
     # step 1: create VPC
+    redis_client.set(self.request.id, 1)
     # TagEasyunVPC= [{'ResourceType':'vpc','Tags': TagEasyun}]
 
     # query account id from DB (only one account for both phase 1 and 2) ????
@@ -119,6 +93,7 @@ def add_datacenter_task(data):
         )
 
         # step 2: create Internet Gateway
+    redis_client.set(self.request.id, 2)
     # Create and Attach the Internet Gateway
     # TagEasyunIG= [{'ResourceType':'internet-gateway','Tags': TagEasyun}]
 
@@ -168,6 +143,7 @@ def add_datacenter_task(data):
         )
 
     # step 3: create 2 pub-subnet
+    redis_client.set(self.request.id, 3)
 
     datacentersdk.add_subnet(ec2, vpc, igw_route_table, data["pubSubnet1"])
     datacentersdk.add_subnet(ec2, vpc, igw_route_table, data["pubSubnet2"])
@@ -202,6 +178,7 @@ def add_datacenter_task(data):
     datacentersdk.add_subnet(ec2, vpc, nat_route_table, data["priSubnet2"])
 
     # step 2: create NAT Gateway and allocate EIP
+    redis_client.set(self.request.id, 4)
     # allocate IPV4 address for NAT gateway
 
     TagEasyunEIP = [
@@ -259,6 +236,7 @@ def add_datacenter_task(data):
         )
 
         # Step 5-1:  create security group easyun-sg-default
+    redis_client.set(self.request.id, 5)
     # create security group allow SSH inbound rule through the VPC enable ssh/rdp/ping
 
     TagEasyunSecurityGroup = [{'ResourceType': 'security-group', 'Tags': TagEasyun}]
