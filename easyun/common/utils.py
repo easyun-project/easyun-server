@@ -95,6 +95,49 @@ def get_server_name(svr_id):
         return None
 
 
+def get_tag_name(res_type, res_id):
+    '''通过 Resource ID 查询资源的 tag:Name '''
+    resource_ec2 = get_ec2_resource()
+    try:
+        if res_type == 'server':
+            res = resource_ec2.Instance(res_id)
+        elif res_type == 'volume':
+            res = resource_ec2.Volume(res_id)
+        elif res_type == 'keypari':
+            res = resource_ec2.KeyPair(res_id)  
+        elif res_type == 'subnet':
+            res = resource_ec2.Subnet(res_id)
+        elif res_type == 'secgroup':
+            res = resource_ec2.SecurityGroup(res_id)
+        elif res_type == 'igw':
+            res = resource_ec2.InternetGateway(res_id)
+        elif res_type == 'natgw':
+            return 'Nat Gateway'
+        elif res_type == 'route':
+            res = resource_ec2.Route(res_id)
+        elif res_type == 'routetable':
+            res = resource_ec2.RouteTable(res_id)
+        else:
+            raise ValueError('reasouce type error')     
+        tagName = next((tag['Value'] for tag in res.tags if tag["Key"] == 'Name'), None)
+        return tagName
+    except Exception:
+        return None
+
+
+def get_eni_type(eni_id):
+    '''获取 Elastic Network Interface 类型 '''
+    # 'InterfaceType': 'interface'|'natGateway'|'efa'|'trunk'|'load_balancer'|'network_load_balancer'|'vpc_endpoint'|'transit_gateway',
+    resource_ec2 = get_ec2_resource()
+    try:
+        if eni_id == None:
+            raise ValueError('subnet_id is None')    
+        thisEni = resource_ec2.NetworkInterface(eni_id)
+        return thisEni.interface_type
+    except Exception:
+        return None
+
+
 def get_subnet_type(subnet_id):
     '''判断subnet type是 public 还是 private'''
     # 偷个懒仅以名称判断，完整功能待实现

@@ -13,7 +13,7 @@ from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery, DcNameBody
-from easyun.common.utils import gen_dc_tag, set_boto3_region, get_server_name
+from easyun.common.utils import gen_dc_tag, set_boto3_region, get_tag_name, get_eni_type
 from .schemas import DelEipParm, DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
 
@@ -43,6 +43,7 @@ def list_eip_detail(param):
 
         for eip in eips:
             nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag["Key"] == 'Name'), None)
+            eniType = get_eni_type( eip.get('NetworkInterfaceId') )
             eipItem = {
                 'pubIp': eip['PublicIp'],
                 'tagName': nameTag,                
@@ -50,12 +51,13 @@ def list_eip_detail(param):
                 'eipDomain': eip['Domain'],
                 'ipv4Pool': eip['PublicIpv4Pool'],
                 'boarderGroup' : eip['NetworkBorderGroup'],
+                'assoId': eip.get('AssociationId'),
                 #eip关联的目标ID及Name
-                'assoTarget':{
-                    'assoId': eip.get('AssociationId'),
+                'assoTarget':{                    
                     'svrId' : eip.get('InstanceId'),
-                    'tagName': get_server_name(eip.get('InstanceId')),
-                    'eniId': eip.get('NetworkInterfaceId')     
+                    'tagName': get_tag_name('server', eip.get('InstanceId')) if eniType == 'interface' else get_tag_name('natgw', ''),
+                    'eniId': eip.get('NetworkInterfaceId'),
+                    'eniType' : get_eni_type( eip.get('NetworkInterfaceId') ) 
                 }
             }
             eipList.append(eipItem)
@@ -93,6 +95,7 @@ def get_eip_detail(pub_ip, param):
 
         if eip:
             nameTag = next((tag['Value'] for tag in eip.get('Tags') if tag["Key"] == 'Name'), None)
+            eniType = get_eni_type( eip.get('NetworkInterfaceId') )
             eipAttributes = {
                 'pubIp': eip['PublicIp'],
                 'tagName': nameTag,                
@@ -100,15 +103,16 @@ def get_eip_detail(pub_ip, param):
                 'eipDomain': eip['Domain'],
                 'ipv4Pool': eip['PublicIpv4Pool'],
                 'boarderGroup' : eip['NetworkBorderGroup'],
-                #基于AssociationId判断 eip是否可用
-                'isAvailable': True if not eip.get('AssociationId') else False,
+                'assoId': eip.get('AssociationId'),
                 #eip关联的目标ID及Name
                 'assoTarget':{
-                    'assoId': eip.get('AssociationId'),
                     'svrId' : eip.get('InstanceId'),
-                    'tagName': get_server_name(eip.get('InstanceId')),
-                    'eniId': eip.get('NetworkInterfaceId')     
-                }
+                    'tagName': get_tag_name('server', eip.get('InstanceId')) if eniType == 'interface' else get_tag_name('natgw', ''),
+                    'eniId': eip.get('NetworkInterfaceId'),
+                    'eniType' : eniType
+                },
+                #基于AssociationId判断 eip是否可用
+                'isAvailable': True if not eip.get('AssociationId') else False,                
             }
 
         resp = Result(
