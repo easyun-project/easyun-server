@@ -15,7 +15,7 @@ from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import gen_dc_tag, len_iter, query_dc_region, query_svr_name, set_boto3_region
+from easyun.common.utils import gen_dc_tag, len_iter, query_dc_region, get_server_name, set_boto3_region
 from . import bp, TYPE
 from .schemas import VolumeDetail,AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
@@ -52,7 +52,7 @@ def add_volume(parms):
             # 获取 server az属性
             volumeAz = resource_ec2.Subnet(thisSvr.subnet_id).availability_zone
             # 以 server tagName 作为卷名前缀
-            tagName = '%s-%s' % (query_svr_name(svrId), diskType)
+            tagName = '%s-%s' % (get_server_name(svrId), diskType)
             nameTag = {"Key": "Name", "Value": tagName }
         # 否则从传入的body参数上获取
         else:
@@ -116,7 +116,7 @@ def add_volume(parms):
                 'volumeState': attachResp['State'],
                 'volumeAttach':[{
                     'attachSvrId': svrId,
-                    'attachSvr': query_svr_name(svrId),
+                    'attachSvr': get_server_name(svrId),
                     'attachPath': attachPath,
                     'diskType': diskType}
                 ]

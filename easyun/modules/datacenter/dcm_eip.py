@@ -13,30 +13,26 @@ from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery, DcNameBody
-from easyun.common.utils import gen_dc_tag, set_boto3_region
+from easyun.common.utils import gen_dc_tag, set_boto3_region, get_server_name
 from .schemas import DelEipParm, DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
 
 @bp.get('/eip')
 @auth_required(auth_token)
-# @input(DataCenterEIPIn, location='query')
 @input(DcNameQuery, location='query')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_eip_detail(param):
     '''获取 全部静态IP(EIP)信息'''
-    # only for globa regions
-    # dc_name=request.args.get("vpc_idp")
-    # dcTag = {"Key": "Flag", "Value": dcName}
-
     dcName=param.get('dc')
     
     thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
     # if (thisDC is None):
     #         response = Result(detail ={'Result' : 'Errors'}, message='DC not existed, kindly create it first!', status_code=2011,http_status_code=400)
-    #         response.err_resp()   
-    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+    #         response.err_resp()  
+    dcRegion = set_boto3_region(dcName) 
 
     try:
+        client_ec2 = boto3.client('ec2' )
         eips = client_ec2.describe_addresses(
             Filters=[
                 gen_dc_tag(dcName, 'filter'),
@@ -54,12 +50,13 @@ def list_eip_detail(param):
                 'eipDomain': eip['Domain'],
                 'ipv4Pool': eip['PublicIpv4Pool'],
                 'boarderGroup' : eip['NetworkBorderGroup'],
-                #可基于AssociationId判断eip是否可用
-                'assoId': eip.get('AssociationId'),
                 #eip关联的目标ID及Name
-                'targetId' : eip.get('InstanceId'),
-                # 'targetName': 'server_name_xxx',
-                'eniId': eip.get('NetworkInterfaceId')                
+                'assoTarget':{
+                    'assoId': eip.get('AssociationId'),
+                    'svrId' : eip.get('InstanceId'),
+                    'tagName': get_server_name(eip.get('InstanceId')),
+                    'eniId': eip.get('NetworkInterfaceId')     
+                }
             }
             eipList.append(eipItem)
 
@@ -70,7 +67,7 @@ def list_eip_detail(param):
         return resp.make_resp()
 
     except Exception as ex:
-        resp = Result(message=ex, status_code=2101,http_status_code=400)
+        resp = Result(message=str(ex), status_code=2101,http_status_code=400)
         resp.err_resp()
 
 
@@ -84,8 +81,7 @@ def get_eip_detail(pub_ip, param):
     dcName = param.get('dc')
     filterTag = gen_dc_tag(dcName, 'filter')
     try:
-        dcRegion = set_boto3_region(dcName)
-        client_ec2 = boto3.client('ec2', region_name= dcRegion)
+        client_ec2 = boto3.client('ec2')
         eips = client_ec2.describe_addresses(
             Filters=[ filterTag ],
             PublicIps = [pub_ip],
@@ -104,13 +100,16 @@ def get_eip_detail(pub_ip, param):
                 'eipDomain': eip['Domain'],
                 'ipv4Pool': eip['PublicIpv4Pool'],
                 'boarderGroup' : eip['NetworkBorderGroup'],
-                #可基于AssociationId判断eip是否可用
-                'assoId': eip.get('AssociationId'),
-                #eip关联的目标ID及Name                
-                'targetId' : eip.get('InstanceId'),
-                'targetName': 'server_name_xxx',
-                'eniId': eip.get('NetworkInterfaceId')                
-            }            
+                #基于AssociationId判断 eip是否可用
+                'isAvailable': True if not eip.get('AssociationId') else False,
+                #eip关联的目标ID及Name
+                'assoTarget':{
+                    'assoId': eip.get('AssociationId'),
+                    'svrId' : eip.get('InstanceId'),
+                    'tagName': get_server_name(eip.get('InstanceId')),
+                    'eniId': eip.get('NetworkInterfaceId')     
+                }
+            }
 
         resp = Result(
             detail = eipAttributes,
@@ -134,9 +133,10 @@ def list_eip_brief(param):
     '''获取 全部静态IP列表(EIP)[仅基础字段]'''
     dcName=param.get('dc')  
     thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-    client_ec2 = boto3.client('ec2', region_name= thisDC.region)
+    dcRegion = set_boto3_region(dcName) 
 
     try:
+        client_ec2 = boto3.client('ec2')
         eips = client_ec2.describe_addresses(
             Filters=[
                 { 'Name': 'tag:Flag', 'Values': [dcName] },             

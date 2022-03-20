@@ -6,16 +6,13 @@
 
 import boto3
 from apiflask import Schema, input, output, auth_required
-from flask import request
-from datetime import datetime
-from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
-from easyun.common.result import Result
-from easyun.common.utils import len_iter, query_dc_region
+from easyun.common.result import Result 
+from easyun.common.utils import len_iter, gen_dc_tag, query_dc_region, get_subnet_type
 from . import bp, DryRun
-from .schemas import DataCenterEIPIn,DataCenterListsIn,DataCenterListIn,DcParmIn, DataCenterSubnetIn,DataCenterSubnetInsert
+from .schemas import DataCenterSubnetIn,DataCenterSubnetInsert
 
 
 @bp.get('/subnet')
@@ -39,13 +36,10 @@ def list_subnet_detail(param):
         boto3.setup_default_session(region_name = dcRegion )
         client_ec2 = boto3.client('ec2')
 
+        filterTag = gen_dc_tag(dcName, 'filter')
         subnets = client_ec2.describe_subnets(
-            Filters=[
-                {
-                    'Name': 'tag:Flag', 'Values': [dcName]
-                },             
-            ]
-        )['Subnets']
+            Filters=[ filterTag ],
+        ).get('Subnets')
         subnetList = []
         for subnet in subnets:
             # 获取Tag:Name
@@ -173,20 +167,6 @@ def list_subnet_brief(param):
         )
         resp.err_resp()
 
-
-def get_subnet_type(subnet_id):
-    '''判断subnet type是 public 还是 private'''
-    # 偷个懒仅以名称判断，完整功能待实现
-    resource_ec2 = boto3.resource('ec2')
-    thisSubnet = resource_ec2.Subnet(subnet_id)
-    nameTag = next((tag['Value'] for tag in thisSubnet.tags if tag["Key"] == 'Name'), None)
-    if nameTag.lower().startswith('pub'):
-        subnetType = 'public'
-    elif nameTag.lower().startswith('pri'):
-        subnetType = 'private'
-    else:
-        subnetType = None
-    return subnetType
 
 
 @bp.delete('/subnet')

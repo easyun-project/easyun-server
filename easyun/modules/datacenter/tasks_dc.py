@@ -10,7 +10,7 @@ from datetime import date, datetime
 from easyun import db, celery
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
-from easyun.common.utils import len_iter, gen_dc_tag, get_hash_tag
+from easyun.common.utils import len_iter, gen_dc_tag, gen_hash_tag
 from easyun.cloud.aws_quota import get_quota_value
 from . import logger, DryRun
 

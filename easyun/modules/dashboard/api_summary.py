@@ -32,7 +32,7 @@ def summary_dc(parm):
     # dcVPC = thisDC.get_vpc()
 
     # 从AWS Region列表中匹配 当前 region 信息
-    regionDict = [region for region in AWS_Regions if region['regionCode']==dcRegion][0]
+    regionDict = next((region for region in AWS_Regions if region['regionCode'] == dcRegion), None)
     regionInfo = {
         "icon" : regionDict.get('countryCode'),
         "name" : regionDict.get('regionName')['eng']

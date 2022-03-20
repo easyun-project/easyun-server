@@ -12,7 +12,7 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result, make_resp, error_resp, bad_request
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import query_dc_region, query_svr_name, set_boto3_region
+from easyun.common.utils import query_dc_region, get_server_name, set_boto3_region
 from . import bp
 
 
@@ -57,7 +57,7 @@ def get_volume_detail(vol_id, parm):
                 attachList.append({
                     'attachPath' : a['Device'],
                     'attachSvrId' : a['InstanceId'],
-                    'attachSvr' : query_svr_name(a['InstanceId']),
+                    'attachSvr' : get_server_name(a['InstanceId']),
                     'attachTime': a['AttachTime'].isoformat(),
                     'diskType': diskType,  
                 })

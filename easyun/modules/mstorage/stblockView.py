@@ -15,7 +15,7 @@ from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import len_iter, query_dc_region, query_svr_name
+from easyun.common.utils import len_iter, query_dc_region, get_server_name
 from . import bp, TYPE
 from .volume_schema import newVolume
 
@@ -52,7 +52,7 @@ def list_stblock_detail(parm):
             if attach:
                 attachPath = attach[0].get('Device')
                 insId = attach[0].get('InstanceId')
-                attachSvr = query_svr_name(insId)
+                attachSvr = get_server_name(insId)
             else:
                 attachPath = None
                 attachSvr = None
@@ -112,7 +112,7 @@ def get_server_detail(disk_id):
         if attach:
             attachPath = attach[0].get('Device')
             insId = attach[0].get('InstanceId')
-            attachSvr = query_svr_name(insId)
+            attachSvr = get_server_name(insId)
         else:
             attachPath = None
             attachSvr = None

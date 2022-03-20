@@ -15,7 +15,7 @@ from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import len_iter, query_dc_region, query_svr_name
+from easyun.common.utils import len_iter, query_dc_region, get_server_name
 from .schemas import newVolume, VolumeDetail
 from . import bp
 
@@ -56,7 +56,7 @@ def list_stblock_detail(parm):
                     attachList.append({
                         'attachPath' : a['Device'],
                         'attachSvrId' : a['InstanceId'],
-                        'attachSvr' : query_svr_name(a['InstanceId']),
+                        'attachSvr' : get_server_name(a['InstanceId']),
                         'attachTime': a['AttachTime'],
                         'diskType': diskType,  
                     })

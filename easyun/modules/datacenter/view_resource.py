@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  DataCenter Overview
-  @desc:    数据中心首页(overview)相关API，包含数据中心资源使用情况，成本等信息；
+  @module:  Resource Overview
+  @desc:    Resource首页(overview)相关API, 包含数据中心资源使用情况, 成本等信息
   @auth:    
 """
 
@@ -20,12 +20,12 @@ from easyun.common.utils import len_iter, query_dc_region
 from . import bp
 
 
-@bp.get('/usage')
+@bp.get('/res/usage')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
 def get_dc_usage(parm):
-    '''获取数据中心已使用资源数据 [mock]'''
+    '''获取当前数据中心资源使用数据 [mock]'''
     dcName=parm.get('dc')    
     thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
 
@@ -97,12 +97,12 @@ def get_dc_usage(parm):
     # return resp.make_resp()
 
 
-@bp.get('/cost')
+@bp.get('/res/cost')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(SecgroupsOut, description='List DataCenter SecurityGroups Resources')
-def get_dc_cost(parm):
-    '''获取数据中心当前资源月度成本 [mock]'''
+def get_res_cost(parm):
+    '''获取当前数据中心资源月度成本 [mock]'''
     dcName=parm.get('dc')
 
     today = datetime.date.today()
