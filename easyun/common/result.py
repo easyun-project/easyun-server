@@ -10,10 +10,12 @@ from werkzeug.http import HTTP_STATUS_CODES, http_date
 from typing import Any, Union, Tuple
 
 
-def generate_payload(detail: Any = None,
-                     message: str = "success",                     
-                     status_code: int = 200,
-                     task_id: str = None) -> dict:
+def generate_payload(
+    detail: Any = None,
+    message: str = "success",                     
+    status_code: int = 200,
+    task_id: str = None  
+) -> dict:
     """生成格式化的响应体
 
     Args:
@@ -27,9 +29,13 @@ def generate_payload(detail: Any = None,
     return {'detail': detail,'message': message, 'status_code': status_code, 'task_id': task_id}
 
 
-def make_resp(detail: Any = None, message: str = "success", 
-              status_code: int = 200, task_id: str = None,
-              http_status_code: int = 200) -> Tuple[dict, int]:
+def make_resp(
+    detail: Any = None, 
+    message: str = "success",
+    status_code: int = 200,
+    task_id: str = None,
+    http_status_code: int = 200
+) -> Tuple[dict, int]:
     """make a views function response
 
             The return value should match the base response schema
@@ -68,8 +74,9 @@ class Result:
                  detail: Any = None,                  
                  message: str = "success", 
                  status_code: int = 200,
-                 http_status_code: int = 200,
-                 task_id: str = None) -> None:
+                 task_id: str = None,
+                 http_status_code: int = 200                 
+    ) -> None:
         """初始化响应数据类
 
         Args:
@@ -79,11 +86,11 @@ class Result:
             task_id (str, optional): 异步任务ID. Defaults to None.
             http_status_code (int, optional): HTTP状态码. Defaults to 200.
         """
-        self.status_code = status_code
+        self.detail = detail        
         self.message = message
-        self.detail = detail
-        self.http_status_code = http_status_code
+        self.status_code = status_code
         self.task_id = task_id
+        self.http_status_code = http_status_code
 
     def make_resp(self) -> Tuple[dict, int]:
         """构建success响应
@@ -99,7 +106,7 @@ class Result:
         Returns:
             Tuple[dict, int]: 响应体与http状态码
         """
-        return make_resp(self.detail, self.message, self.status_code, self.http_status_code, self.task_id)
+        return make_resp(self.detail, self.message, self.status_code, self.task_id, self.http_status_code)
 
     def err_resp(self) -> None:
         """构建error响应

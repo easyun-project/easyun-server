@@ -377,9 +377,17 @@ def add_datacenter_async(data):
     res = add_datacenter_task.apply_async(args=[data, ])
     return Result(detail=res.id, status_code=2001).make_resp()
 
+
+class TaskIdQuery(Schema):
+    id = String(required=True,   #celery task id
+        validate=Length(0, 36),
+        example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8"
+    )
+
 @bp.get('/add-dc-ret')
-def get_result():
-    celery_id = request.args.get('id')
+@input(TaskIdQuery, location='query')
+def get_result(parm):
+    celery_id = parm.get('id')
     res = AsyncResult(celery_id, app=celery)
     if res.ready():
         ret = res.result

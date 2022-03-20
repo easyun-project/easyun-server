@@ -15,8 +15,8 @@ class Config(object):
     # openapi.info.description
     DESCRIPTION = '''
 Easyun api docs:  
-* Swagger docs path： /api/docs
-* redoc path： /api/redoc'
+* Swagger docs path: /api/docs
+* redoc path: /api/redoc'
     '''
 
     # celery for async

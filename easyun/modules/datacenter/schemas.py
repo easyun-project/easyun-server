@@ -29,7 +29,7 @@ class VpcParm(Schema):
 class SecGroupParm(Schema):
     tagName = String(
         required=True,
-        validate=Length(0, 20)
+        validate=Length(0, 256)
     )
     enablePing = Boolean(required=True, example=False)
     enableSSH = Boolean(required=True, example=False)
@@ -40,7 +40,7 @@ class SecGroupParm(Schema):
 class SubnetParm(Schema):
     tagName = String(
         required=True,
-        validate=Length(0, 40),
+        validate=Length(0, 256),
         example="Public subnet 1"
     )
     cidrBlock = String(

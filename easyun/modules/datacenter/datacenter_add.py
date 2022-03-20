@@ -83,9 +83,34 @@ def create_datacenter(parm):
     except Exception as ex:
         resp = Result(message=str(ex), status_code=2010)
         resp.err_resp()
-        
-    
-    # step 2: create Internet Gateway
+
+
+   # step 2: Write VPC metadata to local database
+    try:
+        curr_account:Account = Account.query.first()
+        curr_user = auth_token.current_user.username
+        # curr_user = 'test-user'
+        newDC = Datacenter(
+            name=dcName,
+            cloud='AWS', 
+            account_id = curr_account.account_id, 
+            region = dcRgeion,
+            vpc_id = vpc.id,
+            create_date = datetime.utcnow(),
+            create_user = curr_user
+        )
+        db.session.add(newDC)
+        db.session.commit()
+
+        stage = '[DataCenter]'+newDC.name+' metadata updated'
+        logger.info(stage)
+
+    except Exception as ex:
+        resp = Result(message=str(ex) , status_code=2092)
+        resp.err_resp()
+
+
+    # step 3: create Internet Gateway
     try:
         nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['gwName']}
         igw = resource_ec2.create_internet_gateway(
@@ -116,7 +141,7 @@ def create_datacenter(parm):
         resp.err_resp()
 
 
-    # step 3: create 2x Public Subnets
+    # step 4: create 2x Public Subnets
     try:
         nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['tagName']}
         pubsbn1 = resource_ec2.create_subnet(
@@ -155,7 +180,7 @@ def create_datacenter(parm):
         resp.err_resp()
 
 
-    # step 4: update main route table （route-igw）
+    # step 5: update main route table （route-igw）
     try:
         nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['routeTable']}
         rtbs = vpc.route_tables.all()
@@ -195,7 +220,7 @@ def create_datacenter(parm):
         resp.err_resp()
 
 
-    # step 5: create 2x Private Subnets
+    # step 6: create 2x Private Subnets
     try:
         nameTag = {"Key": "Name", "Value": parm['priSubnet1']['tagName']}
         prisbn1 = resource_ec2.create_subnet(
@@ -234,8 +259,8 @@ def create_datacenter(parm):
         resp.err_resp()
 
 
-    # step 6: create NAT Gateway with EIP
-    # 6-1: Allocate EIP for NAT Gateway
+    # step 7: create NAT Gateway with EIP
+    # 7-1: Allocate EIP for NAT Gateway
     try:
         nameTag = {"Key": "Name", "Value": dcName.lower()+"-natgw-eip"}
         eip = client_ec2.allocate_address(
@@ -256,7 +281,7 @@ def create_datacenter(parm):
         resp = Result(message=str(ex) , status_code=2061)
         resp.err_resp()
 
-    # 6-2: create nat gateway
+    # 7-2: create nat gateway
     try:
         nameTag = {"Key": "Name", "Value": parm['priSubnet1']['gwName']}
         natgw = client_ec2.create_nat_gateway(
@@ -290,8 +315,8 @@ def create_datacenter(parm):
         resp.err_resp()
 
 
-    # step 7: create NAT route table and route to natgw
-    # 7-1 create route table for natgw
+    # step 8: create NAT route table and route to natgw
+    # 8-1 create route table for natgw
     try:
         nameTag = {"Key": "Name", "Value": parm['priSubnet1']['routeTable']}
         nrtb = vpc.create_route_table(
@@ -330,7 +355,7 @@ def create_datacenter(parm):
         resp.err_resp()
 
 
-    # step 8: update and create Security Groups
+    # step 9: update and create Security Groups
     webPerm = [
         {
             'IpProtocol': 'tcp',
@@ -372,7 +397,7 @@ def create_datacenter(parm):
         },                
     ]
 
-    # 8-1: update default security group
+    # 9-1: update default security group
     try:
         nameTag = {"Key": "Name", "Value": parm['securityGroup0']['tagName']}
         basePerm = check_perm(parm['securityGroup0'])
@@ -396,7 +421,7 @@ def create_datacenter(parm):
         resp = Result(message=str(ex) , status_code=2081)
         resp.err_resp()
 
-    # 8-2: create webapp security group
+    # 9-2: create webapp security group
     try:
         nameTag = {"Key": "Name", "Value": parm['securityGroup1']['tagName']}
         basePerm = check_perm(parm['securityGroup1'])
@@ -425,7 +450,7 @@ def create_datacenter(parm):
         resp = Result(message=str(ex) , status_code=2082)
         resp.err_resp()
 
-    # 8-3: create database security group
+    # 9-3: create database security group
     try:
         nameTag = {"Key": "Name", "Value": parm['securityGroup2']['tagName']}
         basePerm = check_perm(parm['securityGroup2'])
@@ -454,30 +479,6 @@ def create_datacenter(parm):
         resp = Result(message=str(ex) , status_code=2083)
         resp.err_resp()
 
-
-   # step 9: Write Datacenter metadata to local database
-    try:
-        curr_account:Account = Account.query.first()
-        curr_user = auth_token.current_user.username
-        # curr_user = 'test-user'
-        newDC = Datacenter(
-            name=dcName,
-            cloud='AWS', 
-            account_id = curr_account.account_id, 
-            region = dcRgeion,
-            vpc_id = vpc.id,
-            create_date = datetime.utcnow(),
-            create_user = curr_user
-        )
-        db.session.add(newDC)
-        db.session.commit()
-
-        stage = '[DataCenter]'+newDC.name+' metadata updated'
-        logger.info(stage)
-
-    except Exception as ex:
-        resp = Result(message=str(ex) , status_code=2092)
-        resp.err_resp()
 
 # step 10: Update Datacenter name list to DynamoDB
     try:
