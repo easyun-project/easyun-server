@@ -24,7 +24,14 @@ class ObjectListQuery(Schema):
         required=True,
         example='Easyun'
     )
-
+class ObjectQuery(Schema):
+    dcName = String(
+        required=True,
+        example='Easyun'
+    )
+    objectKey = String(
+        required=True
+    )
 class newBucket(Schema):
     bucketName = String(
         required=True, 

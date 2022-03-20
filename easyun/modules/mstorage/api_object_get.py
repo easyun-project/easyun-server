@@ -12,7 +12,7 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.utils import len_iter, query_dc_region
 from easyun.common.result import Result, make_resp, error_resp, bad_request
-from .schemas import ObjectListQuery
+from .schemas import ObjectListQuery,ObjectQuery
 from . import bp
 
 @bp.get('/bucket/object/list')
@@ -56,3 +56,11 @@ def get_object_list(parm):
             status_code=4002,
         )
         return response.err_resp()
+
+@bp.get('/bucket/object')
+@auth_required(auth_token)
+@input(ObjectQuery, location='query')
+def get_object_list(parm):
+    '''获取指定存储桶(Bucket)内单个对象的详细信息'''
+    dcName=parm.get('dcName')
+    pass
