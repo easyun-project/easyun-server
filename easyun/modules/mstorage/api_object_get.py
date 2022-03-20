@@ -60,7 +60,7 @@ def get_object_list(parm):
 @bp.get('/bucket/object')
 @auth_required(auth_token)
 @input(ObjectQuery, location='query')
-def get_object_list(parm):
+def get_object_detail(parm):
     '''获取指定存储桶(Bucket)内单个对象的详细信息'''
     dcName=parm.get('dcName')
     pass
