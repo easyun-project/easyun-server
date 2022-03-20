@@ -256,12 +256,34 @@ def delete_disk(DeleteDiskIn):
     # 创建EBS卷
 
 
+class attachDisk(Schema):
+    volumeId = String(required=True)
+    instanceId = String(required=True)
+    diskPath = String(required=True)
 
 @bp.put('/volume/attach')
 @auth_required(auth_token)
-def attach_server(parm):
+@input(attachDisk)
+def attach_server(attachDisk):
     '''块存储关联云服务器(ec2)'''
-    pass
+    try:
+        RESOURCE = boto3.resource('ec2')
+        volume = RESOURCE.Volume(attachDisk['volumeId'])
+        response = volume.attach_to_instance(
+            Device = attachDisk['diskPath'],
+            InstanceId = attachDisk['instanceId']
+        )
+        response = Result(
+            detail={'msg':'{} attach to {} success'.format(attachDisk['volumeId'],attachDisk['instanceId'])},
+            status_code=200
+        )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3001, http_status_code=400
+        )
+        response.err_resp()
+ 
 
 
 @bp.put('/volume/detach')
