@@ -10,7 +10,7 @@ from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
-from easyun.common.result import Result, make_resp, error_resp, bad_request
+from easyun.common.result import Result
 from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
 from .schemas import TagItem
 from . import bp

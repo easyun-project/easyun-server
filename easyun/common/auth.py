@@ -7,7 +7,7 @@
 from apiflask import APIBlueprint, HTTPTokenAuth, HTTPBasicAuth, auth_required, Schema, doc
 from apiflask.validators import Length, OneOf, Email
 from apiflask.fields import String, Integer, DateTime
-from .result import Result, make_resp, error_resp, bad_request
+from .result import Result
 from .models import User, Account
 from .. import db
 
@@ -180,4 +180,5 @@ def get_auth_token():
     token = auth_basic.current_user.get_token()
     db.session.commit()
     # return jsonify({'token': token})
-    return make_resp('Success', 200, {'token': token})
+    result = Result(detail={'token': token})
+    return result.make_resp()

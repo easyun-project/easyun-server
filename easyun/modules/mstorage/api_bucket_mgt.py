@@ -14,7 +14,7 @@ from flask import jsonify
 from sqlalchemy import true
 from werkzeug.wrappers import response
 from easyun.common.auth import auth_token
-from easyun.common.result import Result, make_resp, error_resp, bad_request
+from easyun.common.result import Result
 from .schemas import BktNameQuery
 from . import bp
 
