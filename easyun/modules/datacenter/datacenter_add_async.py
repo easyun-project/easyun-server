@@ -19,21 +19,29 @@ from .tasks_async import create_dc_task
 from . import bp, logger, DryRun
 
 
-@bp.post('/add-task')
+@bp.post('/add-async')
 @auth_required(auth_token)
 @input(CreateDcParms)
 # @output(CreateDcResult)
 @log.api_error(logger)
 def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
-    curr_user = auth_token.current_user.username
-    task = create_dc_task.apply_async(args=[parm, curr_user])
-    resp = Result(
-        status_code=200,
-        task_id=task.id,
-    )
-    return resp.make_resp()
+    try:
+        curr_user = auth_token.current_user.username
+        task = create_dc_task.apply_async(args=[parm, curr_user])
+        resp = Result(
+            message='CREATING',
+            status_code=200,
+            task_id=task.id,
+        )
+        return resp.make_resp()
 
+    except Exception as ex:
+        resp = Result(
+            message=str(ex),
+            status_code='2003'
+        )
+        resp.err_resp()
 
 class TaskIdQuery(Schema):
     id = String(required=True,   # celery task UUID
@@ -45,51 +53,43 @@ class TaskIdQuery(Schema):
 @bp.get('/add-result')
 @auth_required(auth_token)
 @input(TaskIdQuery, location='query')
-@output(CreateDcResult)
-def fetch_task_result(parm):
+# @output(CreateDcResult)
+def create_dc_result(parm):
     '''获取 add-task 任务执行结果'''
     try:
-        task = create_dc_task.AsyncResult(parm['id'])
-        taskRes = task.result
-        if task.ready():            
+        # task = AsyncResult(parm['id'], app=celery)
+        task:AsyncResult = create_dc_task.AsyncResult(parm['id'])
+        # .ready() Return `True` if the task has executed.
+        if task.ready(): 
+            # 通过task.info 获得 task return 数据
             resp = Result(
-                detail=taskRes.get('detail'),
-                message=taskRes.get('message'),
-                status_code=taskRes.get('status_code')
+                detail = task.info.get('detail'),
+                message = task.info.get('message', 'success'),
+                status_code = task.info.get('status_code', 200),
+                task_id = task.id,
+                http_status_code = task.info.get('http_status_code', 200)
             )
-        elif task.state == 'PENDING': # 在等待
+        # task.state: PENDING/STARTED/SUCCESS/FAILURE
+        else:            
+            # 通过task.info.get()获得 update_state() meta数据
             resp = Result(
-                detail={
-                    'current': 0,
-                    'total': 1,                
-                },
-                message=task.state,
-            )
-        elif task.state != 'FAILURE': # 没有失败
-            resp = Result(
-                # 通过task.info.get()获得 update_state() meta中的数据
-                detail={
+                detail = {
                     'current': task.info.get('current', 0), # 当前循环进度
-                    'total': task.info.get('total', 1), # 总循环进度           
+                    'total': task.info.get('total', 100), # 总循环进度
                 },
-                message=task.state,
+                message = task.info.get('stage', ''),
+                status_code = 200,
+                task_id = task.id
             )
-        else:  # task.state == 'FAILURE': 失败
-            resp = Result(
-                message=taskRes.get('message'),
-                status_code=taskRes.get('status_code'),
-                http_status_code=taskRes.get('http_status_code')                
-            )            
+        return resp.make_resp()
+
     # 如查询过程出现了一些问题
     except Exception as ex:
         resp = Result(
-            detail={
-                'current': 1,
-                'total': 1,                
-            },
             message=str(ex),
-            status_code='2002'
-        )        
+            status_code=task.info.get('status_code'),
+            task_id = task.id
+        )
         resp.err_resp()
 
 

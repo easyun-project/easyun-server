@@ -100,6 +100,7 @@ __pypackages__/
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
+celery/
 
 # SageMath parsed files
 *.sage.py
@@ -165,7 +166,3 @@ cython_debug/
 *.log
 logs/*
 *.log.*
-
-
-
-
