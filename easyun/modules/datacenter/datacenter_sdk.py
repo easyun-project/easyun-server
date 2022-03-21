@@ -11,7 +11,7 @@ from flask import current_app,jsonify
 from datetime import date, datetime
 from easyun.common.auth import auth_token
 from easyun.common.models import Account,Datacenter
-from easyun.common.result import Result, make_resp, error_resp, bad_request
+from easyun.common.result import Result
 from easyun import db, FLAG
 import boto3
 import os, time
