@@ -10,8 +10,7 @@ from datetime import date, datetime
 from easyun import db, celery
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
-from easyun.common.utils import len_iter, gen_dc_tag, gen_hash_tag
-from easyun.cloud.aws_quota import get_quota_value
+from easyun.common.utils import gen_dc_tag, gen_hash_tag
 from . import logger, DryRun
 
 
@@ -29,37 +28,14 @@ def create_dc_task(self, parm, user):
     # Mandatory tag:Flag for all resource
     flagTag = gen_dc_tag(dcName)
     
-    boto3.setup_default_session(region_name = dcRgeion ) 
-    resource_ec2 = boto3.resource('ec2')
+    # boto3.setup_default_session(region_name = dcRgeion ) 
+    resource_ec2 = boto3.resource('ec2', region_name = dcRgeion ) 
 
     # Step 0:  Check the prerequisites for creating new datacenter
-    try:
-        # Check if the DC Name is available
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-        if (thisDC is not None):
-            raise ValueError('DataCenter name already existed')
-        # Check if VPC quota is enough
-        vpcQuota = get_quota_value('vpc','L-F678F1CE')
-        vpcIter = resource_ec2.vpcs.all()
-        if len_iter(vpcIter)  >= int(vpcQuota):
-            raise ValueError('The VPCs per Region limit has been reached')
-        # Check if EIP quota is enough
-        eipQuota = get_quota_value('ec2','L-0263D0A3')
-        eipIter = resource_ec2.vpc_addresses.all()
-        if len_iter(eipIter) >= int(eipQuota):
-            raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
-
-        # when prerequisites check Ok
-        logger.info(self.request.id)
-        self.update_state(state='STARTED', meta={'current': 1, 'total': 100})
- 
-    except Exception as ex:
-        logger.error('[DataCenter]'+str(ex))
-        return {
-            'message':str(ex), 
-            'status_code':2001,
-            'http_status_code':400
-        }
+    # 移到任务执行前检测
+    # when prerequisites check Ok
+    logger.info(self.request.id)
+    self.update_state(state='STARTED', meta={'current': 1, 'total': 100})
 
     # Step 1: create easyun vpc, including:
     # 1* main route table
@@ -83,8 +59,10 @@ def create_dc_task(self, parm, user):
         logger.error('[VPC]'+str(ex))
         return {
             'message':str(ex), 
-            'status_code':2010
+            'status_code':2010,
+            'http_status_code':400
         }
+
 
    # step 2: Write VPC metadata to local database
     try:
@@ -107,7 +85,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2020
+            'status_code':2020,
+            'http_status_code':400
         }
 
     
@@ -140,7 +119,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2030
+            'status_code':2030,
+            'http_status_code':400
         }
 
 
@@ -222,7 +202,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2050
+            'status_code':2050,
+            'http_status_code':400
         }
 
 
@@ -322,7 +303,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2070
+            'status_code':2070,
+            'http_status_code':400
         }
 
 
@@ -363,7 +345,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2080
+            'status_code':2080,
+            'http_status_code':400
         }
 
 
@@ -431,7 +414,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2091
+            'status_code':2091,
+            'http_status_code':400
         }
 
     # 9-2: create webapp security group
@@ -461,7 +445,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2092
+            'status_code':2092,
+            'http_status_code':400
         }
 
     # 9-3: create database security group
@@ -492,7 +477,8 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2093
+            'status_code':2093,
+            'http_status_code':400
         }
 
 

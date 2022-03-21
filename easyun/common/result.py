@@ -82,12 +82,12 @@ class Result:
 
             ```example
                 result = Result(detail=None, status_code=1001,
-                            message="catch an error", http_status_code=500)
+                            message="catch an error", http_status_code=400)
                 result.err_resp()
             ```
         """
         if self.http_status_code == 200:
-            self.http_status_code = 500
+            self.http_status_code = 400
         abort(self.http_status_code,
               extra_data=generate_payload(
                   self.detail,

@@ -29,7 +29,11 @@ def delete_datacenter(param):
     dcName=param.get('dcName')
     flagTag = gen_dc_tag(dcName)
 
-   # step 9: Update Datacenter metadata
+   # step 1: 判断是否为空
+   # server, volume, rds, natgw
+
+
+   # step 5: Update Datacenter metadata
     try:
         curr_account:Account = Account.query.first()
         curr_user = auth_token.current_user.username
@@ -38,18 +42,18 @@ def delete_datacenter(param):
         db.session.delete(thisDC)
         db.session.commit()
 
-        stage = '[DataCenter]'+thisDC.name+' metadata updated'
+        stage = f"[DataCenter]' {thisDC.name} metadata updated."
         logger.info(stage)
 
     except Exception as ex:
         resp = Result(detail=str(ex) , status_code=2181)
         resp.err_resp()
 
-# step 10: Update Datacenter name list to DynamoDB
+    # step 6: Update Datacenter name list to DynamoDB
     try:
         # 待補充
 
-        stage = '[DataCenter]'+thisDC.name+' deleted successfully !'
+        stage = f"[DataCenter]' {thisDC.name} deleted successfully !"
         logger.info(stage)
 
         resp = Result(

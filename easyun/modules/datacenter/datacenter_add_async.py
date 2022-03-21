@@ -5,15 +5,17 @@
   @auth:    aleck
 """
 
-from flask import current_app,jsonify, request
+import boto3
 from apiflask import Schema, input, output, doc, abort, auth_required
 from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean
 from apiflask.validators import Length, OneOf
 from celery.result import ResultBase, AsyncResult
 from easyun import db, log, celery
 from easyun.common.auth import auth_token
-from easyun.common.models import Account
+from easyun.common.models import Account, Datacenter
+from easyun.common.utils import len_iter
 from easyun.common.result import Result
+from easyun.cloud.aws_quota import get_quota_value
 from .schemas import CreateDcParms, CreateDcResult, DcParmIn
 from .tasks_async import create_dc_task
 from . import bp, logger, DryRun
@@ -27,6 +29,37 @@ from . import bp, logger, DryRun
 def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
     try:
+        # Check the prerequisites before create datacenter task
+        dcName = parm['dcName']
+        dcRgeion = parm['dcRegion']
+
+        boto3.setup_default_session(region_name = dcRgeion ) 
+        resource_ec2 = boto3.resource('ec2') 
+
+        # Check if the DC Name is available
+        thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
+        if (thisDC is not None):
+            raise ValueError('DataCenter name already existed')
+        # Check if VPC quota is enough
+        vpcQuota = get_quota_value('vpc','L-F678F1CE')
+        vpcIter = resource_ec2.vpcs.all()
+        if len_iter(vpcIter)  >= int(vpcQuota):
+            raise ValueError('The VPCs per Region limit has been reached')
+        # Check if EIP quota is enough
+        eipQuota = get_quota_value('ec2','L-0263D0A3')
+        eipIter = resource_ec2.vpc_addresses.all()
+        if len_iter(eipIter) >= int(eipQuota):
+            raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
+ 
+    except Exception as ex:
+        logger.error('[DataCenter]'+str(ex))
+        resp = Result(
+            message=str(ex),
+            status_code= 2001
+        )
+        resp.err_resp()        
+
+    try:
         curr_user = auth_token.current_user.username
         task = create_dc_task.apply_async(args=[parm, curr_user])
         resp = Result(
@@ -39,16 +72,17 @@ def create_dc_async(parm):
     except Exception as ex:
         resp = Result(
             message=str(ex),
-            status_code='2003'
+            status_code=2003
         )
         resp.err_resp()
+
+
 
 class TaskIdQuery(Schema):
     id = String(required=True,   # celery task UUID
         validate=Length(0, 36),
         example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8"
     )
-
 
 @bp.get('/add-result')
 @auth_required(auth_token)
@@ -91,31 +125,3 @@ def create_dc_result(parm):
             task_id = task.id
         )
         resp.err_resp()
-
-
-'''
-# celery create_dc_task log for reference:
-2022-03-20 16:04:26,568 INFO sqlalchemy.engine.Engine [generated in 0.00023s] (4,)
-[2022-03-20 16:04:26,568: INFO/ForkPoolWorker-1] [generated in 0.00023s] (4,)
-[2022-03-20 16:04:26,569: INFO/ForkPoolWorker-1] [DataCenter]task11 metadata updated
-[2022-03-20 16:04:26,719: INFO/ForkPoolWorker-1] [IGW]igw-0376b9c38949a266a created
-[2022-03-20 16:04:26,919: INFO/ForkPoolWorker-1] [IGW]igw-0376b9c38949a266a attached to vpc-0d9a9d76df8e44a76
-[2022-03-20 16:04:27,259: INFO/ForkPoolWorker-1] [Subnet]subnet-0fe28852000b1f828 created
-[2022-03-20 16:04:27,502: INFO/ForkPoolWorker-1] [Subnet]subnet-0fc9ce4ca2a892874 created
-[2022-03-20 16:04:27,774: WARNING/ForkPoolWorker-1] [{'Key': 'Flag', 'Value': 'task11'}, {'Key': 'Name', 'Value': 'task1-rtb-igw'}]
-[2022-03-20 16:04:27,900: INFO/ForkPoolWorker-1] [RouteTable]0.0.0.0/0 created
-[2022-03-20 16:04:28,654: INFO/ForkPoolWorker-1] [Subnet]subnet-03ac46ff89d2cff20 created
-[2022-03-20 16:04:28,973: INFO/ForkPoolWorker-1] [Subnet]subnet-021a9864cd01c18ff created
-[2022-03-20 16:04:29,228: INFO/ForkPoolWorker-1] [EIP]35.78.143.43 created
-[2022-03-20 16:04:29,557: INFO/ForkPoolWorker-1] [NatGW]nat-0ef9d2d996a9aae79 creating
-[2022-03-20 16:06:30,253: INFO/ForkPoolWorker-1] [NatGW]nat-0ef9d2d996a9aae79 created
-[2022-03-20 16:06:30,694: INFO/ForkPoolWorker-1] [Route]0.0.0.0/0 created
-[2022-03-20 16:06:31,975: INFO/ForkPoolWorker-1] [SecGroup]default updated
-[2022-03-20 16:06:32,704: INFO/ForkPoolWorker-1] [SecGroup]task1-sg-webapp created
-[2022-03-20 16:06:33,381: INFO/ForkPoolWorker-1] [SecGroup]task1-sg-webapp created
-[2022-03-20 16:06:33,387: INFO/ForkPoolWorker-1] [DataCenter]task11 created successfully !
-2022-03-20 16:06:33,397 INFO sqlalchemy.engine.Engine ROLLBACK
-[2022-03-20 16:06:33,397: INFO/ForkPoolWorker-1] ROLLBACK
-[2022-03-20 16:06:33,404: INFO/ForkPoolWorker-1] Task easyun.modules.datacenter.tasks_async.create_dc_task[78bc9f52-a8ef-41ad-8ace-0206ed33e4c5] succeeded in 128.12716651599476s: {'detail': <Datacenter 4>, 'status_code': 200}
-'''
-
