@@ -25,16 +25,24 @@ def generate_payload(
     """
     return {'detail': detail,'message': message, 'status_code': status_code, 'task_id': task_id}
 
-
-
 class Result:
+    """
+        >>> result = Result()
+        >>> result.make_resp()
+        {
+            'detail': None,
+            'message': "success",
+            'status_code': 200,
+            'task_id': ""
+        }, 200
+    """
     # 构造函数
     def __init__(self,
-                 detail: Any = None,                  
-                 message: str = "success", 
+                 detail: Any = None,
+                 message: str = "success",
                  status_code: int = 200,
                  task_id: str = None,
-                 http_status_code: int = 200                 
+                 http_status_code: int = 200
     ) -> None:
         """初始化响应数据类
 
