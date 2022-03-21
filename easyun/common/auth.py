@@ -4,7 +4,7 @@
 @LastEditors: 
 '''
 
-from apiflask import APIBlueprint, HTTPTokenAuth, HTTPBasicAuth, auth_required, Schema, doc
+from apiflask import APIBlueprint, HTTPTokenAuth, HTTPBasicAuth, abort, auth_required, Schema, doc
 from apiflask.validators import Length, OneOf, Email
 from apiflask.fields import String, Integer, DateTime
 from .result import Result
@@ -28,17 +28,18 @@ def verify_password(username, password):
 
 @auth_basic.error_handler
 def basic_auth_error(status):
-    return error_resp(status)
+    result = Result(http_status_code=status)
+    return result.err_resp()
 
 @auth_token.verify_token
 def verify_token(token):
     return User.check_token(token) if token else None
-    if token in tokens:
-        return tokens[token]
+
 
 @auth_token.error_handler
 def token_auth_error(status):
-    return error_resp(status)
+    result = Result(http_status_code=status)
+    return result.err_resp()
 
 
 class UserDetail(Schema):
@@ -114,9 +115,8 @@ def login_user(user):
             }, 
             status_code=200)    
         return resp.make_resp()
-        # jsonify({'token': token})
     else:
-        return error_resp(401)
+        return abort(401)
 
 
 @bp.delete('/logout')
@@ -141,7 +141,7 @@ def change_passowrd(parm):
     auth_token.current_user.set_password(parm['password'])
     db.session.commit()
     resp = Result(
-        detail={'status': 'Password changed.' }, 
+        detail={'status': 'Password changed.' },
         status_code=200)    
     return resp.make_resp()
 
@@ -154,11 +154,14 @@ def change_passowrd(parm):
 def add_user(parm):
     '''向数据库添加新用户'''
     if 'username' not in parm or 'password' not in parm:
-        return bad_request('must include username and password fields')
+        result = Result(http_status_code=400, message='must include username and password fields')
+        return result.err_resp()
     if User.query.filter_by(username=parm['username']).first():
-        return bad_request('please use a different username')
+        result = Result(http_status_code=400, message='please use a different username')
+        return result.err_resp()
     if User.query.filter_by(email=parm['email']).first():
-        return bad_request('please use a different email address')
+        result = Result(http_status_code=400, message='please use a different email address')
+        return result.err_resp()
 
     newUser = User()
     newUser.from_dict(parm, new_user=True)
@@ -179,6 +182,5 @@ def get_auth_token():
     '''基于auth_basic, Get方法获取token'''
     token = auth_basic.current_user.get_token()
     db.session.commit()
-    # return jsonify({'token': token})
     result = Result(detail={'token': token})
     return result.make_resp()

@@ -6,6 +6,12 @@
 from apiflask import abort
 from typing import Any, Union, Tuple
 
+# def error_resp(status_code, message=None):
+#     abort(status_code=status_code, message=message)
+
+# def bad_request(message):
+#     return error_resp(400, message)
+
 
 def generate_payload(
     detail: Any = None,
