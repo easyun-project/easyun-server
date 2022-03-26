@@ -75,7 +75,23 @@ def get_server_detail(svr_id):
         Memory = instance_type['InstanceTypes'][0]["MemoryInfo"]["SizeInMiB"]/1024
 
         images = CLIENT.describe_images(ImageIds=[instance_res['ImageId']])
-        arch = images['Images'][0]['Architecture']
+        if  len(images['Images'])==0:
+            tip = "EC2 can't retrieve the {} because the AMI was either deleted or made private"
+            arch = tip.format('arch')
+            instance_res['ImageName'] = tip.format('ImageName')
+            instance_res['ImageFullName'] = tip.format('ImageFullName')
+            amitmp = []
+            instance_res['ImagePath'] = tip.format('ImagePath')
+        else:
+            arch = images['Images'][0]['Architecture']
+            instance_res['ImageName'] = images["Images"][0]["Name"].split('/')[-1]
+            instance_res['ImageFullName'] = images["Images"][0]["Name"]
+            print(instance_res['ImageFullName'])
+            AMI = AMI_Win[arch] + AMI_Lnx[arch]
+            amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']]
+            # print(amitmp)
+            # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
+            instance_res['ImagePath'] = '/'.join(images["Images"][0]["ImageLocation"].split('/')[1:])
         protection = CLIENT.describe_instance_attribute(InstanceId = instance_res['InstanceId'],Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
         # print(images["Images"][0]["ImageLocation"])
         # print(images["Images"][0]["Name"])
@@ -86,14 +102,7 @@ def get_server_detail(svr_id):
         instance_res['VCpu'] = VCpu
         instance_res['Memory'] = Memory
         instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile']['Arn'].split('/')[-1]
-        instance_res['ImageName'] = images["Images"][0]["Name"].split('/')[-1]
-        instance_res['ImageFullName'] = images["Images"][0]["Name"]
-        print(instance_res['ImageFullName'])
-        AMI = AMI_Win[arch] + AMI_Lnx[arch]
-        amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']]
-        # print(amitmp)
-        # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
-        instance_res['ImagePath'] = '/'.join(images["Images"][0]["ImageLocation"].split('/')[1:])
+
         instance_res['ServerState'] = instance_res['State']['Name']
         instance_res['PublicIpAddress'] = instance_res1.public_ip_address
         instance_res['Tenancy'] = 'default'
