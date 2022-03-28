@@ -232,6 +232,7 @@ class bktPubBlock(Schema):
 @auth_required(auth_token)
 @input(bktPubBlock)
 def get_bkt_public_block(bktPubBlock):
+    '''获取Bucket Public Block Policy信息'''
     S3Client = boto3.client('s3')
     try:
         result = S3Client.get_public_access_block(
