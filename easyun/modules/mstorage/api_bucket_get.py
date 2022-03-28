@@ -219,3 +219,33 @@ def check_bkt_public(config):
     else:
         accessStatus = 'other'
     return accessStatus
+
+
+class bktPubBlock(Schema):
+    bucketName = String(
+        required=True, 
+        validate=Length(0, 60),
+        example='easyun-bkt-test'
+    )
+
+@bp.get('/bucket/pubblock')
+@auth_required(auth_token)
+@input(bktPubBlock)
+def get_bkt_public_block(bktPubBlock):
+    S3Client = boto3.client('s3')
+    try:
+        result = S3Client.get_public_access_block(
+            Bucket = bktPubBlock['bucketName']
+        )['PublicAccessBlockConfiguration']
+        response = Result(
+            detail=[{
+                'message' : result
+            }],
+            status_code=4013
+        )
+        return response.make_resp()
+    except Exception:
+        response = Result(
+            message='Get Bucket public block policy fail', status_code=4013,http_status_code=400
+        )
+        return response.err_resp()
