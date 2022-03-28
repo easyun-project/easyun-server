@@ -257,6 +257,7 @@ class modifyBktPubBlock(Schema):
 
 '''Modify Bucket Public Block Policy'''
 @bp.put('/bucket/pubblock')
+@auth_required(auth_token)
 @input(modifyBktPubBlock)
 def modify_bucket_policy(modifyBktPubBlock):
     '''修改存储桶的Public Block Policy'''
