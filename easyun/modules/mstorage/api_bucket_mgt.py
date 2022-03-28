@@ -234,10 +234,6 @@ class modifyBktPubBlock(Schema):
         required=True, 
         validate=Length(0, 30)
     )
-    blockAll = Boolean(
-        required=True,
-        example=True
-    )
     newAcl = Boolean(
         required=True,
         example=True
@@ -264,58 +260,33 @@ def modify_bucket_policy(modifyBktPubBlock):
     S3Client = boto3.client('s3')
 
     bucketName = modifyBktPubBlock['bucketName']
-    blockAll = modifyBktPubBlock['blockAll']
+
     newAcl = modifyBktPubBlock['newAcl']
     allAcl = modifyBktPubBlock['allAcl']
     newPolicy = modifyBktPubBlock['newPolicy']
     allPolicy = modifyBktPubBlock['allPolicy']
+    
     try:
-        # 关闭所有的公有访问 all true
-        if blockAll:
-            result = S3Client.put_public_access_block(
-                Bucket = bucketName,
-                PublicAccessBlockConfiguration={
-                    'BlockPublicAcls': True,
-                    'IgnorePublicAcls': True,
-                    'BlockPublicPolicy': True,
-                    'RestrictPublicBuckets': True
-                }
-            )['ResponseMetadata']['HTTPStatusCode']
-            if result == 200 :
-                message = 'Modify public block policy success'
-            else :
-                message = 'Modify public block policy fail'
-            response = Result(
-                detail=[{
-                    'message' : message
-                }],
-                status_code=4003
-            )
-            return response.make_resp()
-        
-        # 打开公有访问
-        else:
-            result = S3Client.put_public_access_block(
-                Bucket = bucketName,
-                PublicAccessBlockConfiguration={
+        result = S3Client.put_public_access_block(
+            Bucket = bucketName,
+            PublicAccessBlockConfiguration={
                 'BlockPublicAcls': newAcl,
                 'IgnorePublicAcls': allAcl,
                 'BlockPublicPolicy': newPolicy,
                 'RestrictPublicBuckets': allPolicy
             }
-            )['ResponseMetadata']['HTTPStatusCode']
-
-            if result == 200 :
-                message = 'Modify public block policy success'
-            else :
-                message = 'Modify public block policy fail'
-            response = Result(
-                detail=[{
-                    'message' : message
-                }],
-                status_code=4003
-            )
-            return response.make_resp()
+        )['ResponseMetadata']['HTTPStatusCode']
+        if result == 200 :
+            message = 'Modify public block policy success'
+        else :
+            message = 'Modify public block policy fail'
+        response = Result(
+            detail=[{
+                'message' : message
+            }],
+            status_code=4003
+        )
+        return response.make_resp()
     except Exception:
         response = Result(
             message='Modify public block policy fail', status_code=4003,http_status_code=400
