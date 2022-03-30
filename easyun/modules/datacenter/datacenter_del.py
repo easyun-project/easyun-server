@@ -15,7 +15,7 @@ from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result
-from easyun.common.utils import gen_dc_tag, set_boto3_region
+from easyun.cloud.utils import gen_dc_tag, set_boto3_region
 from .schemas import VpcListOut,DataCenterListIn
 from . import bp, logger
 

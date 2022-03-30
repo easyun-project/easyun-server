@@ -14,7 +14,8 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.common.utils import len_iter, query_dc_region
+from easyun.libs.utils import len_iter
+from easyun.cloud.utils import query_dc_region
 from . import bp
 
 

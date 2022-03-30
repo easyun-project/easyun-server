@@ -9,7 +9,7 @@ from apiflask.fields import Integer, String, List, Dict, Boolean
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.utils import query_dc_region, get_server_name
+from easyun.cloud.utils import query_dc_region, get_server_name
 from . import bp, REGION
 
 

@@ -14,8 +14,8 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
-from easyun.common.utils import len_iter, query_dc_region
 from easyun.common.schemas import DcNameQuery
+from easyun.cloud.utils import query_dc_region
 from .schemas import BktNameQuery
 from . import bp
 

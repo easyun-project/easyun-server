@@ -15,7 +15,8 @@ from sqlalchemy import false, true
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import gen_dc_tag, len_iter, query_dc_region, get_server_name, set_boto3_region
+from easyun.cloud.utils import gen_dc_tag, query_dc_region, get_server_name, set_boto3_region
+from easyun.libs.utils import len_iter
 from . import bp, TYPE
 from .schemas import VolumeDetail,AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 

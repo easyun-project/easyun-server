@@ -62,13 +62,12 @@ def get_attribute_values(service_code = 'AmazonEC2', attribute_name = 'instanceT
     try:
         client_price = boto3.client('pricing', region_name= Price_Region_List[0] )
         valueList = []
-        describe_args = {}
+        describe_args = {
+            'ServiceCode' : service_code,
+            'AttributeName' : attribute_name
+        }
         while True:        
-            response = client_price.get_attribute_values(
-                **describe_args,
-                ServiceCode = service_code,
-                AttributeName = attribute_name,
-            )
+            response = client_price.get_attribute_values( **describe_args )
             valueList.extend(
                 [a['Value'] for a in response['AttributeValues']]
             )

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  Common Utils
-  @desc:    存放各类公共组件
+  @module:  Cloud Utils
+  @desc:    存放Cloud相关公共组件
   @auth:    aleck
 """
 
 import boto3
-from datetime import date, datetime
-from .models import Datacenter, Account
+from easyun.common.models import Datacenter, Account
 
 
 _RESOURCE_EC2 = None
+
 
 def get_ec2_resource():
     global _RESOURCE_EC2
@@ -156,35 +156,3 @@ def get_subnet_type(subnet_id):
         return subnetType
     except Exception:
         return None
-
-
-def filter_list_by_key(full_list:list,key:str):
-    '''过滤列表:按指定字段筛选'''
-    filtedList = [i.get(key) for i in full_list]
-    return filtedList
-
-
-def filter_list_by_value(full_list:list,key:str,value:str):
-    '''过滤列表:按指定字段取值筛选'''
-    filtedList = [i for i in full_list if i.get(key) == value]
-    return {
-        'countNum':len(filtedList),
-        'countList':filtedList
-    }
-
-
-def len_iter(iterator):
-    '''获取迭代器(Colleciton)列表长度'''
-    # 相比 len(list(iterator)) 方式消耗更少内存
-    if hasattr(iterator,"__len__"):
-        return len(iterator)
-    else:
-        return sum(1 for _ in iterator)
-
-
-def datetime_serializer(obj):
-    '''Helper method to serialize datetime fields'''
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError ("Type %s not serializable" % type(obj))
-    

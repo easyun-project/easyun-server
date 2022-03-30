@@ -11,7 +11,7 @@ from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyStore
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import set_boto3_region, gen_dc_tag, query_dc_region
+from easyun.cloud.utils import set_boto3_region, gen_dc_tag, query_dc_region
 from .schema import KeypairParms, KeypairOut, KeyPairDelIn
 from . import bp
 

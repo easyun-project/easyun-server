@@ -4,7 +4,6 @@
   @desc:    Get parameters to create new server, like: AMI id,instance type
   @auth:    
 """
-
 import boto3
 from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict, Nested
@@ -13,9 +12,10 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
+from easyun.cloud.utils import set_boto3_region
+from easyun.cloud.aws_ec2_ami import AMI_Windows, AMI_Linux
 from easyun.cloud.aws_price import ec2_monthly_cost
-from easyun.cloud.aws_ec2_instype import Instance_Family, get_familyDes
+from easyun.cloud.aws_ec2_instype import Instance_Family, get_family_descode
 from . import bp
 
 
@@ -41,58 +41,32 @@ class ImageQuery(Schema):
 @auth_required(auth_token)
 @input(ImageQuery, location='query')
 # @output()
-def list_images( parm):
+def list_images( parms ):
     '''获取可用的AMI列表(包含 System Disk信息)'''
-
-    imgArch = parm.get('arch')
-    # if imgArch not in ['x86_64', 'arm64']:
-    #     resp = Result(
-    #         detail='Unknown image architecture. The valure must be one of: x86_64, arm64.',
-    #         message='Validation error',
-    #         status_code=3011,
-    #         http_status_code=400
-    #     )
-    #     return resp.err_resp()
-    imgOS = parm.get('os')        
-    if imgOS == 'windows':
-        amiList = AMI_Win.get(str(imgArch)) 
-        # 从image name中截取有意义字段
-        def split_name(imgName):
-            pass
-    elif imgOS == 'linux':
-        amiList = AMI_Lnx.get(str(imgArch)) 
-        def split_name(imgName):
-            pass
-    else:
-        resp = Result(
-            detail='Unknown image architecture. The valure must be one of: windows, linux.',
-            message='Validation error',
-            status_code=3011,
-            http_status_code=400
-        )
-        return resp.err_resp()
+    dcName = parms['dc']
+    imgArch = parms['arch']
+    imgOS = parms['os']
+    amiList = AMI_Windows[str(imgArch)] if imgOS == 'windows' else AMI_Linux[str(imgArch)]
 
     filters = [
         {'Name': 'state','Values': ['available']},
         {'Name': 'image-type','Values': ['machine']},
-        # {'Name': 'platform','Values': ['windows']}, # for Windows only        
+        # {'Name': 'platform','Values': ['windows']}, # for Windows only
         {'Name': 'virtualization-type', 'Values': ['hvm']},
         {'Name': 'architecture','Values': [imgArch]},
         {'Name': 'name','Values': [ami.get('amiName') for ami in amiList]},
     ]
 
     try:
-        thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
-        dcRegion = thisDC.get_region()
-
         # 设置 boto3 接口默认 region_name
-        boto3.setup_default_session(region_name = dcRegion )  
-
+        dcRegion = set_boto3_region( dcName )
         client_ec2 = boto3.client('ec2')
-        result = client_ec2.describe_images(
+
+        # No paginator needed for describe_images
+        images = client_ec2.describe_images(
     #         Owners=['amazon'],
             Filters = filters
-        )
+        )['Images']
 
         imgList = [
             {
@@ -108,8 +82,9 @@ def list_images( parm):
                     'deviceType': img['RootDeviceType'],
                     'deviceDisk': img['BlockDeviceMappings'][0].get('Ebs')                    
                 }
-            } for img in result['Images']
+            } for img in images
         ]
+                   
         resp = Result(
             detail=imgList,
             message = str(len(imgList))+",success",
@@ -158,12 +133,12 @@ def get_ins_family(parm):
         for familyDict in Instance_Family:
             subFamily = familyDict['familyList']
             for f in subFamily:
-                if f['insArch'] == insArch:
+                if f['architecture'] == insArch:
                     tmp = {
                         'catgName': familyDict['catgName'],
                         'catdesCode': familyDict['catdesCode'],
-                        'familyName': f['familyName'],
-                        'familyDes': f['familyDes']
+                        'familyName': f['name'],
+                        'familyDes': f['description']
                     }
                     familyList.append(tmp)
 
@@ -186,7 +161,7 @@ def get_ins_family(parm):
 # 定义 insFamily 有效取值范围
 InsFamily_All = ['all']
 for i in Instance_Family:
-    familyList = [f['familyName'] for f in i['familyList']]
+    familyList = [f['name'] for f in i['familyList']]
     InsFamily_All.extend(familyList)
 
 
@@ -235,13 +210,12 @@ def get_ins_type_list(parm):
         dcRegion = thisDC.get_region()
         client_ec2 = boto3.client('ec2', region_name = dcRegion)
         # 基于NextToken判断获取完整 instance types 列表
-        desc_args = {}
+        desc_args = {
+            'Filters' : filters,
+        }
         instypeList = []
         while True:
-            result = client_ec2.describe_instance_types(
-                **desc_args,
-                Filters = filters,
-            )
+            result = client_ec2.describe_instance_types( **desc_args )
     #         print(describe_result.keys())
             for i in result['InstanceTypes']:
                 insType = i['InstanceType']
@@ -249,7 +223,7 @@ def get_ins_type_list(parm):
                 tmp = {
                     'insType': insType,
                     'familyName': insFamily,
-                    'familyDes': get_familyDes(insFamily)
+                    'familyDes': get_family_descode(insFamily)
                 }
                 instypeList.append(tmp)
             if 'NextToken' not in result:

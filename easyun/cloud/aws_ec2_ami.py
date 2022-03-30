@@ -6,159 +6,26 @@
 """
 
 import boto3
+from easyun.libs.utils import load_json_config
 from easyun.cloud.aws_price import get_attribute_values
 
 
-'''全部受支持的 AMI Operating System 列表'''
-ALL_OperatingSystem = get_attribute_values('AmazonEC2','operatingSystem')
+# 获取 windows ami 列表
+AMI_Windows = load_json_config('aws_ec2_ami').get('windows')
+
+# 获取 linux ami 列表
+AMI_Linux = load_json_config('aws_ec2_ami').get('linux')
+
+# 全部受支持的 AMI Operating System 列表
+OperatingSystemALL = get_attribute_values('AmazonEC2','operatingSystem')
 
 
-'''预定义支持的AMI列表'''
-# 后续放在配置文件中便于维护
-AMI_Win = {
-    'x86_64': [
-        {
-            'amiName': 'Windows_Server-2012-R2_RTM-English-64Bit-Base-2021.11.10',
-            'osName': 'Windows Server 2012 R2 64Bit',
-            'osCode': 'windows',
-            'osVersion': '2021.11.10',
-            'userName':[],
-        },
-        {
-            'amiName': 'Windows_Server-2016-English-Full-Base-2021.11.10',
-            'osName': 'Windows Server 2016',
-            'osCode': 'windows',
-            'osVersion': '2021.11.10',
-            'userName':[],
-        },   
-        {
-            'amiName': 'Windows_Server-2019-English-Full-Base-2021.11.10',
-            'osName': 'Windows Server 2019',
-            'osCode': 'windows',
-            'osVersion': '2021.11.10',
-            'userName':[],
-        },
-        {
-            'amiName': 'Windows_Server-2022-English-Full-Base-2021.11.16',
-            'osName': 'Windows Server 2022',
-            'osCode': 'windows',
-            'osVersion': '2021.11.10',
-            'userName':[],
-        }
-    ],
-    'arm64': [
-        # Windows Server 暂无 arm 版本
-    ]
-}
 
-AMI_Lnx = {
-    'x86_64': [
-        {
-            'amiName': 'amzn2-ami-kernel-5.10-hvm-2.0.20211201.0-x86_64-gp2',
-            'osName': 'Amazon Linux 2 Kernel 5.10',
-            'osCode': 'amzn2',
-            'osVersion': '2.0.20211201.0',
-            'userName':['ec2-user'],
-        },
-        {
-            'amiName': 'RHEL-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2',
-            'osName': 'Red Hat Enterprise Linux',
-            'osCode': 'rhel',
-            'osVersion': '8.4',
-            'userName':['ec2-user','root'],
-        },   
-        {
-            'amiName': 'suse-sles-15-sp2-v20201211-hvm-ssd-x86_64',
-            'osName': 'SUSE Linux Enterprise Server',
-            'osCode': 'sles',
-            'osVersion': '15 SP2',
-            'userName':['ec2-user','root'],
-        },
-        {
-            'amiName': 'suse-sles-12-sp5-v20201212-hvm-ssd-x86_64',
-            'osName': 'SUSE Linux Enterprise Server',
-            'osCode': 'sles',
-            'osVersion': '12 SP5',
-            'userName':['ec2-user','root'],
-        },
-        {
-            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20211021',
-            'osName': 'Ubuntu',
-            'osCode': 'ubuntu',
-            'osVersion': '20.04 LTS',
-            'userName':['ubuntu'],
-        },
-        {
-            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20211027',
-            'osName': 'Ubuntu',
-            'osCode': 'ubuntu',
-            'osVersion': '18.04 LTS',
-            'userName':['ubuntu'],
-        },   
-        {
-            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20210928',
-            'osName': 'Ubuntu',
-            'osCode': 'ubuntu',
-            'osVersion': '16.04 LTS',
-            'userName':['ubuntu'],
-        },
-        {
-            'amiName': 'debian-10-amd64-20211011-792',
-            'osName': 'Debian 10',
-            'osCode': 'debian',
-            'osVersion': '10 [2021.10]',
-            'userName':['admin'],
-        }
-    ],
-    'arm64': [
-        {
-            'amiName': 'amzn2-ami-kernel-5.10-hvm-2.0.20211223.0-arm64-gp2',
-            'osName': 'Amazon Linux 2 Kernel 5.10',
-            'osCode': 'amzn2',
-            'osVersion': '2.0.20211201.0',
-            'userName':['ec2-user'],
-        },
-        {
-            'amiName': 'RHEL-8.4.0_HVM-20210825-arm64-0-Hourly2-GP2',
-            'osName': 'Red Hat Enterprise Linux',
-            'osCode': 'rhel',
-            'osVersion': '8.4',
-            'userName':['ec2-user','root'],
-        },   
-        {
-            'amiName': 'suse-sles-15-sp2-v20210604-hvm-ssd-arm64',
-            'osName': 'SUSE Linux Enterprise Server',
-            'osCode': 'sles',
-            'osVersion': '15 SP2',
-            'userName':['ec2-user','root'],
-        },
-        {
-            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20211129',
-            'osName': 'Ubuntu',
-            'osCode': 'ubuntu',
-            'osVersion': '20.04 LTS',
-            'userName':['ubuntu'],
-        },
-        {
-            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-arm64-server-20211129',
-            'osName': 'Ubuntu',
-            'osCode': 'ubuntu',
-            'osVersion': '18.04 LTS',
-            'userName':['ubuntu'],
-        },   
-        {
-            'amiName': 'ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-arm64-server-20210928',
-            'osName': 'Ubuntu',
-            'osCode': 'ubuntu',
-            'osVersion': '16.04 LTS',
-            'userName':['ubuntu'],
-        },
-        {
-            'amiName': 'debian-10-arm64-20211011-792',
-            'osName': 'Debian 10',
-            'osCode': 'debian',
-            'osVersion': '10 [2021.10]',
-            'userName':['admin'],
-        }
-    ]
-}
+def split_ami_name(imgName, platform):
+    '''根据系统平台从image name中截取有意义字段'''
+    if platform == 'windows':
+        pass
+    elif platform == 'linux':
+        pass
+    return ''
+    

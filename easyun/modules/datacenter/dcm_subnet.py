@@ -10,7 +10,8 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result 
-from easyun.common.utils import len_iter, gen_dc_tag, query_dc_region, get_subnet_type
+from easyun.libs.utils import len_iter
+from easyun.cloud.utils import gen_dc_tag, query_dc_region, get_subnet_type
 from . import bp, DryRun
 from .schemas import DataCenterSubnetIn,DataCenterSubnetInsert
 

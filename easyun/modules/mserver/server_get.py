@@ -11,8 +11,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.models import Datacenter
 from easyun.common.schemas import DcNameQuery
-from easyun.common.utils import set_boto3_region, gen_dc_tag
-# from easyun.common.utils import query_svr_name
+from easyun.cloud.utils import set_boto3_region, gen_dc_tag
 from datetime import date, datetime
 from . import bp
 from flask import request, jsonify

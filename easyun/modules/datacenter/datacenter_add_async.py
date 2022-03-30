@@ -13,7 +13,7 @@ from celery.result import ResultBase, AsyncResult
 from easyun import db, log, celery
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
-from easyun.common.utils import len_iter
+from easyun.libs.utils import len_iter
 from easyun.common.result import Result
 from easyun.cloud.aws_quota import get_quota_value
 from .schemas import CreateDcParms, CreateDcResult, DcParmIn

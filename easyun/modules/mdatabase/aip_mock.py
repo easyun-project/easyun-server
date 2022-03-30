@@ -10,7 +10,7 @@ from apiflask import Schema, input, output, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.result import Result
-from easyun.common.utils import query_dc_list
+from easyun.cloud.utils import query_dc_list
 from datetime import date, datetime
 from . import bp
 

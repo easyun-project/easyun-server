@@ -10,7 +10,7 @@ from datetime import date, datetime
 from easyun import db, celery
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
-from easyun.common.utils import gen_dc_tag, gen_hash_tag
+from easyun.cloud.utils import gen_dc_tag, gen_hash_tag
 from . import logger, DryRun
 
 

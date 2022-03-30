@@ -8,7 +8,7 @@
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Date, Field, Nested
 from apiflask.validators import Length, OneOf
-from .utils import query_dc_list
+from ..cloud.utils import query_dc_list
 
 
 class DcNameQuery(Schema):

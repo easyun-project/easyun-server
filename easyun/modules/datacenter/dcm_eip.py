@@ -13,7 +13,7 @@ from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery, DcNameBody
-from easyun.common.utils import gen_dc_tag, set_boto3_region, get_tag_name, get_eni_type
+from easyun.cloud.utils import gen_dc_tag, set_boto3_region, get_tag_name, get_eni_type
 from .schemas import DelEipParm, DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
 

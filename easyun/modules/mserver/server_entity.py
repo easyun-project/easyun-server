@@ -11,7 +11,7 @@ from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.cloud.aws_ec2_ami import AMI_Win, AMI_Lnx
+from easyun.cloud.aws_ec2_ami import AMI_Windows, AMI_Linux
 from .schemas import TagItem
 from . import bp
 
@@ -90,7 +90,7 @@ def get_server_detail(svr_id):
             instance_res['ImageName'] = images["Images"][0]["Name"].split('/')[-1]
             instance_res['ImageFullName'] = images["Images"][0]["Name"]
             print(instance_res['ImageFullName'])
-            AMI = AMI_Win[arch] + AMI_Lnx[arch]
+            AMI = AMI_Windows[arch] + AMI_Linux[arch]
             amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']]
             # print(amitmp)
             # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]

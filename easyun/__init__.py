@@ -11,7 +11,7 @@ from apiflask.fields import String, Integer, Field, Nested
 from logging.handlers import RotatingFileHandler
 import click
 from flask_sqlalchemy import SQLAlchemy
-from flask_redis import FlaskRedis
+# from flask_redis import FlaskRedis
 from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -36,7 +36,7 @@ celery = FlaskCelery(
         backend=Config.result_backend
     )
 log = EasyunLogging()
-redis_client = FlaskRedis()
+# redis_client = FlaskRedis()
 
 
 class BaseResponseSchema(Schema):
@@ -100,7 +100,7 @@ def register_extensions(app: APIFlask):
     cors.init_app(app)
     celery.init_app(app)
     log.init_app(app)
-    redis_client.init_app(app)
+    # redis_client.init_app(app)
 
     with app.app_context():
         # 初始化数据库
