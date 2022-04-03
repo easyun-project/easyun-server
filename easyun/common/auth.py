@@ -33,8 +33,10 @@ def basic_auth_error(status):
 
 @auth_token.verify_token
 def verify_token(token):
-    return User.check_token(token) if token else None
-
+    user:User =  User.check_token(token) if token else abort(401)
+    if user:
+        return user
+    abort(401)
 
 @auth_token.error_handler
 def token_auth_error(status):
