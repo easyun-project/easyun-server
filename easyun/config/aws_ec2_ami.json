@@ -1,165 +1,169 @@
 {
-    "windows" : {
-        "x86_64": [
-            {
-                "amiName": "Windows_Server-2012-R2_RTM-English-64Bit-Base-2022.03.09",
-                "osName": "Windows Server 2012 R2 64Bit",
-                "osCode": "windows",
-                "usageOperation": "RunInstances:0002",
-                "osVersion": "2022.03.09",
-                "userName": ["administrator"]
-            },
-            {
-                "amiName": "Windows_Server-2016-English-Full-Base-2022.03.09",
-                "osName": "Windows Server 2016",
-                "osCode": "windows",
-                "usageOperation": "RunInstances:0002",
-                "osVersion": "2022.03.09",               
-                "userName": ["administrator"]
-            },   
-            {
-                "amiName": "Windows_Server-2019-English-Full-Base-2022.03.09",
-                "osName": "Windows Server 2019",
-                "osCode": "windows",
-                "usageOperation": "RunInstances:0002",
-                "osVersion": "2022.03.09",
-                "userName": ["administrator"]
-            },
-            {
-                "amiName": "Windows_Server-2022-English-Full-Base-2021.11.16",
-                "osName": "Windows Server 2022",
-                "osCode": "windows",
-                "usageOperation": "RunInstances:0002",
-                "osVersion": "2022.03.09",
-                "userName":["administrator"]
-            }
-        ],
-        "arm64": []
-    },
-    "linux": {
-        "x86_64": [
-            {
-                "amiName": "amzn2-ami-kernel-5.10-hvm-2.0.20211201.0-x86_64-gp2",
-                "osName": "Amazon Linux 2 Kernel 5.10",
-                "osCode": "amzn2",
-                "usageOperation": "RunInstances",
-                "osVersion": "2.0.20211201.0",
-                "userName":["ec2-user"]
-            },
-            {
-                "amiName": "RHEL-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2",
-                "osName": "Red Hat Enterprise Linux",
-                "osCode": "rhel",
-                "usageOperation": "RunInstances:0010",
-                "osVersion": "8.4",
-                "userName":["ec2-user","root"]
-            },   
-            {
-                "amiName": "suse-sles-15-sp2-v20201211-hvm-ssd-x86_64",
-                "osName": "SUSE Linux Enterprise Server",
-                "osCode": "sles",
-                "usageOperation": "RunInstances:000g",
-                "osVersion": "15 SP2",
-                "userName":["ec2-user","root"]
-            },
-            {
-                "amiName": "suse-sles-12-sp5-v20201212-hvm-ssd-x86_64",
-                "osName": "SUSE Linux Enterprise Server",
-                "osCode": "sles",
-                "usageOperation": "RunInstances:000g",
-                "osVersion": "12 SP5",
-                "userName":["ec2-user","root"]
-            },
-            {
-                "amiName": "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20211021",
-                "osName": "Ubuntu",
-                "osCode": "ubuntu",
-                "usageOperation": "RunInstances",
-                "osVersion": "20.04 LTS",
-                "userName":["ubuntu"]
-            },
-            {
-                "amiName": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20211027",
-                "osName": "Ubuntu",
-                "osCode": "ubuntu",
-                "usageOperation": "RunInstances",
-                "osVersion": "18.04 LTS",
-                "userName":["ubuntu"]
-            },   
-            {
-                "amiName": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20210928",
-                "osName": "Ubuntu",
-                "osCode": "ubuntu",
-                "usageOperation": "RunInstances",
-                "osVersion": "16.04 LTS",
-                "userName":["ubuntu"]
-            },
-            {
-                "amiName": "debian-10-amd64-20211011-792",
-                "osName": "Debian 10",
-                "osCode": "debian",
-                "usageOperation": "RunInstances",
-                "osVersion": "10 [2021.10]",
-                "userName":["admin"]
-            }
-        ],
-        "arm64": [
-            {
-                "amiName": "amzn2-ami-kernel-5.10-hvm-2.0.20211223.0-arm64-gp2",
-                "osName": "Amazon Linux 2 Kernel 5.10",
-                "osCode": "amzn2",
-                "usageOperation": "RunInstances",
-                "osVersion": "2.0.20211201.0",
-                "userName":["ec2-user"]
-            },
-            {
-                "amiName": "RHEL-8.4.0_HVM-20210825-arm64-0-Hourly2-GP2",
-                "osName": "Red Hat Enterprise Linux",
-                "osCode": "rhel",
-                "usageOperation": "RunInstances:0010",
-                "osVersion": "8.4",
-                "userName":["ec2-user","root"]
-            },   
-            {
-                "amiName": "suse-sles-15-sp2-v20210604-hvm-ssd-arm64",
-                "osName": "SUSE Linux Enterprise Server",
-                "osCode": "sles",
-                "usageOperation": "RunInstances:000g",
-                "osVersion": "15 SP2",
-                "userName":["ec2-user","root"]
-            },
-            {
-                "amiName": "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20211129",
-                "osName": "Ubuntu",
-                "osCode": "ubuntu",
-                "usageOperation": "RunInstances",
-                "osVersion": "20.04 LTS",
-                "userName":["ubuntu"]
-            },
-            {
-                "amiName": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-arm64-server-20211129",
-                "osName": "Ubuntu",
-                "osCode": "ubuntu",
-                "usageOperation": "RunInstances",
-                "osVersion": "18.04 LTS",
-                "userName":["ubuntu"]
-            },   
-            {
-                "amiName": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-arm64-server-20210928",
-                "osName": "Ubuntu",
-                "osCode": "ubuntu",
-                "usageOperation": "RunInstances",
-                "osVersion": "16.04 LTS",
-                "userName":["ubuntu"]
-            },
-            {
-                "amiName": "debian-10-arm64-20211011-792",
-                "osName": "Debian 10",
-                "osCode": "debian",
-                "usageOperation": "RunInstances",
-                "osVersion": "10 [2021.10]",
-                "userName":["admin"]
-            }
-        ]
+    "version": "2022.03",
+    "description": "Amazon EC2 AMI Name Config",
+    "config":{
+        "windows" : {
+            "x86_64": [
+                {
+                    "amiName": "Windows_Server-2012-R2_RTM-English-64Bit-Base-2022.03.09",
+                    "osName": "Windows Server 2012 R2 64Bit",
+                    "osCode": "windows",
+                    "usageOperation": "RunInstances:0002",
+                    "osVersion": "2022.03.09",
+                    "userName": ["administrator"]
+                },
+                {
+                    "amiName": "Windows_Server-2016-English-Full-Base-2022.03.09",
+                    "osName": "Windows Server 2016",
+                    "osCode": "windows",
+                    "usageOperation": "RunInstances:0002",
+                    "osVersion": "2022.03.09",               
+                    "userName": ["administrator"]
+                },   
+                {
+                    "amiName": "Windows_Server-2019-English-Full-Base-2022.03.09",
+                    "osName": "Windows Server 2019",
+                    "osCode": "windows",
+                    "usageOperation": "RunInstances:0002",
+                    "osVersion": "2022.03.09",
+                    "userName": ["administrator"]
+                },
+                {
+                    "amiName": "Windows_Server-2022-English-Full-Base-2022.03.09",
+                    "osName": "Windows Server 2022",
+                    "osCode": "windows",
+                    "usageOperation": "RunInstances:0002",
+                    "osVersion": "2022.03.09",
+                    "userName":["administrator"]
+                }
+            ],
+            "arm64": []
+        },
+        "linux": {
+            "x86_64": [
+                {
+                    "amiName": "amzn2-ami-kernel-5.10-hvm-2.0.20211201.0-x86_64-gp2",
+                    "osName": "Amazon Linux 2 Kernel 5.10",
+                    "osCode": "amzn2",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "2.0.20211201.0",
+                    "userName":["ec2-user"]
+                },
+                {
+                    "amiName": "RHEL-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2",
+                    "osName": "Red Hat Enterprise Linux",
+                    "osCode": "rhel",
+                    "usageOperation": "RunInstances:0010",
+                    "osVersion": "8.4",
+                    "userName":["ec2-user","root"]
+                },   
+                {
+                    "amiName": "suse-sles-15-sp2-v20201211-hvm-ssd-x86_64",
+                    "osName": "SUSE Linux Enterprise Server",
+                    "osCode": "sles",
+                    "usageOperation": "RunInstances:000g",
+                    "osVersion": "15 SP2",
+                    "userName":["ec2-user","root"]
+                },
+                {
+                    "amiName": "suse-sles-12-sp5-v20201212-hvm-ssd-x86_64",
+                    "osName": "SUSE Linux Enterprise Server",
+                    "osCode": "sles",
+                    "usageOperation": "RunInstances:000g",
+                    "osVersion": "12 SP5",
+                    "userName":["ec2-user","root"]
+                },
+                {
+                    "amiName": "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20211021",
+                    "osName": "Ubuntu",
+                    "osCode": "ubuntu",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "20.04 LTS",
+                    "userName":["ubuntu"]
+                },
+                {
+                    "amiName": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20211027",
+                    "osName": "Ubuntu",
+                    "osCode": "ubuntu",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "18.04 LTS",
+                    "userName":["ubuntu"]
+                },   
+                {
+                    "amiName": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20210928",
+                    "osName": "Ubuntu",
+                    "osCode": "ubuntu",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "16.04 LTS",
+                    "userName":["ubuntu"]
+                },
+                {
+                    "amiName": "debian-10-amd64-20211011-792",
+                    "osName": "Debian 10",
+                    "osCode": "debian",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "10 [2021.10]",
+                    "userName":["admin"]
+                }
+            ],
+            "arm64": [
+                {
+                    "amiName": "amzn2-ami-kernel-5.10-hvm-2.0.20211223.0-arm64-gp2",
+                    "osName": "Amazon Linux 2 Kernel 5.10",
+                    "osCode": "amzn2",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "2.0.20211201.0",
+                    "userName":["ec2-user"]
+                },
+                {
+                    "amiName": "RHEL-8.4.0_HVM-20210825-arm64-0-Hourly2-GP2",
+                    "osName": "Red Hat Enterprise Linux",
+                    "osCode": "rhel",
+                    "usageOperation": "RunInstances:0010",
+                    "osVersion": "8.4",
+                    "userName":["ec2-user","root"]
+                },   
+                {
+                    "amiName": "suse-sles-15-sp2-v20210604-hvm-ssd-arm64",
+                    "osName": "SUSE Linux Enterprise Server",
+                    "osCode": "sles",
+                    "usageOperation": "RunInstances:000g",
+                    "osVersion": "15 SP2",
+                    "userName":["ec2-user","root"]
+                },
+                {
+                    "amiName": "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20211129",
+                    "osName": "Ubuntu",
+                    "osCode": "ubuntu",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "20.04 LTS",
+                    "userName":["ubuntu"]
+                },
+                {
+                    "amiName": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-arm64-server-20211129",
+                    "osName": "Ubuntu",
+                    "osCode": "ubuntu",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "18.04 LTS",
+                    "userName":["ubuntu"]
+                },   
+                {
+                    "amiName": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-arm64-server-20210928",
+                    "osName": "Ubuntu",
+                    "osCode": "ubuntu",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "16.04 LTS",
+                    "userName":["ubuntu"]
+                },
+                {
+                    "amiName": "debian-10-arm64-20211011-792",
+                    "osName": "Debian 10",
+                    "osCode": "debian",
+                    "usageOperation": "RunInstances",
+                    "osVersion": "10 [2021.10]",
+                    "userName":["admin"]
+                }
+            ]
+        }
     }
 }

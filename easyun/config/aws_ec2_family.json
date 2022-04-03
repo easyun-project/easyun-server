@@ -1,107 +1,111 @@
-[
-    {
-        "catgName": "general",
-        "catdesCode": "GP",
-        "catDescription":"General Purpose",
-        "familyList": [
-            {"name":"t2", "description":"突增实例", "architecture":"x86_64"},
-            {"name":"t3", "description":"突增实例", "architecture":"x86_64"},
-            {"name":"t3a", "description":"突增实例-AMD", "architecture":"x86_64"},
-            {"name":"m4", "description":"通用实例", "architecture":"x86_64"},
-            {"name":"m5", "description":"通用实例", "architecture":"x86_64"},
-            {"name":"m5d", "description":"通用实例", "architecture":"x86_64"},
-            {"name":"m5n", "description":"通用实例", "architecture":"x86_64"},
-            {"name":"m5zn", "description":"通用实例", "architecture":"x86_64"},
-            {"name":"m6i", "description":"通用实例", "architecture":"x86_64"},                
-            {"name":"m5a", "description":"通用实例-AMD", "architecture":"x86_64"},
-            {"name":"m5ad", "description":"通用实例-AMD", "architecture":"x86_64"},
-            {"name":"m6a", "description":"通用实例-AMD", "architecture":"x86_64"},
-            {"name":"t4g", "description":"突增实例-ARM", "architecture":"arm64"},
-            {"name":"a1", "description":"突增实例-ARM", "architecture":"arm64"},
-            {"name":"m6g", "description":"通用实例-ARM", "architecture":"arm64"},
-            {"name":"m6gd", "description":"通用实例-ARM", "architecture":"arm64"}     
-        ]
-    },
-    {
-        "catgName": "compute",
-        "catdesCode": "CO",
-        "catDescription":"Compute Optimized",
-        "familyList": [
-            {"name":"c4", "description":"计算密集型", "architecture":"x86_64"},
-            {"name":"c5", "description":"计算密集型", "architecture":"x86_64"},
-            {"name":"c6i", "description":"计算密集型", "architecture":"x86_64"},
-            {"name":"c5a", "description":"计算密集型-AMD", "architecture":"x86_64"},
-            {"name":"c5d", "description":"计算密集型-AMD", "architecture":"x86_64"},
-            {"name":"c5ad", "description":"计算密集型-AMD", "architecture":"x86_64"},
-            {"name":"c5n", "description":"计算密集型-AMD", "architecture":"x86_64"},                
-            {"name":"c6g", "description":"计算密集型-ARM", "architecture":"arm64"},
-            {"name":"c6gn", "description":"计算密集型-ARM", "architecture":"arm64"},
-            {"name":"c6gd", "description":"计算密集型-ARM", "architecture":"arm64"},            
-            {"name":"c7g", "description":"计算密集型-ARM", "architecture":"arm64"}
-        ]
-    },
-    {
-        "catgName": "memory",
-        "catdesCode": "MO",
-        "catDescription":"Memory Optimized",
-        "familyList": [
-            {"name":"r4", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r5", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r5d", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r5a", "description":"内存优化型-AMD", "architecture":"x86_64"},
-            {"name":"r5ad", "description":"内存优化型-AMD", "architecture":"x86_64"},
-            {"name":"r5b", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r5n", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r5dn", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r6i", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"r6g", "description":"内存优化型-ARM", "architecture":"arm64"},
-            {"name":"r6gd", "description":"内存优化型-ARM", "architecture":"arm64"},  
-            {"name":"x1", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"x1e", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"z1d", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"x2idn", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"x2iedn", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"x2iezn", "description":"内存优化型", "architecture":"x86_64"},
-            {"name":"x2gd", "description":"内存优化型-ARM", "architecture":"arm64"},
-            {"name":"x2g", "description":"内存优化型-ARM", "architecture":"arm64"}
-        ]
-    },
-    {
-        "catgName": "storage",
-        "catdesCode": "SO", 
-        "catDescription":"Storage Optimized",
-        "familyList": [
-            {"name":"d2", "description":"存储实例-HDD", "architecture":"x86_64"},
-            {"name":"d3", "description":"存储实例-HDD", "architecture":"x86_64"},
-            {"name":"d3en", "description":"存储实例-HDD", "architecture":"x86_64"},
-            {"name":"h1", "description":"存储实例-HDD", "architecture":"x86_64"},
-            {"name":"i3", "description":"存储实例-NVMe", "architecture":"x86_64"},
-            {"name":"i3en", "description":"存储实例-NVMe", "architecture":"x86_64"},
-            {"name":"i4i", "description":"存储优化-Nitro SSD", "architecture":"x86_64"},
-            {"name":"is4gen", "description":"存储优化-Nitro SSD", "architecture":"x86_64"},
-            {"name":"im4gn", "description":"存储优化-Nitro SSD", "architecture":"x86_64"}  
-        ]
-    },
-    {
-        "catgName": "accelerate",
-        "catdesCode": "AC",
-        "catDescription":"Accelerated Computing",
-        "familyList": [
-            {"name":"p2", "description":"GPU实例-K80", "architecture":"x86_64"},
-            {"name":"p3", "description":"GPU实例-V100", "architecture":"x86_64"},
-            {"name":"p3dn", "description":"GPU实例-V100", "architecture":"x86_64"},
-            {"name":"p4d", "description":"GPU实例-A100", "architecture":"x86_64"},                
-            {"name":"g3", "description":"GPU实例-M60", "architecture":"x86_64"},
-            {"name":"g3s", "description":"GPU实例-M60", "architecture":"x86_64"},
-            {"name":"g4dn", "description":"GPU实例-T4", "architecture":"x86_64"},
-            {"name":"g4ad", "description":"GPU实例-V520", "architecture":"x86_64"},
-            {"name":"g5", "description":"GPU实例-A10G", "architecture":"x86_64"},
-            {"name":"g5g", "description":"GPU实例-T4G", "architecture":"arm64"},
-            {"name":"inf1", "description":"ML推理-Inferentia", "architecture":"x86_64"},
-            {"name":"trn1", "description":"ML训练-Trainium", "architecture":"x86_64"},              
-            {"name":"dl1", "description":"ML训练-Gaudi", "architecture":"x86_64"},                          
-            {"name":"f1", "description":"FPGA加速实例", "architecture":"x86_64"},
-            {"name":"vt1", "description":"转码加速实例", "architecture":"x86_64"}
-        ]
-    }
-]
+{
+    "version": "2022.03",
+    "description": "Amazon EC2 Instance Family Config",
+    "config":[
+        {
+            "catgName": "general",
+            "catdesCode": "GP",
+            "catDescription":"General Purpose",
+            "familyList": [
+                {"name":"t2", "description":"突增实例", "architecture":"x86_64"},
+                {"name":"t3", "description":"突增实例", "architecture":"x86_64"},
+                {"name":"t3a", "description":"突增实例-AMD", "architecture":"x86_64"},
+                {"name":"m4", "description":"通用实例", "architecture":"x86_64"},
+                {"name":"m5", "description":"通用实例", "architecture":"x86_64"},
+                {"name":"m5d", "description":"通用实例", "architecture":"x86_64"},
+                {"name":"m5n", "description":"通用实例", "architecture":"x86_64"},
+                {"name":"m5zn", "description":"通用实例", "architecture":"x86_64"},
+                {"name":"m6i", "description":"通用实例", "architecture":"x86_64"},                
+                {"name":"m5a", "description":"通用实例-AMD", "architecture":"x86_64"},
+                {"name":"m5ad", "description":"通用实例-AMD", "architecture":"x86_64"},
+                {"name":"m6a", "description":"通用实例-AMD", "architecture":"x86_64"},
+                {"name":"t4g", "description":"突增实例-ARM", "architecture":"arm64"},
+                {"name":"a1", "description":"突增实例-ARM", "architecture":"arm64"},
+                {"name":"m6g", "description":"通用实例-ARM", "architecture":"arm64"},
+                {"name":"m6gd", "description":"通用实例-ARM", "architecture":"arm64"}     
+            ]
+        },
+        {
+            "catgName": "compute",
+            "catdesCode": "CO",
+            "catDescription":"Compute Optimized",
+            "familyList": [
+                {"name":"c4", "description":"计算密集型", "architecture":"x86_64"},
+                {"name":"c5", "description":"计算密集型", "architecture":"x86_64"},
+                {"name":"c6i", "description":"计算密集型", "architecture":"x86_64"},
+                {"name":"c5a", "description":"计算密集型-AMD", "architecture":"x86_64"},
+                {"name":"c5d", "description":"计算密集型-AMD", "architecture":"x86_64"},
+                {"name":"c5ad", "description":"计算密集型-AMD", "architecture":"x86_64"},
+                {"name":"c5n", "description":"计算密集型-AMD", "architecture":"x86_64"},                
+                {"name":"c6g", "description":"计算密集型-ARM", "architecture":"arm64"},
+                {"name":"c6gn", "description":"计算密集型-ARM", "architecture":"arm64"},
+                {"name":"c6gd", "description":"计算密集型-ARM", "architecture":"arm64"},            
+                {"name":"c7g", "description":"计算密集型-ARM", "architecture":"arm64"}
+            ]
+        },
+        {
+            "catgName": "memory",
+            "catdesCode": "MO",
+            "catDescription":"Memory Optimized",
+            "familyList": [
+                {"name":"r4", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r5", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r5d", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r5a", "description":"内存优化型-AMD", "architecture":"x86_64"},
+                {"name":"r5ad", "description":"内存优化型-AMD", "architecture":"x86_64"},
+                {"name":"r5b", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r5n", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r5dn", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r6i", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"r6g", "description":"内存优化型-ARM", "architecture":"arm64"},
+                {"name":"r6gd", "description":"内存优化型-ARM", "architecture":"arm64"},  
+                {"name":"x1", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"x1e", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"z1d", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"x2idn", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"x2iedn", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"x2iezn", "description":"内存优化型", "architecture":"x86_64"},
+                {"name":"x2gd", "description":"内存优化型-ARM", "architecture":"arm64"},
+                {"name":"x2g", "description":"内存优化型-ARM", "architecture":"arm64"}
+            ]
+        },
+        {
+            "catgName": "storage",
+            "catdesCode": "SO", 
+            "catDescription":"Storage Optimized",
+            "familyList": [
+                {"name":"d2", "description":"存储实例-HDD", "architecture":"x86_64"},
+                {"name":"d3", "description":"存储实例-HDD", "architecture":"x86_64"},
+                {"name":"d3en", "description":"存储实例-HDD", "architecture":"x86_64"},
+                {"name":"h1", "description":"存储实例-HDD", "architecture":"x86_64"},
+                {"name":"i3", "description":"存储实例-NVMe", "architecture":"x86_64"},
+                {"name":"i3en", "description":"存储实例-NVMe", "architecture":"x86_64"},
+                {"name":"i4i", "description":"存储优化-Nitro SSD", "architecture":"x86_64"},
+                {"name":"is4gen", "description":"存储优化-Nitro SSD", "architecture":"x86_64"},
+                {"name":"im4gn", "description":"存储优化-Nitro SSD", "architecture":"x86_64"}  
+            ]
+        },
+        {
+            "catgName": "accelerate",
+            "catdesCode": "AC",
+            "catDescription":"Accelerated Computing",
+            "familyList": [
+                {"name":"p2", "description":"GPU实例-K80", "architecture":"x86_64"},
+                {"name":"p3", "description":"GPU实例-V100", "architecture":"x86_64"},
+                {"name":"p3dn", "description":"GPU实例-V100", "architecture":"x86_64"},
+                {"name":"p4d", "description":"GPU实例-A100", "architecture":"x86_64"},                
+                {"name":"g3", "description":"GPU实例-M60", "architecture":"x86_64"},
+                {"name":"g3s", "description":"GPU实例-M60", "architecture":"x86_64"},
+                {"name":"g4dn", "description":"GPU实例-T4", "architecture":"x86_64"},
+                {"name":"g4ad", "description":"GPU实例-V520", "architecture":"x86_64"},
+                {"name":"g5", "description":"GPU实例-A10G", "architecture":"x86_64"},
+                {"name":"g5g", "description":"GPU实例-T4G", "architecture":"arm64"},
+                {"name":"inf1", "description":"ML推理-Inferentia", "architecture":"x86_64"},
+                {"name":"trn1", "description":"ML训练-Trainium", "architecture":"x86_64"},              
+                {"name":"dl1", "description":"ML训练-Gaudi", "architecture":"x86_64"},                          
+                {"name":"f1", "description":"FPGA加速实例", "architecture":"x86_64"},
+                {"name":"vt1", "description":"转码加速实例", "architecture":"x86_64"}
+            ]
+        }
+    ]
+}

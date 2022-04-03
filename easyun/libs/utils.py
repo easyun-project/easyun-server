@@ -13,7 +13,7 @@ def load_json_config(file, location = 'easyun/config'):
     '''load config from json file'''
     file_name = '%s.%s' %(file,'json')
     with open(os.path.join(location, file_name), encoding='utf-8') as f:
-        config = json.load(f)
+        config = json.load(f).get('config')
     return config
 
 
