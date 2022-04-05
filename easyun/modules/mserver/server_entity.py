@@ -79,12 +79,17 @@ def get_server_detail(svr_id):
 
         images = CLIENT.describe_images(ImageIds=[instance_res['ImageId']])
         if  len(images['Images'])==0:
-            tip = "EC2 can't retrieve the {} because the AMI was either deleted or made private"
-            arch = tip.format('arch')
-            instance_res['ImageName'] = tip.format('ImageName')
-            instance_res['ImageFullName'] = tip.format('ImageFullName')
+            # tip = "EC2 can't retrieve the {} because the AMI was either deleted or made private"
+            # arch = tip.format('arch')
+            # instance_res['ImageName'] = tip.format('ImageName')
+            # instance_res['ImageFullName'] = tip.format('ImageFullName')
+            # amitmp = []
+            # instance_res['ImagePath'] = tip.format('ImagePath')
+            arch = 'unknown'
+            instance_res['ImageName'] = 'unknown'
+            instance_res['ImageFullName'] = 'unknown'
             amitmp = []
-            instance_res['ImagePath'] = tip.format('ImagePath')
+            instance_res['ImagePath'] = 'unknown'
         else:
             arch = images['Images'][0]['Architecture']
             instance_res['ImageName'] = images["Images"][0]["Name"].split('/')[-1]
