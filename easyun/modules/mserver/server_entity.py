@@ -213,11 +213,14 @@ def get_ins_types(svr_id):
         )
         response.err_resp()
 
+
+
 class DiskInfoIn(Schema):
     action = String(required=True, example='attach')
     svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
     diskPath = String(required=True, example='/dev/sdf')
     volumeId = String(required=True, example='vol-0fcb3e28f8687f74d')  #volumn ID
+
 @bp.put('/disk')
 @auth_required(auth_token)
 @input(DiskInfoIn)
@@ -318,7 +321,7 @@ def attach_disk(param):
 
 
 class EipAttachInfoIn(Schema):
-    action = String(required=True, example='attach')
+    action = String(required=True, validate=OneOf('attach', 'detach'), example='attach')
     svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
     publicIp = String(required=True, example='34.192.222.116')
 
@@ -387,7 +390,7 @@ def attach_eip(param):
 #         response.err_resp()
 
 class SgAttachInfoIn(Schema):
-    action = String(required=True, example='attach')
+    action = String(required=True, validate=OneOf('attach', 'detach'), example='attach')
     svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
     secgroupId = String(required=True, example='sg-0bb69bb599b303a1e')
 
@@ -459,7 +462,7 @@ def list_svr_tags(svr_id):
     try:
         resource_ec2 = boto3.resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
-        userTags = [t for t in thisSvr.tags if t['Key'] not in ["Flag",]]
+        userTags = [tag for tag in thisSvr.tags if tag['Key'] not in ["Flag",]]
         response = Result(
             detail= userTags,
             status_code=200
@@ -468,8 +471,7 @@ def list_svr_tags(svr_id):
     except Exception as ex:
         response = Result(
             message=str(ex), 
-            status_code=3031, 
-            http_status_code=400
+            status_code=3031
         )
         response.err_resp()
 
