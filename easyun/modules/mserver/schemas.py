@@ -27,6 +27,16 @@ class ModSvrNameParm(Schema):
         required=True,
         example='new_server_name'
     )
+class ModSvrProtectionParm(Schema):
+    svrIds = List(         #云服务器IDs
+        String(),
+        required=True,
+        example=['i-0e5250487e0fec039','i-0dfc0232b2f4f8ab9']
+    )
+    action = String(
+        required=True, 
+        validate=OneOf(['enable', 'disable'])  #Operation TYPE
+        )
 
 
 class SvrIdList(Schema):

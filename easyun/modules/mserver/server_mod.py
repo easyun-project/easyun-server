@@ -9,7 +9,7 @@ from apiflask.fields import Integer, String, List, Dict, Boolean
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.cloud.utils import query_dc_region, get_server_name
-from .schemas import ModSvrNameParm, SvrTagNameItem
+from .schemas import ModSvrNameParm, SvrTagNameItem,ModSvrProtectionParm
 from . import bp, REGION
 
 
@@ -60,6 +60,48 @@ def update_svr_name(parms):
                 'svrId' : server.id,
                 'tagName' : next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
                 } for server in svrList],
+            status_code=200
+        )
+        return response.make_resp()
+    except Exception as e:
+        response = Result(
+            message=str(e), status_code=3102, http_status_code=400
+        )
+        response.err_resp()  
+
+ModSvrNameParm
+@bp.put('/protection')
+# @auth_required(auth_token)
+@input(ModSvrProtectionParm)
+# @output(SvrTagNameItem(many=True))
+def update_svr_protection(parms):
+    '''修改指定云服务器protection'''
+    try:
+        ec2 = boto3.resource('ec2')
+        successIds = []
+        if len(parms['svrIds']) > 0:
+            instances = ec2.instances.filter(
+                InstanceIds=parms["svrIds"],
+                Filters=[{'Name': 'instance-state-name', 'Values': ['stopped']}]
+                )
+            
+            value = True if parms['action'] == 'disable' else False
+            
+            for instance in instances:
+                # CLIENT = boto3.client('ec2')
+                # tmp = CLIENT.describe_instance_attribute(InstanceId = instance.id,Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
+                # print(tmp)
+                ec2.Instance(instance.id).modify_attribute(
+                    DisableApiTermination={
+                        'Value': value 
+                    })
+                successIds.append(instance.id)
+        failedIds = list(set(parms['svrIds']) - set(successIds))
+        # print(successIds,failedIds)
+        response = Result(
+            # detail='{} update success'.format(successIds) + ',{} must be updated before stopping server'.format(failedIds) if failedIds else '',
+            detail={'success':successIds,
+            'failed':failedIds},
             status_code=200
         )
         return response.make_resp()
