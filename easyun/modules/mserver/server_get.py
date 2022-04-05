@@ -66,6 +66,9 @@ def list_server_detail(parm):
             #获取内存容量            
             insType = client_ec2.describe_instance_types(InstanceTypes=[s.instance_type])
             ramSize = insType['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
+            instance = client_ec2.describe_instances(InstanceIds=[s.id])
+            instance_res = [j for i in instance['Reservations'] for j in i['Instances']][0]
+            association = instance_res["NetworkInterfaces"][0].get("Association")
             try:
                 osName = resource_ec2.Image(s.image_id).platform_details
             except:
@@ -82,7 +85,8 @@ def list_server_detail(parm):
                 # 'azName' : resource_ec2.Subnet(s.subnet_id).availability_zone,
                 'azName' : s.placement.get('AvailabilityZone'),
                 'pubIp' : s.public_ip_address,
-                'priIp' : s.private_ip_address
+                'priIp' : s.private_ip_address,
+                'isEip': True if association and association["IpOwnerId"]!='amazon' else False,
             }
             svrList.append(svrItem)
 
