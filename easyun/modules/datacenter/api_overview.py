@@ -1,35 +1,31 @@
 # -*- coding: utf-8 -*-
 """
   @module:  DataCenter Overview
-  @desc:    数据中心首页(overview)相关API，包含数据中心基本信息和VPC资源分布情况
+  @desc:    首页(overview)相关API, 包含数据中心基本信息和VPC资源分布情况
   @auth:    aleck
 """
 
-from http import client
-import re
 import boto3
-from datetime import datetime
-from apiflask import Schema, input, output, auth_required
-from apiflask.fields import Integer, String, List, Dict
-from apiflask.validators import Length, OneOf
-from easyun import FLAG
+from datetime import datetime, date, timedelta
+from apiflask import input, output, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.libs.utils import len_iter, filter_list_by_key, filter_list_by_value
 from easyun.cloud.utils import query_dc_region, gen_dc_tag, get_subnet_type, set_boto3_region
-from easyun.cloud.aws_region import AWS_Regions, query_country_code, query_region_name
+from easyun.cloud.sdk_tagging import RgTagging
+from easyun.cloud.sdk_cost import CostExplorer, get_ce_region
 from . import bp, logger
 
 
 
-@bp.get('/detail')
+@bp.get('/vpc')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
-def get_dc_detail(parm):
-    '''获取指定的数据中心详细信息'''
+def get_vpc_summary(parm):
+    '''获取指定的数据中心VPC资源统计信息'''
     dcName = parm['dc']
     try:
         thisDC:Datacenter = Datacenter.query.filter_by(name=dcName).first()
@@ -37,19 +33,7 @@ def get_dc_detail(parm):
 
         resource_ec2 = boto3.resource('ec2')
         thisVPC = resource_ec2.Vpc(thisDC.vpc_id)
-
-        # 获取指定的数据中心基础信息
-        dcBasic = {
-            'dcName' : thisDC.name,
-            'createDate' : thisDC.create_date.isoformat(),
-            'createUser' : thisDC.create_user,
-            'dcAccount' : thisDC.account_id,
-            'dcRegion' : thisDC.region,
-            'vpcID' : thisDC.vpc_id,
-            'vpcCidr' : thisVPC.cidr_block,            
-        }
  
-        # 获取当前数据中心的vpc资源统计信息
         filterTag = gen_dc_tag(dcName, 'filter')
         desFilters=[
                 filterTag,
@@ -97,10 +81,77 @@ def get_dc_detail(parm):
 
         resp = Result(
             detail = {
-                'dcBasic': dcBasic,
                 'azSummary':azSummary,
                 'vpcSummary':vpcSummary
             },
+            status_code=200
+        )
+        return resp.make_resp()
+    except Exception as ex:
+        response = Result(
+            message= str(ex), status_code=2012, http_status_code=400
+        )
+        response.err_resp()
+
+
+@bp.get('/resource')
+@auth_required(auth_token)
+@input(DcNameQuery, location='query')
+# @output(DCInfoOut, description='Get Datacenter Metadata')
+def get_res_summary(parm):
+    '''获取指定的数据中心Resource统计信息'''
+    dcName = parm['dc']
+    dcRegion = set_boto3_region(dcName)    
+    try:
+        rgt = RgTagging( dcName )
+        resSummary = {
+            'serverNum': rgt.sum_resources('ec2:instance'),
+            'volumeNum': rgt.sum_resources('ec2:volume'),
+            'bucketNum': rgt.sum_resources('s3:bucket'),
+            'efsNum': rgt.sum_resources('elasticfilesystem:file-system'),
+            'rdsNum': rgt.sum_resources('rds:db'),
+            'elbNum': rgt.sum_resources('elasticloadbalancing:loadbalancer'),
+            'elbtgNum': rgt.sum_resources('elasticloadbalancing:targetgroup'),           
+            'volbackupNum': rgt.sum_resources('ec2:snapshot'),
+            'rdsbackupNum': rgt.sum_resources('rds:snapshot'),
+            'efsbackupNum': rgt.sum_resources('backup:recovery-point'),
+        }
+        resp = Result(
+            detail = resSummary,
+            status_code=200
+        )
+        return resp.make_resp()
+    except Exception as ex:
+        response = Result(
+            message= str(ex), status_code=2012, http_status_code=400
+        )
+        response.err_resp()
+
+@bp.get('/cost')
+@auth_required(auth_token)
+@input(DcNameQuery, location='query')
+def get_cost_summary(parm):
+    dcName = parm['dc']
+    thisAccount:Account = Account.query.first()
+    try:
+        #根据账号类型选择对应 api endpoint
+        ceRegion = get_ce_region(thisAccount.aws_type)  
+        ce = CostExplorer( dcName ,region=ceRegion) 
+
+        # get last month
+        todayDate = date.today()
+        lastMonthDate = todayDate.replace(day=1) - timedelta(days = 1)
+        lastMonth = lastMonthDate.strftime('%Y-%m')
+        
+        costSummary = {
+            'currMonthTotal': ce.get_monthly_total_cost(),
+            'nextMonthTotal': ce.get_forecast_cost(),
+            'lastMonthTotal':ce.get_monthly_total_cost(lastMonth),
+            'currMonthCost':ce.get_monthly_cost(),
+            'last5daysCost':ce.get_last5days_total_cost(),
+        }
+        resp = Result(
+            detail = costSummary,
             status_code=200
         )
         return resp.make_resp()

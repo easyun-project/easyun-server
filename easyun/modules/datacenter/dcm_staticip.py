@@ -12,7 +12,7 @@ from easyun.common.result import Result
 from . import bp,DryRun
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
-from easyun.common.schemas import DcNameQuery, DcNameBody
+from easyun.common.schemas import DcNameQuery, DcNameParm
 from easyun.cloud.utils import gen_dc_tag, set_boto3_region, get_tag_name, get_eni_type
 from .schemas import DelEipParm, DataCenterListsIn,DataCenterListIn,DcParmIn,DataCenterSubnetIn
 
@@ -180,7 +180,7 @@ def list_eip_brief(param):
 
 @bp.post('/eip')
 @auth_required(auth_token)
-@input(DcNameBody)
+@input(DcNameParm)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_eip(param):
     '''新增 静态IP(EIP)'''

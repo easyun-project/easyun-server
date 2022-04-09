@@ -11,17 +11,19 @@ from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean
 from apiflask.validators import Length, OneOf
 from celery.result import ResultBase, AsyncResult
 from easyun import db, log, celery
+from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.schemas import DcNameParm
 from easyun.libs.utils import len_iter
-from easyun.common.result import Result
 from easyun.cloud.aws_quota import get_quota_value
+from easyun.cloud.utils import set_boto3_region
 from .schemas import CreateDcParms, CreateDcResult, DcParmIn
-from .tasks_async import create_dc_task
+from .tasks_async import create_dc_task, delete_dc_task
 from . import bp, logger, DryRun
 
 
-@bp.post('/add-async')
+@bp.post('/add')
 @auth_required(auth_token)
 @input(CreateDcParms)
 # @output(CreateDcResult)
@@ -78,18 +80,67 @@ def create_dc_async(parm):
 
 
 
+@bp.delete('/del')
+@auth_required(auth_token)
+@input(DcNameParm)
+# @output(CreateDcResult)
+@log.api_error(logger)
+def delete_dc_async(parm):
+    '''删除 Datacenter 及基础资源[异步]'''
+    try:
+        # Check the prerequisites before create datacenter task
+        dcName = parm['dcName']
+        dcRegion = set_boto3_region(dcName)
+
+        resource_ec2 = boto3.resource('ec2') 
+
+        # step 1: DC resource empty checking - instance
+
+        # step 2: DC resource empty checking - volume
+
+        # step 3: DC resource empty checking - rds
+
+        # step 4: DC resource empty checking - NAT Gateway
+
+ 
+    except Exception as ex:
+        logger.error('[DataCenter]'+str(ex))
+        resp = Result(
+            message=str(ex),
+            status_code= 2011
+        )
+        resp.err_resp()
+            
+        # step 5: Update Datacenter metadata
+    try:
+        task = delete_dc_task.apply_async(args=[parm])
+        resp = Result(
+            message='Deleting',
+            status_code=200,
+            task_id=task.id,
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(
+            message=str(ex),
+            status_code=2013
+        )
+        resp.err_resp()
+
+
 class TaskIdQuery(Schema):
     id = String(required=True,   # celery task UUID
         validate=Length(0, 36),
         example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8"
     )
 
-@bp.get('/add-result')
+@bp.get('/task')
 @auth_required(auth_token)
 @input(TaskIdQuery, location='query')
 # @output(CreateDcResult)
-def create_dc_result(parm):
-    '''获取 add-task 任务执行结果'''
+def get_task_result(parm):
+    '''获取异步任务执行结果'''
     try:
         # task = AsyncResult(parm['id'], app=celery)
         task:AsyncResult = create_dc_task.AsyncResult(parm['id'])
@@ -110,8 +161,9 @@ def create_dc_result(parm):
                 detail = {
                     'current': task.info.get('current', 0), # 当前循环进度
                     'total': task.info.get('total', 100), # 总循环进度
+                    'description': task.info.get('stage', '') # 阶段描述
                 },
-                message = task.info.get('stage', ''),
+                message = task.info.get('message', 'success'),
                 status_code = 200,
                 task_id = task.id
             )

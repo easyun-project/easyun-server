@@ -4,11 +4,12 @@
   @desc:    AWS SDK Boto3 Client and Resource Wrapper.  
   @auth:    
 """
+import boto3
 
 
 class EC2Resource(object):
-    def __init__(self, boto3_resource):
-        self._boto3_resource = boto3_resource
+    def __init__(self):
+        self._resource = boto3.resource('ec2')
 
     #SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.describe_services
     def get_service_codes(self):

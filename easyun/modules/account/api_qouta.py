@@ -1,83 +1,74 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  Account Qoutas
+  @module:  Service Qoutas
   @desc:    获取云账号下资源配额相关信息
   @auth:    aleck
 """
-
-import boto3
-from apiflask import Schema, input, output, auth_required
-from apiflask.fields import Integer, String, List, Dict
-from apiflask.validators import Length, OneOf
-from easyun import FLAG
+from apiflask import input, output, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
+from easyun.common.schemas import RegionCodeQuery
 from easyun.common.result import Result
-from datetime import date, datetime
+from easyun.libs.utils import load_json_config
+from easyun.cloud.sdk_quotas import ServiceQuotas
 from . import bp
+
 
 
 @bp.get('/quota')
 @auth_required(auth_token)
-def get_account_quota():
-    '''获取云账号下资源配额 [mock]'''
-    pass
-    resp = Result(
-        detail = '功能开发中...',
-        status_code=200
-    )
-    return resp.make_resp()
+@input(RegionCodeQuery, location='query')
+def get_region_quota(parm):
+    '''获取指定region的资源配额'''
+    thisRegion = parm['region']
+    sq = ServiceQuotas(thisRegion)
 
+    dcList = [dc.name for dc in Datacenter.query.filter_by(region=thisRegion)]
+    serviceCodes = load_json_config('aws_quota_codes')
+    
+    vpcQuotaCodes = [ q['quotaCode'] for q in serviceCodes['vpcQuotaCodes'] ]
+    networkQuotas = sq.get_service_quotas('vpc', vpcQuotaCodes)
+    # eip 是个列外，单独获取后append上去
+    eipQuota = sq.get_service_quota('ec2','L-0263D0A3')
+    networkQuotas.append(eipQuota)
 
-@bp.get('/quota/<region>')
-@auth_required(auth_token)
-# @input(DcNameQuery, location='query')
-def get_region_quota(region):
-    '''获取指定region的资源配额 [mock]'''
+    elbQuotaCodes = [ q['quotaCode'] for q in serviceCodes['elbQuotaCodes'] ]
+    elasticLBQuotas = sq.get_service_quotas('elasticloadbalancing', elbQuotaCodes)
 
-    AWS_Valid_Quota = [
-            {
-                'qoutaName':'od_instances',
-                'serviceCode':'ec2',
-                'quotaCode':'L-1216C47A',
-                'quotaDes' :'Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances'
-            },
-            {
-                'qoutaName':'spot_instances',
-                'serviceCode':'ec2',
-                'quotaCode':'L-34B43A08',
-                'quotaDes' :'All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests'
-            },
-            {
-                'qoutaName':'eips',
-                'serviceCode':'ec2',
-                'quotaCode':'L-0263D0A3',
-                'quotaDes' :'EC2-VPC Elastic IPs'
-            },            
-    ]
+    ec2QuotaCodes = [ q['quotaCode'] for q in serviceCodes['ec2QuotaCodes'] ]
+    serverQuotas = sq.get_service_quotas('elasticloadbalancing', ec2QuotaCodes)
 
-    client_sq = boto3.client('service-quotas', region_name= region)
+    ebsQuotaCodes = [ q['quotaCode'] for q in serviceCodes['ebsQuotaCodes'] ]
+    volumeQuotas = sq.get_service_quotas('ebs', ebsQuotaCodes)
 
-    eipQuota = client_sq.get_service_quota(
-            ServiceCode='ec2',
-            QuotaCode='L-0263D0A3'  #EC2-VPC Elastic IPs
-    #             QuotaCode='L-1216C47A'  #Running On-Demand Standard
-    )['Quota']
+    rdsQuotaCodes = [ q['quotaCode'] for q in serviceCodes['rdsQuotaCodes'] ]
+    databaseQuotas = sq.get_service_quotas('rds', rdsQuotaCodes)    
 
-    quotaList = []
-    vpcLimit = {
-            'vpcQuota' : 5,
-            'eipQuota' : eipQuota.get('Value'),
-            'natQuota' : 5,
-            'igwQuota': 10,
-            'eniQuota': 10,
-            'secgroupQuota' : 5,
-            'subnetQuota': 200
-            }
-    quotaList.append(vpcLimit)
+    quotaList = {
+        'dcList':dcList,
+        'networkQuotas':networkQuotas,
+        'elasticLBQuotas':elasticLBQuotas,
+        'serverQuotas':serverQuotas,
+        'volumeQuotas':volumeQuotas,
+        'databaseQuotas':databaseQuotas,
+    }
         
     resp = Result(
         detail = quotaList,
         status_code=200
     )
     return resp.make_resp()
+
+
+@bp.get('/quota/all')
+@auth_required(auth_token)
+def get_account_quota():
+    '''获取云账号下资源配额 [mock]'''
+    pass
+
+    resp = Result(
+        detail = '功能开发中...',
+        status_code=200
+    )
+    return resp.make_resp()
+    

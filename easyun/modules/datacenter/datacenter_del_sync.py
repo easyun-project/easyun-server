@@ -2,7 +2,7 @@
 """
   @module:  DataCenter Module
   @desc:    Datacenter Delete API
-  @auth:    aleck
+  @auth:    
 """
 
 import boto3
@@ -15,6 +15,7 @@ from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.result import Result
+from easyun.libs.utils import len_iter
 from easyun.cloud.utils import gen_dc_tag, set_boto3_region
 from .schemas import VpcListOut,DataCenterListIn
 from . import bp, logger
@@ -24,14 +25,32 @@ from . import bp, logger
 @bp.delete('')
 @auth_required(auth_token)
 @input(DataCenterListIn)
-def delete_datacenter(param):
+def delete_datacenter(parm):
     '''删除Datacenter'''
-    dcName=param.get('dcName')
+    dcName=parm.get('dcName')
     flagTag = gen_dc_tag(dcName)
+    try:
+        dcName = parm['dcName']
+        dcRegion = set_boto3_region(dcName)
 
-   # step 1: 判断是否为空
-   # server, volume, rds, natgw
+        resource_ec2 = boto3.resource('ec2')
+        thisVPC = resource_ec2.Vpc('id')
 
+        # step 1: DC resource empty checking - instance
+        insIter = thisVPC.instances.all()
+        if len_iter(insIter) > 0:
+            raise ValueError('Cloud Server(s) in the Datacenter.')
+
+        # step 2: DC resource empty checking - volume
+
+        # step 3: DC resource empty checking - rds
+
+        # step 4: DC resource empty checking - NAT Gateway
+
+
+    except Exception as ex:
+        resp = Result(detail=str(ex) , status_code=2181)
+        resp.err_resp()
 
    # step 5: Update Datacenter metadata
     try:
