@@ -326,7 +326,7 @@ def attach_disk(param):
 
 
 class EipAttachInfoIn(Schema):
-    action = String(required=True, validate=OneOf('attach', 'detach'), example='attach')
+    action = String(required=True, validate=OneOf(['attach', 'detach']), example='attach')
     svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
     publicIp = String(required=True, example='34.192.222.116')
 
@@ -395,7 +395,7 @@ def attach_eip(param):
 #         response.err_resp()
 
 class SgAttachInfoIn(Schema):
-    action = String(required=True, validate=OneOf('attach', 'detach'), example='attach')
+    action = String(required=True, validate=OneOf(['attach', 'detach']), example='attach')
     svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
     secgroupId = String(required=True, example='sg-0bb69bb599b303a1e')
 
