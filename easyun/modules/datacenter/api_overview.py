@@ -145,9 +145,9 @@ def get_cost_summary(parm):
         
         costSummary = {
             'currMonthTotal': ce.get_monthly_total_cost(),
-            'nextMonthTotal': ce.get_forecast_cost(),
+            'forecastTotal': ce.get_forecast_total_cost(),
             'lastMonthTotal':ce.get_monthly_total_cost(lastMonth),
-            'currMonthCost':ce.get_monthly_cost(),
+            'currMonthCost':ce.get_a_month_cost_list(),
             'last5daysCost':ce.get_last5days_total_cost(),
         }
         resp = Result(

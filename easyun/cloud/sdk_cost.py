@@ -111,16 +111,14 @@ class CostExplorer(object):
         except Exception as ex:
             return '%s: %s' %(self.__class__.__name__ ,str(ex))  
 
-    def get_monthly_cost(self, month=None):
+    def get_monthly_cost_list(self, start_month, end_month):
         '''get monthly cost and usage group by service'''
         try:
-            if month is None:
-                lastDate = date.today()
-                firtDate = lastDate.replace(day=1)
-            else:
-                firtDate = datetime.strptime(month, '%Y-%m').date()
-                monthLength = calendar.monthrange(firtDate.year, firtDate.month)[1]
-                lastDate = firtDate + timedelta(monthLength)
+            firtDate = datetime.strptime(start_month, '%Y-%m').date()
+            secondDate = datetime.strptime(end_month, '%Y-%m').date()
+            #get end month's next month 1st day
+            monthLength = calendar.monthrange(secondDate.year, secondDate.month)[1]
+            lastDate = secondDate + timedelta(monthLength)
 
             start_date = firtDate.strftime('%Y-%m-%d')
             end_date = lastDate.strftime('%Y-%m-%d')
@@ -182,9 +180,26 @@ class CostExplorer(object):
             return '%s: %s' %(self.__class__.__name__ ,str(ex))  
 
 
+    def get_a_month_cost_list(self, month=None):
+        '''get monthly cost and usage group by service'''
+        try:
+            if month is None:
+                start_month = date.today().strftime('%Y-%m')
+                end_month = start_month
+            else:
+                start_month = month
+                end_month = month
+
+            costList = self.get_monthly_cost_list(start_month, end_month)
+            return costList[0] if costList else {}
+
+        except Exception as ex:
+            return '%s: %s' %(self.__class__.__name__ ,str(ex))  
+
+
 
     #CostExplorer.Client.get_cost_forecast
-    def get_forecast_cost(self, month=None, time_cycle='MONTHLY'):
+    def get_forecast_total_cost(self, month=None, time_cycle='MONTHLY'):
         '''get forecast cost in future(month)'''
         try:
             todayDate = date.today()
