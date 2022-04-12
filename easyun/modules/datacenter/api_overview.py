@@ -131,6 +131,7 @@ def get_res_summary(parm):
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 def get_cost_summary(parm):
+    '''获取指定的数据中心成本及用量统计信息'''
     dcName = parm['dc']
     thisAccount:Account = Account.query.first()
     try:
@@ -148,7 +149,7 @@ def get_cost_summary(parm):
             'forecastTotal': ce.get_forecast_total_cost(),
             'lastMonthTotal':ce.get_monthly_total_cost(lastMonth),
             'currMonthCost':ce.get_a_month_cost_list(),
-            'last5daysCost':ce.get_last5days_total_cost(),
+            'latestWeekCost':ce.get_latest_week_daily_cost(),
         }
         resp = Result(
             detail = costSummary,

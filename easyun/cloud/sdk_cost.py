@@ -77,8 +77,8 @@ class CostExplorer(object):
         except Exception as ex:
             return '%s: %s' %(self.__class__.__name__ ,str(ex))              
 
-    def get_daily_total_cost(self, tdate=None):
-        '''get total cost in a day'''
+    def get_day_total_cost(self, tdate=None):
+        '''get one day total cost'''
         # tdate = '2021-02-03'
         try:
             if tdate is None:
@@ -96,11 +96,12 @@ class CostExplorer(object):
         except Exception as ex:
             return '%s: %s' %(self.__class__.__name__ ,str(ex))  
 
-    def get_last5days_total_cost(self):
-        '''get total cost in last 5 days'''
+
+    def get_latest_week_daily_cost(self):
+        '''get daily total cost in latest week'''
         try:
             todayDate = date.today()
-            beforeDate = todayDate - timedelta(days = 5)
+            beforeDate = todayDate - timedelta(days = 7)
 
             start_date = beforeDate.strftime('%Y-%m-%d')
             end_date = todayDate.strftime('%Y-%m-%d')
@@ -110,6 +111,7 @@ class CostExplorer(object):
 
         except Exception as ex:
             return '%s: %s' %(self.__class__.__name__ ,str(ex))  
+
 
     def get_monthly_cost_list(self, start_month, end_month):
         '''get monthly cost and usage group by service'''
