@@ -42,6 +42,7 @@ def add_volume(parms):
         volumeType = parms['volumeType']
         volumeIops = parms.get('volumeIops')
         volumeThruput = parms.get('volumeThruput')
+        isMultiAttach = parms.get('isMultiAttach')
         # attachment related attributes
         svrId = parms.get("svrId")
         attachPath = parms.get("attachPath")
@@ -85,6 +86,7 @@ def add_volume(parms):
                 VolumeType=parms['volumeType'],             
                 TagSpecifications=tagSpecifications,
                 Iops = volumeIops,
+                MultiAttachEnabled = isMultiAttach
             )
         else:   # ['gp2','sc1','st1','standard']
             newVolume = client_ec2.create_volume(

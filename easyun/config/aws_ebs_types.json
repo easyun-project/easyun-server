@@ -1,0 +1,62 @@
+{
+    "version": "2021.11.21",
+    "description": "Amazon EBS Types Config",
+    "config":{
+        "gp2": {
+            "typeDes":"General Purpose SSD (gp2)",
+            "volumeSize":[1,16384],
+            "volumeIops": null,
+            "volumeThruput": null,
+            "isMultiAttach": false,
+            "isBootvolume": true
+        },
+        "gp3": {
+            "typeDes":"General Purpose SSD (gp3)",
+            "volumeSize":[1,16384],
+            "volumeIops":[3000, 16000],
+            "volumeThruput":[1, 1000],
+            "isMultiAttach": false,
+            "isBootvolume": true
+        },
+        "io1": {
+            "typeDes":"Provisioned IOPS SSD (io1)",
+            "volumeSize":[4,16384],
+            "volumeIops":[100, 64000],
+            "volumeThruput": null,
+            "isMultiAttach": true,
+            "isBootvolume": true
+        },
+        "io2": {
+            "typeDes":"Provisioned IOPS SSD (io2)",
+            "volumeSize":[8,16384],
+            "volumeIops":[100, 256000],
+            "volumeThruput": null,
+            "isMultiAttach": true,
+            "isBootvolume": true
+        },
+        "st1":{
+            "typeDesc":"Throughput Optimized HDD (st1)",
+            "volumeSize":[125,16384],
+            "volumeIops": null,
+            "volumeThruput": null,
+            "isMultiAttach": false,
+            "isBootvolume": false
+        },
+        "sc1":{
+            "typeDesc":"Cold HDD (sc1)",
+            "volumeSize":[125,16384],
+            "volumeIops": null,
+            "volumeThruput": null,
+            "isMultiAttach": false,
+            "isBootvolume": false
+        },
+        "standard":{
+            "typeDesc":"Magnetic (standard)",
+            "volumeSize":[1,1024],
+            "volumeIops": null,
+            "volumeThruput": null,
+            "isMultiAttach": false,
+            "isBootvolume": true
+        }
+    }
+}

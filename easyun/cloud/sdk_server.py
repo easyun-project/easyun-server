@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  The API Wrapper Module
-  @desc:    AWS SDK Boto3 Client and Resource Wrapper.  
+  @module:  Server (ec2) SDK Module
+  @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper.  
   @auth:    
 """
 import boto3
 
 
-class EC2Resource(object):
+class EC2Server(object):
     def __init__(self):
+        self._client = boto3.resource('ec2')
         self._resource = boto3.resource('ec2')
 
     #SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.describe_services

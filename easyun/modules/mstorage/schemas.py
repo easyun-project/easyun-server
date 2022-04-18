@@ -10,6 +10,16 @@ from apiflask.fields import String, Integer, List, Boolean, DateTime, Nested
 from apiflask.validators import Length
 
 
+class TagItem(Schema):
+    Key= String(
+        required=True,
+        example='Env'
+    )
+    Value= String(
+        required=True,
+        example='Develop'
+    )
+
 class BktNameQuery(Schema):
     bktName = String(
         required=True, 
@@ -55,6 +65,85 @@ class vaildateBucket(Schema):
 
 
 
+class VolAttachment(Schema):
+    svrId = String(
+        required=True, 
+        example= "i-09aa9e2c83d840ab1")
+    tagName = String(
+        example= "test-devbk")        
+    attachPath = String(
+        required=True,
+        example= "/dev/sdf")
+    diskType = String(
+        example= "user")
+    attachTime = DateTime(
+        example= "2022-02-27T02:20:44+00:00")
+
+class volumeConfig(Schema):
+    volumeSize = Integer(
+        example=10)        
+    volumeIops = Integer(
+        example=3000)
+    volumeThruput = Integer(
+        example=500)
+    isEncrypted = Boolean(
+        example=False)
+
+class VolumeModel(Schema):
+    volumeId = String(
+        required=True,         
+        example= "vol-0bd70f2001d6fb8bc")
+    tagName = String(
+        example= "disk_test")
+    volumeState = String(
+        example= "in-use")
+    isAttachable = Boolean(
+        example=False)   
+    volumeAz = String(
+        example= "us-east-1a")
+    createTime = DateTime(
+        # 效果同 .isoformat()
+        example= "2022-02-20T09:59:21.61+00:00")
+    volumeType = String(
+        example="gp3")
+    volumeSize = Integer(
+        example=10)        
+    volumeIops = Integer(
+        example=3000)
+    volumeThruput = Integer(
+        example=500)
+    isEncrypted = Boolean(
+        example=False)        
+    volumeAttach = Nested(VolAttachment(many=True))
+
+class VolumeBasic(Schema):
+    volumeId = String(
+        required=True,         
+        example= "vol-0bd70f2001d6fb8bc")
+    tagName = String(
+        example= "disk_test")
+    isAttachable = Boolean(
+        example=False)
+    volumeState = String(
+        example= "in-use")
+    volumeAz = String(
+        example= "us-east-1a")
+    volumeType = String(
+        example="gp3")
+    volumeSize = Integer(
+        example=10)
+    createTime = DateTime(
+        # 效果同 .isoformat()
+        example= "2022-02-20T09:59:21.61+00:00")    
+
+class VolumeDetail(Schema):
+    volumeBasic = Nested(VolumeBasic)
+    volumeConfig = Nested(volumeConfig)
+    volumeAttach = Nested(VolAttachment(many=True))
+    userTags = Nested(TagItem(many=True))
+
+
+
 class AddVolumeParm(Schema):
     dcName = String(
         required=True,
@@ -68,6 +157,8 @@ class AddVolumeParm(Schema):
     isEncrypted = Boolean(
         required=True, 
         example=False)
+    isMultiAttach = Boolean(
+        example=False)        
     volumeIops = Integer(
         example=3000)
     volumeThruput = Integer(
@@ -113,58 +204,5 @@ class DetachVolParm(Schema):
         example='i-0ac436622e8766a13')
     attachPath = String(
         example='/dev/sdf')
-
-
-class VolAttachment(Schema):
-    attachSvrId = String(
-        required=True, 
-        example= "i-09aa9e2c83d840ab1")
-    attachSvr = String(
-        example= "test-devbk")        
-    attachPath = String(
-        required=True,
-        example= "/dev/sdf")
-    diskType = String(
-        example= "user")
-    attachTime = DateTime(
-        example= "2022-02-27T02:20:44+00:00")
-
-
-class VolumeDetail(Schema):
-    volumeId = String(
-        required=True,         
-        example= "vol-0bd70f2001d6fb8bc")
-    tagName = String(
-        example= "disk_test")
-    volumeState = String(
-        example= "in-use")
-    isEncrypted = Boolean(
-        example=False)        
-    volumeAz = String(
-        example= "us-east-1a")
-    createTime = DateTime(
-        # 效果同 .isoformat()
-        example= "2022-02-20T09:59:21.61+00:00")
-    volumeType = String(
-        example="gp3")
-    volumeIops = Integer(
-        example=3000)
-    volumeSize = Integer(
-        example=10)
-    volumeThruput = Integer(
-        example=500)
-    volumeAttach = Nested(VolAttachment(many=True))
-
-
-
-class newVolume(Schema):
-    az = String(required=True)
-    instanceId = String(required=True)
-    diskType = String(required=True)
-    size = String(required=True)
-    iops = String(required=True)
-    thruput = String(required=True)
-    diskPath = String(required=True)
-    encryption = String(required=True)
 
 

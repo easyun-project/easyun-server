@@ -46,7 +46,7 @@ def list_eip_detail(param):
             eniType = get_eni_type( eip.get('NetworkInterfaceId') )
             eipItem = {
                 'pubIp': eip['PublicIp'],
-                'tagName': nameTag,                
+                'tagName': nameTag,
                 'alloId': eip['AllocationId'],
                 'eipDomain': eip['Domain'],
                 'ipv4Pool': eip['PublicIpv4Pool'],

@@ -9,14 +9,14 @@ import boto3
 from easyun.common.models import Datacenter, Account
 
 
-_RESOURCE_EC2 = None
+_EC2_RESOURCE = None
 
 
 def get_ec2_resource():
-    global _RESOURCE_EC2
-    if _RESOURCE_EC2 is None:
-        _RESOURCE_EC2 = boto3.resource('ec2')
-    return _RESOURCE_EC2
+    global _EC2_RESOURCE
+    if _EC2_RESOURCE is None:
+        _EC2_RESOURCE = boto3.resource('ec2')
+    return _EC2_RESOURCE
 
 
 def gen_dc_tag(dc_name, type='flag'):
