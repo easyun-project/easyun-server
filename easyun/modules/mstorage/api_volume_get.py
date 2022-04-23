@@ -16,6 +16,16 @@ from . import bp
 
 
 
+_EC2_VOLUME = None
+
+def get_ec2_volume(dcName):
+    global _EC2_VOLUME
+    if _EC2_VOLUME is not None and _EC2_VOLUME.dcName == dcName :
+        return _EC2_VOLUME
+    else:
+        return EC2Volume(dcName)
+
+
 @bp.get('/volume')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
@@ -26,7 +36,8 @@ def list_volume_detail(parm):
     # 设置 boto3 接口默认 region_name
     dcRegion = set_boto3_region(dcName)
     try:
-        vol = EC2Volume(dcName)
+        # vol = EC2Volume(dcName)
+        vol = get_ec2_volume(dcName)
         volumeList = vol.list_all_volume()
 
         resp = Result(
@@ -53,7 +64,8 @@ def list_volume_brief(parm):
     # 设置 boto3 接口默认 region_name
     dcRegion = set_boto3_region(dcName)
     try:
-        vol = EC2Volume(dcName)
+        # vol = EC2Volume(dcName)
+        vol = get_ec2_volume(dcName)
         volumeList = vol.get_volume_list()        
 
         resp = Result(
@@ -80,7 +92,7 @@ def get_volume_detail(volume_id, parm):
     # 设置 boto3 接口默认 region_name
     dcRegion =  set_boto3_region(dcName)
     try:
-        vol = EC2Volume(dcName)
+        vol = get_ec2_volume(dcName)
         volumeDetail = vol.get_volume_detail(volume_id)           
   
         response = Result(

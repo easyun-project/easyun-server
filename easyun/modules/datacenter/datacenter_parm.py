@@ -12,18 +12,18 @@ from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
-from .schemas import DataCenterListOut
+from .schemas import DefaultParmQuery, DefaultParmsOut
 from . import bp, REGION, FLAG, TagEasyun
 
 
 @bp.get('/default')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-#@output(DataCenterListOut, description='Get DataCenter Info')
+@input(DefaultParmQuery, location='query')
+@output(DefaultParmsOut, description='Get DataCenter Parameters')
 def get_default_parms(parm):
     '''获取创建云数据中心默认参数'''
     inputName = parm['dc']
+    inputRegion = parm.get('region')
     try:
         # Check if the DC Name is available
         thisDC:Datacenter = Datacenter.query.filter_by(name = inputName).first()
@@ -36,10 +36,11 @@ def get_default_parms(parm):
         # get account info from database
         curr_account:Account = Account.query.first()
         # set deploy_region as default region
-        defaultRegion = curr_account.get_region()
+        if inputRegion is None:
+            inputRegion = curr_account.get_region() 
 
         # get az list
-        client_ec2 = boto3.client('ec2', region_name=defaultRegion)
+        client_ec2 = boto3.client('ec2', region_name=inputRegion)
         azs = client_ec2.describe_availability_zones()
         azList = [az['ZoneName'] for az in azs['AvailabilityZones']] 
 
@@ -81,7 +82,7 @@ def get_default_parms(parm):
         dcParms = {    
             # default selected parameters      
             "dcName" : inputName,
-            "dcRegion" : defaultRegion,
+            "dcRegion" : inputRegion,
             'dcVPC' : defaultVPC,
             "pubSubnet1": {
                 "tagName" : "Public subnet 1",

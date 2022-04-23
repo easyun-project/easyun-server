@@ -21,6 +21,7 @@ class EC2Volume(object):
     def __init__(self, dcName):        
         self._resource = boto3.resource('ec2')
         self._client = self._resource.meta.client
+        self.dcName = dcName
         self.tagFilter = { 'Name': 'tag:Flag',  'Values': [dcName] }
 
     def list_all_volume(self):

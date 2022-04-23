@@ -9,7 +9,21 @@
 from apiflask import APIBlueprint, Schema, input, output, abort, auth_required
 from apiflask.fields import Integer, String, List, Dict, DateTime, Boolean, Nested
 from apiflask.validators import Length, OneOf
+from easyun.cloud.aws_region import get_region_codes
 
+
+# 定义获取DC默认值的query参数
+class DefaultParmQuery(Schema):
+    ''' datacenter name for query parm '''
+    dc = String(
+        required=True, 
+        validate=Length(0, 30),
+        example='Easyun'
+    )
+    region = String(
+        validate=OneOf(get_region_codes()),
+        example='us-east-1'
+    )
 
 
 # 定义VPC 参数的格式
@@ -147,7 +161,6 @@ class CreateDcParms(Schema):
         }
     )
 
-
 # 定义api返回数据格式
 class CreateDcResult(Schema):
     name = String()
@@ -155,6 +168,18 @@ class CreateDcResult(Schema):
     region = String()
     vpc_id = String()
     create_date = DateTime()
+
+
+# 定义DC参数返回格式
+class DropDownList(Schema):
+    azList = List(String)
+    gwList = List(String)
+    rtbList = List(String)
+
+class DefaultParmsOut(Schema):
+    dcParms = Nested(CreateDcParms)
+    dropDown = Nested(DropDownList)
+
 
 ''' 
 Schemas for Datacenter APIs

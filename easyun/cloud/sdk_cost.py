@@ -12,9 +12,9 @@ from datetime import datetime, date, timedelta
 
 # SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ce.html
 class CostExplorer(object):
-    def __init__(self, dc_tag, region='us-east-1'):
+    def __init__(self, dc_name, region='us-east-1'):
         self._client = boto3.client('ce', region_name=region)
-        self.filterTag = { 'Key': 'Flag', 'Values': [ dc_tag ] }
+        self.filterTag = { 'Key': 'Flag', 'Values': [ dc_name ] }
         self._metrics = ['UnblendedCost', 'UsageQuantity']
 
     #CostExplorer.Client.get_cost_and_usage
@@ -219,9 +219,7 @@ class CostExplorer(object):
                 },
                 Metric='UNBLENDED_COST',
                 Granularity = time_cycle,
-                # Filter = {
-                #     "Tags": { "Key": "Flag", "Values": ['Easyun'] },
-                # },        
+                Filter = { "Tags": self.filterTag, }, 
             )
             unit = resp['Total'].get('Unit')
             # 暂时只考虑一个周期的预测
@@ -235,7 +233,19 @@ class CostExplorer(object):
                 }
             }   
             return foreCast
-
+        # 如果数据不足以预测则返回0
+        except self._client.exceptions.DataUnavailableException:
+            return {
+                'timePeriod' : {
+                    'Start': start_date,
+                    'End': end_date
+                },                        
+                'totalCost':{
+                    'value': '0.0',
+                    'unit': None,
+                    'metric': self._metrics[0]
+                }
+            }   
         except Exception as ex:
             return '%s: %s' %(self.__class__.__name__ ,str(ex))
             
