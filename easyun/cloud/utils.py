@@ -80,21 +80,6 @@ def set_boto3_region(dc_name):
         return 'Datacenter not existed, kindly create it first!'
 
 
-def get_server_name(svr_id):
-    '''通过instanceID 查询服务器 tag:Name '''
-    resource_ec2 = get_ec2_resource()
-    try:
-        if svr_id == None:
-            raise ValueError('svr_id is None')
-        server = resource_ec2.Instance(svr_id)
-        tagName = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
-        # nameTag = [tag['Value'] for tag in server.tags if tag['Key'] == 'Name']
-        # svrName = nameTag[0] if len(nameTag) else None
-        return tagName
-    except Exception:
-        return None
-
-
 def get_tag_name(res_type, res_id):
     '''通过 Resource ID 查询资源的 tag:Name '''
     resource_ec2 = get_ec2_resource()
@@ -121,6 +106,20 @@ def get_tag_name(res_type, res_id):
             raise ValueError('reasouce type error')     
         tagName = next((tag['Value'] for tag in res.tags if tag["Key"] == 'Name'), None)
         return tagName
+    except Exception as ex:
+        return str(ex)
+
+
+def get_server_name(svr_id):
+    '''通过instanceID 查询服务器 tag:Name '''
+    resource_ec2 = get_ec2_resource()
+    try:
+        if svr_id == None:
+            raise ValueError('svr_id is None')
+        # server = resource_ec2.Instance(svr_id)
+        # tagName = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
+        tagName = get_tag_name('server', svr_id)
+        return tagName
     except Exception:
         return None
 
@@ -134,8 +133,8 @@ def get_eni_type(eni_id):
             raise ValueError('subnet_id is None')    
         thisEni = resource_ec2.NetworkInterface(eni_id)
         return thisEni.interface_type
-    except Exception:
-        return None
+    except Exception as ex:
+        return str(ex)
 
 
 def get_subnet_type(subnet_id):
@@ -152,7 +151,7 @@ def get_subnet_type(subnet_id):
         elif nameTag.lower().startswith('pri'):
             subnetType = 'private'
         else:
-            subnetType = None
+            subnetType = 'unknown'
         return subnetType
-    except Exception:
-        return None
+    except Exception as ex:
+        return str(ex)

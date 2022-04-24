@@ -17,7 +17,7 @@ def generate_payload(
     detail: Any = None,
     message: str = "success",
     status_code: int = 200,
-    task_id: str = None
+    task: Any = None
 ) -> dict:
     """生成格式化的响应体
 
@@ -29,7 +29,7 @@ def generate_payload(
     Returns:
         dict: 格式化好的载体
     """
-    return {'detail': detail,'message': message, 'status_code': status_code, 'task_id': task_id}
+    return {'detail': detail,'message': message, 'status_code': status_code, 'task': task}
 
 class Result:
     """
@@ -39,7 +39,7 @@ class Result:
             'detail': None,
             'message': "success",
             'status_code': 200,
-            'task_id': ""
+            'task': None
         }, 200
     """
     # 构造函数
@@ -47,7 +47,7 @@ class Result:
                  detail: Any = None,
                  message: str = "success",
                  status_code: int = 200,
-                 task_id: str = None,
+                 task: Any = None,
                  http_status_code: int = 200
     ) -> None:
         """初始化响应数据类
@@ -56,13 +56,13 @@ class Result:
             detail (Any, optional): 响应的数据. Defaults to None.
             message (str, optional): 响应消息. Defaults to "success".
             status_code (int, optional): 业务状态码. Defaults to 200.
-            task_id (str, optional): 异步任务ID. Defaults to None.
+            task (Any, optional): 异步任务信息. Defaults to None.
             http_status_code (int, optional): HTTP状态码. Defaults to 200.
         """
         self.detail = detail
         self.message = message
         self.status_code = status_code
-        self.task_id = task_id
+        self.task = task
         self.http_status_code = http_status_code
 
     def make_resp(self) -> Tuple[dict, int]:
@@ -81,7 +81,7 @@ class Result:
         """
         return generate_payload(detail=self.detail, message=self.message,
                                 status_code=self.status_code,
-                                task_id=self.task_id), self.http_status_code
+                                task=self.task), self.http_status_code
 
     def err_resp(self) -> None:
         """构建error响应
@@ -99,5 +99,5 @@ class Result:
                   self.detail,
                   self.message,
                   self.status_code,
-                  self.task_id
+                  self.task
               ))

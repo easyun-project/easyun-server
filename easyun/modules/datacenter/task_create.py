@@ -8,7 +8,6 @@
 import boto3
 from datetime import date, datetime
 from easyun import db, celery
-from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.cloud.utils import gen_dc_tag, gen_hash_tag
 from . import logger, DryRun
@@ -544,15 +543,4 @@ def check_perm(sg):
             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
         })
     return sgpermList
-
-
-@celery.task(bind=True)
-def delete_dc_task(self, parm, user):
-    """
-    删除 DataCenter 异步任务
-    按步骤进行，步骤失败直接返回
-    :return {message,status_code,http_code:200}    
-    """
-    # Datacenter basic attribute define
-    # To be do
 

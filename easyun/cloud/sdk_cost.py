@@ -233,19 +233,14 @@ class CostExplorer(object):
                 }
             }   
             return foreCast
-        # 如果数据不足以预测则返回0
+        # 如果数据不足以预测则通过按天数比例预估整月花费
         except self._client.exceptions.DataUnavailableException:
-            return {
-                'timePeriod' : {
-                    'Start': start_date,
-                    'End': end_date
-                },                        
-                'totalCost':{
-                    'value': '0.0',
-                    'unit': None,
-                    'metric': self._metrics[0]
-                }
-            }   
+            currCost = self.get_monthly_total_cost()
+            value = float(currCost['totalCost'].get('value'))
+            currCost['totalCost']['value'] = str(value * monthLength / todayDate.day)
+            currCost['timePeriod']['End'] = end_date
+
+            return currCost  
         except Exception as ex:
             return '%s: %s' %(self.__class__.__name__ ,str(ex))
             

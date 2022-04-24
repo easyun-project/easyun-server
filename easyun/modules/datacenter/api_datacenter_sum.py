@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  DataCenter Overview
-  @desc:    首页(overview)相关API, 包含数据中心基本信息和VPC资源分布情况
+  @module:  DataCenter & Resource Overview
+  @desc:    首页(overview)相关API, 数据中心VPC基本信息和各项服务/资源使用情况, 成本等信息
   @auth:    aleck
 """
 
@@ -20,12 +20,12 @@ from . import bp, logger
 
 
 
-@bp.get('/vpc')
+@bp.get('/summary/basic')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
 def get_vpc_summary(parm):
-    '''获取指定的数据中心VPC资源统计信息'''
+    '''获取指定的数据中心VPC基础服务统计信息'''
     dcName = parm['dc']
     try:
         thisDC:Datacenter = Datacenter.query.filter_by(name=dcName).first()
@@ -50,13 +50,13 @@ def get_vpc_summary(parm):
 
         countList = [
             { 
-                'subnetTpye' : get_subnet_type(s['SubnetId']),
+                'subnetType' : get_subnet_type(s['SubnetId']),
                 'subnetAz' : s['AvailabilityZone']
             } for s in subnetList ]
 
         vpcSummary = {
-            'pubNum': filter_list_by_value(countList,'subnetTpye','public').get('countNum'),
-            'priNum': filter_list_by_value(countList,'subnetTpye','private').get('countNum'),
+            'pubNum': filter_list_by_value(countList,'subnetType','public').get('countNum'),
+            'priNum': filter_list_by_value(countList,'subnetType','private').get('countNum'),
             'igwNum': len_iter(thisVPC.internet_gateways.all()),
             'sgNum': len_iter(thisVPC.security_groups.all()),
             'aclNum': len_iter(thisVPC.network_acls.all()),
@@ -94,7 +94,7 @@ def get_vpc_summary(parm):
         response.err_resp()
 
 
-@bp.get('/resource')
+@bp.get('/summary/resource')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
@@ -127,7 +127,8 @@ def get_res_summary(parm):
         )
         response.err_resp()
 
-@bp.get('/cost')
+
+@bp.get('/summary/cost')
 @auth_required(auth_token)
 @input(DcNameQuery, location='query')
 def get_cost_summary(parm):

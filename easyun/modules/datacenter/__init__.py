@@ -34,5 +34,5 @@ DryRun=False
 logger = log.create_logger('dcm')
 
 
-from . import datacenter_get, datacenter_mgt, datacenter_parm, datacenter_add_sync, datacenter_del_sync, api_overview, dcm_secgroup, dcm_staticip, dcm_subnet
+from . import api_datacenter_get, api_datacenter_mgt, api_datacenter_sum, dcm_secgroup, dcm_staticip, dcm_subnet
 
