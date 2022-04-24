@@ -93,9 +93,9 @@ def create_dc_async(parm):
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
     dcName = parm['dcName']
+    dcRegion = set_boto3_region(dcName)
     # Check the prerequisites before create datacenter task
-    try:
-        dcRegion = set_boto3_region(dcName)
+    try:        
         rgt = RgTagging( dcName )
 
         # step 1: DC resource empty checking - instance
@@ -104,7 +104,7 @@ def delete_dc_async(parm):
             raise ValueError(f'DataCenter NOT Empty, contains {serverNum} Server(s) resources.')
 
         # step 2: DC resource empty checking - volume
-        volumeNum = rgt.sum_resources('ec2:volume'),
+        volumeNum = rgt.sum_resources('ec2:volume')
         if volumeNum > 0:
             raise ValueError(f'DataCenter NOT Empty, contains {volumeNum} Volume(s) resources.')
 
@@ -128,11 +128,11 @@ def delete_dc_async(parm):
             
     # create a datacenter delete async task
     try:
-        currUser = auth_token.current_user.username
-        task = delete_dc_task.apply_async(args=[parm, currUser])
+        # currUser = auth_token.current_user.username
+        task = delete_dc_task.apply_async(args=[parm, dcRegion])
         resp = Result(
             task={
-                '':task.id,
+                'taskId':task.id,
                 'description':'DELETING',
             },
             status_code=200
@@ -176,7 +176,7 @@ def get_task_result(parm):
         else:            
             # 通过task.info.get()获得 update_state() meta数据
             resp = Result(
-                detail = {}, # 任务执行的最终结果
+                # detail = {}, # 任务执行的最终结果
                 message = task.info.get('message', 'success'),
                 status_code = 200,
                 task = {

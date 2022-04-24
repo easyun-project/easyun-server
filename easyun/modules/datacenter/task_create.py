@@ -104,7 +104,7 @@ def create_dc_task(self, parm, user):
         # waiter = client_ec2.get_waiter('internet_gateway_exists')
         # waiter.wait(InternetGatewayIds=[igw.id])   
         # got Error：ValueError: Waiter does not exist: internet_gateway_exists 
-        stage = f"[IGW] {igw.id} created"
+        stage = f"[InternetGateway] {igw.id} created"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 15, 'total': 100, 'stage':stage})
         # and Attach the igw to vpc
@@ -112,7 +112,7 @@ def create_dc_task(self, parm, user):
             DryRun = DryRun,
             VpcId = vpc.id
         )
-        stage = f"[IGW] {igw.id} attached to {vpc.id}"
+        stage = f"[InternetGateway] {igw.id} attached to {vpc.id}"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 20, 'total': 100, 'stage':stage})
     except Exception as ex:
@@ -260,7 +260,7 @@ def create_dc_task(self, parm, user):
                 }
             ]
         )
-        stage = f"[EIP] {eip['PublicIp']} created"
+        stage = f"[StaticIP] {eip['PublicIp']} created"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 55, 'total': 100, 'stage':stage})
   
@@ -287,7 +287,7 @@ def create_dc_task(self, parm, user):
             ]
         )
         natgwID = natgw['NatGateway']['NatGatewayId']
-        stage = f"[NatGW] {natgwID} creating"
+        stage = f"[NatGateway] {natgwID} creating"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 65, 'total': 100, 'stage':stage})
 
@@ -295,7 +295,7 @@ def create_dc_task(self, parm, user):
         waiter = resource_ec2.meta.client.get_waiter('nat_gateway_available')
         waiter.wait(NatGatewayIds=[natgwID])
 
-        stage = f"[NatGW] {natgwID} created"
+        stage = f"[NatGateway] {natgwID} created"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'stage':stage})
 
@@ -406,7 +406,7 @@ def create_dc_task(self, parm, user):
                     IpPermissions= basePerm,                
                 )
                 break
-        stage = f"[SecGroup] {sg.group_name} updated"
+        stage = f"[SecurityGroup] {sg.group_name} updated"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 85, 'total': 100, 'stage':stage})
 
@@ -438,7 +438,7 @@ def create_dc_task(self, parm, user):
     #         SourceSecurityGroupOwnerId='string'
             IpPermissions= webPerm
         )
-        stage = f"[SecGroup] {sgWeb.group_name} created"
+        stage = f"[SecurityGroup] {sgWeb.group_name} created"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 90, 'total': 100, 'stage':stage})
     except Exception as ex:
@@ -469,7 +469,7 @@ def create_dc_task(self, parm, user):
     #         SourceSecurityGroupOwnerId='string'
             IpPermissions= dbPerm
         )
-        stage = f"[SecGroup] {sgWeb.group_name} created"
+        stage = f"[SecurityGroup] {sgWeb.group_name} created"
         logger.info(stage)
         self.update_state(state='PROGRESS', meta={'current': 95, 'total': 100, 'stage':stage})
 
@@ -502,7 +502,7 @@ def create_dc_task(self, parm, user):
     except Exception as ex:
         return {
             'message':str(ex), 
-            'status_code':2096,
+            'status_code':2099,
             'http_status_code':400
         }
 
