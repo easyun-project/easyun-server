@@ -11,14 +11,14 @@ from easyun.common.result import Result
 from . import TYPE, bp
 
 # bucket detail:
-# bucketName
+# bucketId
 # bucketStatus
 # bucketRegion
 # 获取一个字典列表返回给端
 # client = boto3.client('s3')
-# def get_bucket_Region(bucketName):
+# def get_bucket_Region(bucketId):
 #     response = client.get_bucket_location(
-#         Bucket = bucketName
+#         Bucket = bucketId
 #     )
 #     if response['LocationConstraint'] == None:
 #         region = 'us-east-1'

@@ -2,11 +2,11 @@
 """
   @module:  DataCenter Get Module
   @desc:    数据中心相关信息GET API
-  @auth:      
+  @auth:    aleck
 """
 
 import boto3
-from apiflask import input, output, auth_required
+from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.result import Result
@@ -15,41 +15,34 @@ from .schemas import DefaultParmQuery, DefaultParmsOut
 from . import bp
 
 
-
 @bp.get('')
 @auth_required(auth_token)
 # @output(DataCenterListOut, description='Get DataCenter List')
 def list_datacenter_detail():
     '''获取Easyun管理的所有数据中心信息'''
     try:
-        thisAccount:Account = Account.query.first()
-        dcs = Datacenter.query.filter_by(account_id = thisAccount.account_id)
+        thisAccount: Account = Account.query.first()
+        dcs = Datacenter.query.filter_by(account_id=thisAccount.account_id)
         dcList = []
         for dc in dcs:
-            resource_ec2 = boto3.resource('ec2', region_name= dc.region)
+            resource_ec2 = boto3.resource('ec2', region_name=dc.region)
             vpc = resource_ec2.Vpc(dc.vpc_id)
             dcItem = {
-                'dcName' : dc.name,
-                'dcRegion' : dc.region,
-                'vpcID' : dc.vpc_id,
-                'vpcCidr' : vpc.cidr_block,
-                'createDate' : dc.create_date.isoformat(),
-                'createUser' : dc.create_user,
-                'dcAccount' : dc.account_id,                
+                'dcName': dc.name,
+                'dcRegion': dc.region,
+                'vpcID': dc.vpc_id,
+                'vpcCidr': vpc.cidr_block,
+                'createDate': dc.create_date.isoformat(),
+                'createUser': dc.create_user,
+                'dcAccount': dc.account_id,
             }
             dcList.append(dcItem)
-        
-        resp = Result(
-            detail = dcList,
-            status_code=200
-        )
+
+        resp = Result(detail=dcList, status_code=200)
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=2001,
-            http_status_code=400)
+        response = Result(message=str(ex), status_code=2001, http_status_code=400)
         response.err_resp()
 
 
@@ -59,28 +52,18 @@ def list_datacenter_detail():
 def list_datacenter_brief():
     '''获取Easyun管理的数据中心列表[仅基础字段]'''
     try:
-        thisAccount:Account = Account.query.first()
-        dcs = Datacenter.query.filter_by(account_id = thisAccount.account_id)
+        thisAccount: Account = Account.query.first()
+        dcs = Datacenter.query.filter_by(account_id=thisAccount.account_id)
         dcList = []
         for dc in dcs:
-            dcItem = {
-                'dcName' : dc.name,
-                'dcRegion' : dc.region,
-                'vpcID' : dc.vpc_id
-            }
+            dcItem = {'dcName': dc.name, 'dcRegion': dc.region, 'vpcID': dc.vpc_id}
             dcList.append(dcItem)
-        
-        resp = Result(
-            detail = dcList,
-            status_code=200
-        )
+
+        resp = Result(detail=dcList, status_code=200)
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(
-            message= str(ex), 
-            status_code=2001,
-            http_status_code=400)
+        response = Result(message=str(ex), status_code=2001, http_status_code=400)
         response.err_resp()
 
 
@@ -89,7 +72,7 @@ def list_datacenter_brief():
 def list_aws_region():
     '''获取可用的Region列表'''
     try:
-        thisAccount:Account = Account.query.first()
+        thisAccount: Account = Account.query.first()
         boto3Session = boto3._get_default_session()
         if thisAccount.aws_type == 'GCR':
             regionList = boto3Session.get_available_regions('ec2', 'aws-cn')
@@ -98,22 +81,20 @@ def list_aws_region():
             regionList = boto3Session.get_available_regions('ec2')
 
         resp = Result(
-            detail = [
+            detail=[
                 {
                     'regionCode': r,
                     'regionName': query_region_name(r),
-                    'countryCode': query_country_code(r)
-                } for r in regionList
+                    'countryCode': query_country_code(r),
+                }
+                for r in regionList
             ],
-            status_code=200
+            status_code=200,
         )
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(
-            message= str(ex), 
-            status_code=2005,
-            http_status_code=400)
+        response = Result(message=str(ex), status_code=2005, http_status_code=400)
         response.err_resp()
 
 
@@ -127,27 +108,27 @@ def get_default_parms(parm):
     inputRegion = parm.get('region')
     try:
         # Check if the DC Name is available
-        thisDC:Datacenter = Datacenter.query.filter_by(name = inputName).first()
-        if (thisDC is not None):
+        thisDC: Datacenter = Datacenter.query.filter_by(name=inputName).first()
+        if thisDC is not None:
             raise ValueError('DataCenter name already existed')
 
         # tag:Name prefix for all resource, eg. easyun-xxx
         prefix = inputName.lower()
 
         # get account info from database
-        curr_account:Account = Account.query.first()
+        curr_account: Account = Account.query.first()
         # set deploy_region as default region
         if inputRegion is None:
-            inputRegion = curr_account.get_region() 
+            inputRegion = curr_account.get_region()
 
         # get az list
         client_ec2 = boto3.client('ec2', region_name=inputRegion)
         azs = client_ec2.describe_availability_zones()
-        azList = [az['ZoneName'] for az in azs['AvailabilityZones']] 
+        azList = [az['ZoneName'] for az in azs['AvailabilityZones']]
 
         # define default vpc parameters
         defaultVPC = {
-            'cidrBlock' : '10.10.0.0/16',
+            'cidrBlock': '10.10.0.0/16',
             # 'vpcCidrv6' : '',
             # 'vpcTenancy' : 'Default',
         }
@@ -155,13 +136,15 @@ def get_default_parms(parm):
         # define default igw
         defaultIgw = {
             # 这里为igw的 tag:Name，创建首个igw的时候默认该名称
-            "tagName" : '%s-%s' %(prefix, 'igw')
+            "tagName": '%s-%s'
+            % (prefix, 'igw')
         }
 
         # define default natgw
         defaultNatgw = {
             # 这里为natgw的 tag:Name ，创建首个natgw的时候默认该名称
-            "tagName" : '%s-%s' %(prefix, 'natgw')
+            "tagName": '%s-%s'
+            % (prefix, 'natgw')
         }
 
         gwList = [defaultIgw["tagName"], defaultNatgw["tagName"]]
@@ -169,90 +152,84 @@ def get_default_parms(parm):
         # define default igw route table
         defaultIrtb = {
             # 这里为igw routetable 的 tag:Name, 创建首个igw routetable 的时候默认该名称
-            "tagName" : '%s-%s' %(prefix, 'rtb-igw')
+            "tagName": '%s-%s'
+            % (prefix, 'rtb-igw')
         }
 
         # define default natgw route table
         defaultNrtb = {
             # 这里为nat routetable 的 tag:Name ，创建首个nat routetable 的时候默认该名称
-            "tagName" : '%s-%s' %(prefix, 'rtb-natgw')
+            "tagName": '%s-%s'
+            % (prefix, 'rtb-natgw')
         }
 
         rtbList = [defaultIrtb["tagName"], defaultNrtb["tagName"]]
 
-        dcParms = {    
-            # default selected parameters      
-            "dcName" : inputName,
-            "dcRegion" : inputRegion,
-            'dcVPC' : defaultVPC,
+        dcParms = {
+            # default selected parameters
+            "dcName": inputName,
+            "dcRegion": inputRegion,
+            'dcVPC': defaultVPC,
             "pubSubnet1": {
-                "tagName" : "Public subnet 1",
-                "cidrBlock" : "10.10.1.0/24",
-                "azName": azList[0],            
-                "gwName": defaultIgw["tagName"],            
-                "routeTable": defaultIrtb["tagName"] 
+                "tagName": "Public subnet 1",
+                "cidrBlock": "10.10.1.0/24",
+                "azName": azList[0],
+                "gwName": defaultIgw["tagName"],
+                "routeTable": defaultIrtb["tagName"],
             },
             "pubSubnet2": {
-                "tagName" : "Public subnet 2",
-                "cidrBlock" : "10.10.2.0/24",
-                "azName": azList[1],                
-                "gwName": defaultIgw["tagName"],   
-                "routeTable": defaultIrtb["tagName"]
+                "tagName": "Public subnet 2",
+                "cidrBlock": "10.10.2.0/24",
+                "azName": azList[1],
+                "gwName": defaultIgw["tagName"],
+                "routeTable": defaultIrtb["tagName"],
             },
             "priSubnet1": {
-                "tagName" : "Private subnet 1",
-                "cidrBlock" : "10.10.21.0/24",
-                "azName": azList[0],            
-                "gwName": defaultNatgw["tagName"],             
-                "routeTable": defaultNrtb["tagName"]
+                "tagName": "Private subnet 1",
+                "cidrBlock": "10.10.21.0/24",
+                "azName": azList[0],
+                "gwName": defaultNatgw["tagName"],
+                "routeTable": defaultNrtb["tagName"],
             },
             "priSubnet2": {
-                "tagName" : "Private subnet 2",
-                "cidrBlock" : "10.10.22.0/24",
+                "tagName": "Private subnet 2",
+                "cidrBlock": "10.10.22.0/24",
                 "azName": azList[1],
                 "gwName": defaultNatgw["tagName"],
-                "routeTable": defaultNrtb["tagName"]
+                "routeTable": defaultNrtb["tagName"],
             },
             "securityGroup0": {
-                "tagName" : '%s-%s' %(prefix, 'sg-default'),
-                #该标记对应是否增加 In-bound: Ping 的安全组规则
+                "tagName": '%s-%s' % (prefix, 'sg-default'),
+                # 该标记对应是否增加 In-bound: Ping 的安全组规则
                 "enablePing": True,
                 "enableSSH": True,
-                "enableRDP": False
+                "enableRDP": False,
             },
             "securityGroup1": {
-                "tagName" : '%s-%s' %(prefix, 'sg-webapp'),
+                "tagName": '%s-%s' % (prefix, 'sg-webapp'),
                 "enablePing": True,
                 "enableSSH": True,
-                "enableRDP": False
+                "enableRDP": False,
             },
             "securityGroup2": {
-                "tagName" : '%s-%s' %(prefix, 'sg-database'),
+                "tagName": '%s-%s' % (prefix, 'sg-database'),
                 "enablePing": True,
                 "enableSSH": True,
-                "enableRDP": False
+                "enableRDP": False,
             },
-
         }
         dropDown = {
             # for DropDownList
             "azList": azList,
-            "gwList" : gwList,
-            "rtbList" : rtbList,
-        }    
+            "gwList": gwList,
+            "rtbList": rtbList,
+        }
 
         response = Result(
-            detail={
-                'dcParms':dcParms, 
-                'dropDown':dropDown
-            },
-            status_code=200
-            )
+            detail={'dcParms': dcParms, 'dropDown': dropDown}, status_code=200
+        )
         return response.make_resp()
 
     except Exception as ex:
-        resp = Result(
-            message=str(ex), 
-            status_code=2001,
-            http_status_code=400)
+        resp = Result(message=str(ex), status_code=2001, http_status_code=400)
         resp.err_resp()

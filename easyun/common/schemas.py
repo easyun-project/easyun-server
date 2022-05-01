@@ -12,32 +12,36 @@ from easyun.cloud.utils import query_dc_list
 from easyun.cloud.aws_region import get_region_codes
 
 
+class TagItem(Schema):
+    Key = String(required=True, example='Env')
+    Value = String(required=True, example='Develop')
+
+
 class DcNameQuery(Schema):
-    ''' datacenter name for query parm '''
+    '''datacenter name for query parm'''
+
     dc = String(
-        required=True, 
+        required=True,
         validate=Length(0, 30),
         # validate=OneOf(query_dc_list()),
-        example='Easyun'
+        example='Easyun',
     )
 
 
 class RegionCodeQuery(Schema):
-    ''' datacenter name for query parm '''
-    region = String(
-        required=True, 
-        validate=OneOf(get_region_codes()),
-        example='us-east-1'
-    )
+    '''datacenter name for query parm'''
 
+    region = String(
+        required=True, validate=OneOf(get_region_codes()), example='us-east-1'
+    )
 
 
 class DcNameParm(Schema):
-    ''' datacenter name for body parm '''
+    '''datacenter name for body parm'''
+
     dcName = String(
-        required=True, 
+        required=True,
         validate=Length(0, 30),
         # validate=OneOf(query_dc_list()),
-        example='Easyun'
+        example='Easyun',
     )
-    

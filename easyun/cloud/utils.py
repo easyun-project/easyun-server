@@ -6,8 +6,11 @@
 """
 
 import boto3
+from boto3.session import Session
 from easyun.common.models import Datacenter, Account
 
+
+_EASYUN_SESSION = None
 
 _EC2_RESOURCE = None
 
@@ -30,7 +33,7 @@ def gen_dc_tag(dc_name, type='flag'):
 
 def gen_hash_tag(dc_name, type='flag'):
     '''查询并生成dcName对应的tag标签'''
-    thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
+    thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
     flagHash = thisDC.get_hash()
     if type == 'flag':
         flagTag = {"Key": "Flag", "Value": flagHash}
@@ -53,35 +56,52 @@ def query_dc_list():
 def query_dc_region(dc_name):
     '''通过dcName查询Region信息'''
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
-        if thisDC is None: 
+        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+        if thisDC is None:
             raise ValueError('Datacenter not existed, kindly create it first!')
         return thisDC.region
     except Exception as ex:
         return str(ex)
 
+
 def query_dc_vpc(dc_name):
     '''通过dcName查询VPC信息'''
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
+        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
         return thisDC.vpc_id
-    except Exception as ex:
+    except Exception:
         return 'Datacenter not existed, kindly create it first!'
+
+
+def get_easyun_session(dc_name):
+    '''设置Boto3 Session 默认region,返回region name'''
+    try:
+        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+        dcRegion = thisDC.region
+        # Get or Create Easyun boto3 session
+        global _EASYUN_SESSION
+        if _EASYUN_SESSION is not None and _EASYUN_SESSION.region_name == dcRegion:
+            return _EASYUN_SESSION
+        else:
+            _EASYUN_SESSION = Session(region_name=dcRegion)
+            return _EASYUN_SESSION
+    except Exception as ex:
+        return str(ex)
 
 
 def set_boto3_region(dc_name):
     '''设置Boto3会话默认region,返回region name'''
     try:
-        thisDC:Datacenter = Datacenter.query.filter_by(name = dc_name).first()
+        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
         # 设置 boto3 接口默认 region_name
-        boto3.setup_default_session(region_name = thisDC.region )   
+        boto3.setup_default_session(region_name=thisDC.region)
         return thisDC.region
     except Exception as ex:
-        return 'Datacenter not existed, kindly create it first!'
+        return str(ex)
 
 
 def get_tag_name(res_type, res_id):
-    '''通过 Resource ID 查询资源的 tag:Name '''
+    '''通过 Resource ID 查询资源的 tag:Name'''
     resource_ec2 = get_ec2_resource()
     try:
         if res_type == 'server':
@@ -89,7 +109,7 @@ def get_tag_name(res_type, res_id):
         elif res_type == 'volume':
             res = resource_ec2.Volume(res_id)
         elif res_type == 'keypari':
-            res = resource_ec2.KeyPair(res_id)  
+            res = resource_ec2.KeyPair(res_id)
         elif res_type == 'subnet':
             res = resource_ec2.Subnet(res_id)
         elif res_type == 'secgroup':
@@ -103,7 +123,7 @@ def get_tag_name(res_type, res_id):
         elif res_type == 'routetable':
             res = resource_ec2.RouteTable(res_id)
         else:
-            raise ValueError('reasouce type error')     
+            raise ValueError('reasouce type error')
         tagName = next((tag['Value'] for tag in res.tags if tag["Key"] == 'Name'), None)
         return tagName
     except Exception as ex:
@@ -111,7 +131,7 @@ def get_tag_name(res_type, res_id):
 
 
 def get_server_name(svr_id):
-    '''通过instanceID 查询服务器 tag:Name '''
+    '''通过instanceID 查询服务器 tag:Name'''
     resource_ec2 = get_ec2_resource()
     try:
         if svr_id == None:
@@ -125,12 +145,12 @@ def get_server_name(svr_id):
 
 
 def get_eni_type(eni_id):
-    '''获取 Elastic Network Interface 类型 '''
+    '''获取 Elastic Network Interface 类型'''
     # 'InterfaceType': 'interface'|'natGateway'|'efa'|'trunk'|'load_balancer'|'network_load_balancer'|'vpc_endpoint'|'transit_gateway',
     resource_ec2 = get_ec2_resource()
     try:
         if eni_id == None:
-            raise ValueError('subnet_id is None')    
+            raise ValueError('subnet_id is None')
         thisEni = resource_ec2.NetworkInterface(eni_id)
         return thisEni.interface_type
     except Exception as ex:
@@ -143,9 +163,11 @@ def get_subnet_type(subnet_id):
     resource_ec2 = get_ec2_resource()
     try:
         if subnet_id == None:
-            raise ValueError('subnet_id is None')    
+            raise ValueError('subnet_id is None')
         thisSubnet = resource_ec2.Subnet(subnet_id)
-        nameTag = next((tag['Value'] for tag in thisSubnet.tags if tag["Key"] == 'Name'), None)
+        nameTag = next(
+            (tag['Value'] for tag in thisSubnet.tags if tag["Key"] == 'Name'), None
+        )
         if nameTag.lower().startswith('pub'):
             subnetType = 'public'
         elif nameTag.lower().startswith('pri'):

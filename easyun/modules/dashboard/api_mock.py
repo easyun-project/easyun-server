@@ -177,22 +177,22 @@ st_objectList = {
     "type":"st_object",
     "data":[
         {
-        "bktName": "bktexample17",
+        "bucketId": "bktexample17",
         "bktRegion": "us-east-1",
         "bktStatus": "Objects can be public"
         },
         {
-        "bktName": "easyun-api-test-13",
+        "bucketId": "easyun-api-test-13",
         "bktRegion": "us-east-1",
         "bktStatus": "Objects can be public"
         },
         {
-        "bktName": "easyun-api-test-11",
+        "bucketId": "easyun-api-test-11",
         "bktRegion": "us-east-1",
         "bktStatus": "Objects can be public"
         },
         {
-        "bktName": "easyun-api-test-12",
+        "bucketId": "easyun-api-test-12",
         "bktRegion": "us-east-1",
         "bktStatus": "Objects can be public"
         }

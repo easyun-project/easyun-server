@@ -3,292 +3,181 @@
   @module:  Object Storage Bucket Management API
   @desc:    .
   @auth:    
-"""  
+"""
 
 import boto3
-from apiflask import Schema, input, output, auth_required
-from apiflask.schemas import EmptySchema 
-from apiflask.fields import Integer, String, List, Dict, Boolean
-from apiflask.validators import Length, OneOf
-from flask import jsonify
-from sqlalchemy import true
-from werkzeug.wrappers import response
+from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from .schemas import BktNameQuery
-from . import bp
+from .schemas import AddBucketParm, BucketIdQuery, BucketIdParm, BucketPubBlockParm, BucketBasic
+from . import bp, get_storage_bucket
 
 
-
-class newBucket(Schema):
-    bktName = String(
-        required=True, 
-        validate=Length(0, 60),
-        example='easyun-bkt-test'
-    )
-    dcName = String(
-        required=True,
-        example='Easyun'
-    )
-    bktRegion = String(
-        required=True,
-        example='us-east-1'
-    )
-    isVersioning = Boolean(
-        required=True,
-        example=False)
-    isEncryption = Boolean(
-        required=True,
-        example=False)
-
-    
-# 新增bucket
-@bp.post('/bucket')
+@bp.get('/bucket/vaildate')
 @auth_required(auth_token)
-@input(newBucket)
-def add_bucket_cc(parm):
-    '''新增存储桶(S3 Bucket)[Cloudcontrol]'''
-    bktName = parm['bktName']
-    bktRegion = parm['bktRegion']
-    dcName=parm['dcName']
-    flagTag = {'Key':'Flag','Value':dcName}
-
-    desiredState = {
-        'BucketName' : bktName,
-        'VersioningConfiguration' : {
-            'Status': 'Enabled' if parm['isVersioning'] else 'Suspended'
-        },
-        'PublicAccessBlockConfiguration' : {
-            'BlockPublicAcls': True,
-            'IgnorePublicAcls': True,
-            'BlockPublicPolicy': True,
-            'RestrictPublicBuckets': True
-        },
-        'Tags' : [flagTag],
-    }
-
-    if parm['isEncryption']:
-        desiredState.update(
-            {'BucketEncryption' : {
-                'ServerSideEncryptionConfiguration':[{
-                    'BucketKeyEnabled' : parm['isEncryption'] ,
-                    'ServerSideEncryptionByDefault' : {'SSEAlgorithm' : 'AES256'}}
-                ]
-            }}
-        )
-
-    try:
-        #调cloudtontro接口创建bucket
-        client_cc = boto3.client('cloudcontrol', region_name=bktRegion)
-        bucket = client_cc.create_resource(
-            TypeName = 'AWS::S3::Bucket',
-            DesiredState = str(desiredState)
-        )
-        
-        response = Result(
-            detail = bucket['ProgressEvent'],
-            # detail = {'bucketName' : bucket['ProgressEvent']['Identifier']},
-            status_code=200
-        )
-        return response.make_resp()
-        
-    except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=4001,
-        )
-        return response.err_resp()
-
-
-@bp.post('/bucket2')
-@auth_required(auth_token)
-@input(newBucket)
-def add_bucket_s3(parm):
-    '''新增存储桶(S3 Bucket)'''
-    bktName = parm['bktName']
-    bktRegion = parm['bktRegion']
-    dcName=parm['dcName']
-    flagTag = {'Key':'Flag','Value':dcName}
-
-    try:
-        client_s3 = boto3.client('s3', region_name=bktRegion)
-        #step1: 新建Bucket 
-        bucket = client_s3.create_bucket(
-            # ACL='private'|'public-read'|'public-read-write'|'authenticated-read',
-            Bucket=bktName,
-            CreateBucketConfiguration={
-                'LocationConstraint': bktRegion
-            },
-            # GrantFullControl='string',
-            # GrantRead='string',
-            # GrantReadACP='string',
-            # GrantWrite='string',
-            # GrantWriteACP='string',
-            # ObjectLockEnabledForBucket=True|False,
-            # ObjectOwnership='BucketOwnerPreferred'|'ObjectWriter'|'BucketOwnerEnforced'
-        )
-        bucket.wait_until_exists(
-    ExpectedBucketOwner='string'
-)
-
-        #step2: 设置Bucket encryption，默认不启用
-
-
-        #step3: 设置Bucket encryption，默认不启用
-
-        #step4: 设置Bucket Tag:Flag 标签
-        
-        #step5:  设置Bucket public access默认private
-        set_defalt_pub_access = client_s3.put_public_access_block(
-            Bucket=bktName,
-            PublicAccessBlockConfiguration={
-                'BlockPublicAcls': True,
-                'IgnorePublicAcls': True,
-                'BlockPublicPolicy': True,
-                'RestrictPublicBuckets': True
-            }
-        )        
-        
-        response = Result(
-            detail = bucket,
-            # detail = {'bucketName' : bucket['ProgressEvent']['Identifier']},
-            status_code=200
-        )
-        return response.make_resp()
-        
-    except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=4001,
-        )
-        return response.err_resp()
-
-
-@bp.get('/object/vaildate')
-@auth_required(auth_token)
-@input(BktNameQuery, location='query')
+@bp.input(BucketIdQuery, location='query')
 def vaildate_bkt(parm):
     '''查询存储桶(bucket)名称是否可用'''
+    dcName = parm['dc']
+    bucketId = parm['bkt']
     try:
-        resource_s3 = boto3.resource('s3') 
-        bucket = resource_s3.Bucket(parm['bktName'])
+        bkt = get_storage_bucket(dcName)
+        isAvailable = bkt.vaildate_bucket_name(bucketId)
 
-        if bucket.creation_date:
-            result = {
-               'isAvailable' : False
-            }
-        else:
-            result = {
-               'isAvailable' : True
-            }
-
-        response = Result(
-            detail=result,
-            status_code=200
-        )
-        return response.make_resp()
+        resp = Result(detail={'isAvailable': isAvailable}, status_code=200)
+        return resp.make_resp()
     except Exception as ex:
-        response = Result(
-            # message='Get bucket message failed', 
+        resp = Result(
             message=str(ex),
             status_code=4004,
         )
-        return response.err_resp()
+        resp.err_resp()
 
 
-class deleteBucket(Schema):
-    bucketName = String(
-        required=True, 
-        validate=Length(0, 30)
-    )
+@bp.post('/bucket')
+@auth_required(auth_token)
+@bp.input(AddBucketParm)
+@bp.output(BucketBasic)
+def add_bucket_s3(parm):
+    '''新增存储桶(S3 Bucket)'''
+    dcName = parm['dcName']
+    bucketId = parm['bucketId']
+    bucketOptions = parm['bucketCreateParm']
+    try:
+        bkt = get_storage_bucket(dcName)
+        newBucket = bkt.create_bucket(bucketId, bucketOptions)
+
+        resp = Result(
+            detail={
+                'bucketId': newBucket.name,
+                'bucketRegion': bucketOptions['regionCode'],
+                'createTime': newBucket.creation_date,
+            },
+            status_code=200,
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(
+            message=str(ex),
+            status_code=4001,
+        )
+        resp.err_resp()
 
 
 @bp.delete('/bucket')
 @auth_required(auth_token)
-@input(deleteBucket)
-def delete_bucket(deleteBucket):
+@bp.input(BucketIdParm)
+def delete_bucket(parm):
     '''删除存储桶(S3 Bucket)'''
-    bucketName = deleteBucket['bucketName']
-    CLIENT = boto3.client('s3')
+    dcName = parm['dcName']
+    bucketId = parm['bucketId']
     try:
-        result = CLIENT.delete_bucket(
-            Bucket = bucketName
-        )
+        bkt = get_storage_bucket(dcName)
+        bkt.delete_bucket(bucketId)
         response = Result(
-            detail=[{
-                'message' : 'bucket delete succee'
-            }],
-            status_code=4003
+            detail={'bucketId': bucketId}, message='bucket delete successfully'
         )
         return response.make_resp()
-    except Exception:
-        response = Result(
-            message='bucket delete failed', status_code=4003,http_status_code=400
-        )
+    except Exception as ex:
+        response = Result(message=str(ex), status_code=4003, http_status_code=400)
         return response.err_resp()
 
 
-
-class modifyBktPubBlock(Schema):
-    bucketName = String(
-        required=True, 
-        validate=Length(0, 30)
-    )
-    newAcl = Boolean(
-        required=True,
-        example=True
-    )
-    allAcl = Boolean(
-        required=True,
-        example=True
-    )
-    newPolicy = Boolean(
-        required=True,
-        example=True
-    )
-    allPolicy = Boolean(
-        required=True,
-        example=True
-    )
-
-'''Modify Bucket Public Block Policy'''
 @bp.put('/bucket/pubblock')
 @auth_required(auth_token)
-@input(modifyBktPubBlock)
-def modify_bucket_policy(modifyBktPubBlock):
+@bp.input(BucketPubBlockParm)
+def modify_bucket_policy(parm):
     '''修改存储桶的Public Block Policy'''
     S3Client = boto3.client('s3')
 
-    bucketName = modifyBktPubBlock['bucketName']
+    bucketId = parm['bucketId']
 
-    newAcl = modifyBktPubBlock['newAcl']
-    allAcl = modifyBktPubBlock['allAcl']
-    newPolicy = modifyBktPubBlock['newPolicy']
-    allPolicy = modifyBktPubBlock['allPolicy']
-    
+    newAcl = parm['newAcl']
+    allAcl = parm['allAcl']
+    newPolicy = parm['newPolicy']
+    allPolicy = parm['allPolicy']
+
     try:
         result = S3Client.put_public_access_block(
-            Bucket = bucketName,
+            Bucket=bucketId,
             PublicAccessBlockConfiguration={
                 'BlockPublicAcls': newAcl,
                 'IgnorePublicAcls': allAcl,
                 'BlockPublicPolicy': newPolicy,
-                'RestrictPublicBuckets': allPolicy
-            }
+                'RestrictPublicBuckets': allPolicy,
+            },
         )['ResponseMetadata']['HTTPStatusCode']
-        if result == 200 :
+        if result == 200:
             message = 'Modify public block policy success'
-        else :
+        else:
             message = 'Modify public block policy fail'
-        response = Result(
-            detail=[{
-                'message' : message
-            }],
-            status_code=4003
-        )
+        response = Result(detail=[{'message': message}], status_code=4003)
         return response.make_resp()
     except Exception:
         response = Result(
-            message='Modify public block policy fail', status_code=4003,http_status_code=400
+            message='Modify public block policy fail',
+            status_code=4003,
+            http_status_code=400,
+        )
+        return response.err_resp()
+
+
+@bp.post('/bucket/add')
+@auth_required(auth_token)
+@bp.input(AddBucketParm)
+def add_bucket_cc(parm):
+    '''新增存储桶(S3 Bucket)[Cloudcontrol]'''
+    bucketId = parm['bucketId']
+    bktRegion = parm['bktRegion']
+    dcName = parm['dcName']
+    flagTag = {'Key': 'Flag', 'Value': dcName}
+
+    desiredState = {
+        'bucketId': bucketId,
+        'VersioningConfiguration': {
+            'Status': 'Enabled' if parm['isVersioning'] else 'Suspended'
+        },
+        'PublicAccessBlockConfiguration': {
+            'BlockPublicAcls': True,
+            'IgnorePublicAcls': True,
+            'BlockPublicPolicy': True,
+            'RestrictPublicBuckets': True,
+        },
+        'Tags': [flagTag],
+    }
+
+    if parm['isEncryption']:
+        desiredState.update(
+            {
+                'BucketEncryption': {
+                    'ServerSideEncryptionConfiguration': [
+                        {
+                            'BucketKeyEnabled': parm['isEncryption'],
+                            'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'},
+                        }
+                    ]
+                }
+            }
+        )
+
+    try:
+        # 调cloudtontro接口创建bucket
+        client_cc = boto3.client('cloudcontrol', region_name=bktRegion)
+        bucket = client_cc.create_resource(
+            TypeName='AWS::S3::Bucket', DesiredState=str(desiredState)
+        )
+
+        response = Result(
+            detail=bucket['ProgressEvent'],
+            # detail = {'bucketId' : bucket['ProgressEvent']['Identifier']},
+            status_code=200,
+        )
+        return response.make_resp()
+
+    except Exception as ex:
+        response = Result(
+            message=str(ex),
+            status_code=4001,
         )
         return response.err_resp()

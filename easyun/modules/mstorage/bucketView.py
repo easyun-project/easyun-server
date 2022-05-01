@@ -15,10 +15,10 @@ from .s3_schema import newBucket, deleteBucket, vaildateBucket
 from . import TYPE, bp, FLAG
 
 
-def get_bucket_Region(bucketName):
+def get_bucket_Region(bucketId):
     client = boto3.client('s3')
     response = client.get_bucket_location(
-        Bucket = bucketName
+        Bucket = bucketId
     )
     if response['LocationConstraint'] == None:
         region = 'us-east-1'
@@ -79,8 +79,8 @@ class S3_Buckets(MethodView):
     def post(self,data):
         try:
             # 获取桶名
-            # bucketName = newBucket['bucketName']
-            bucketName = data.get('bucketName')
+            # bucketId = newBucket['bucketId']
+            bucketId = data.get('bucketId')
             # 获取是否开启版本控制（Enabled | Suspended）
             # versioningConfiguration = newBucket['versioningConfiguration']
             versioningConfiguration = data.get('versioningConfiguration')
@@ -98,7 +98,7 @@ class S3_Buckets(MethodView):
             Tag = [{'Key':'Flag','Value':FLAG}]
             # 使用cloudcontrol api 需要定义DesiredState
             desiredState = {
-                'BucketName' : bucketName,
+                'bucketId' : bucketId,
                 'VersioningConfiguration' : {'Status': versioningConfiguration },
                 'BucketEncryption' : {"ServerSideEncryptionConfiguration":[{'BucketKeyEnabled' : isEncryption ,'ServerSideEncryptionByDefault' : {'SSEAlgorithm' : 'AES256'}}]},
                 'Tags' : Tag,
@@ -114,7 +114,7 @@ class S3_Buckets(MethodView):
             
             response = Result(
                 detail=[{
-                    'bucketName' : bucket['ProgressEvent']['Identifier']
+                    'bucketId' : bucket['ProgressEvent']['Identifier']
                 }],
                 status_code=4001
             )

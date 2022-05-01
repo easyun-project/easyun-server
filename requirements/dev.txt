@@ -1,6 +1,11 @@
 # Everything the developer needs in addition to the production requirements
 -r min.txt
 
+# code linter
+flake8>=4.0.1
+# code formatter
+black>=22.3.0
+
 # Testing
 pytest==6.2.5
 WebTest==3.0.0
