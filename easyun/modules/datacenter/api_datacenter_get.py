@@ -6,6 +6,7 @@
 """
 
 import boto3
+from botocore.exceptions import ClientError
 from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
@@ -26,18 +27,21 @@ def list_datacenter_detail():
         dcList = []
         for dc in dcs:
             resource_ec2 = boto3.resource('ec2', region_name=dc.region)
-            vpc = resource_ec2.Vpc(dc.vpc_id)
-            dcItem = {
-                'dcName': dc.name,
-                'dcRegion': dc.region,
-                'vpcID': dc.vpc_id,
-                'vpcCidr': vpc.cidr_block,
-                'createDate': dc.create_date.isoformat(),
-                'createUser': dc.create_user,
-                'dcAccount': dc.account_id,
-            }
-            dcList.append(dcItem)
-
+            # error handing for InvalidVpcID.NotFound
+            try:
+                vpc = resource_ec2.Vpc(dc.vpc_id)
+                dcItem = {
+                    'dcName': dc.name,
+                    'dcRegion': dc.region,
+                    'vpcID': dc.vpc_id,
+                    'vpcCidr': vpc.cidr_block,
+                    'createDate': dc.create_date.isoformat(),
+                    'createUser': dc.create_user,
+                    'dcAccount': dc.account_id,
+                }
+                dcList.append(dcItem)
+            except ClientError:
+                continue
         resp = Result(detail=dcList, status_code=200)
         return resp.make_resp()
 

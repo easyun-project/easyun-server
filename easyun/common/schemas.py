@@ -6,10 +6,47 @@
 """
 
 from apiflask import Schema
-from apiflask.fields import Integer, String, List, Dict, Date, Field, Nested
-from apiflask.validators import Length, OneOf
-from easyun.cloud.utils import query_dc_list
+from apiflask.fields import Integer, String, DateTime, Field, Nested
+from apiflask.validators import Length, OneOf, Email
 from easyun.cloud.aws_region import get_region_codes
+
+
+class LoginParm(Schema):
+    username = String(required=True, validate=Length(0, 20), example='demo')
+    password = String(required=True, validate=Length(0, 30), example='Passw0rd')
+
+
+class UsernameParm(Schema):
+    username = String(required=True, validate=Length(0, 20), example='demo')
+
+
+class PasswordParm(Schema):
+    password = String(required=True, validate=Length(0, 20), example="Passw0rd")
+
+
+class UserModel(Schema):
+    id = Integer()
+    username = String()
+    email = String()
+    token = String()
+    token_expiration = DateTime()
+    # cloud account info
+    account_id = String()
+    account_type = String()
+    role = String()
+    deploy_region = String()
+
+
+class UserBasic(Schema):
+    id = Integer()
+    username = String()
+    email = String()
+
+
+class AddUserParm(Schema):
+    username = String(required=True, validate=Length(0, 20), example="user")
+    password = String(required=True, validate=Length(0, 30), example="password")
+    email = String(required=True, validate=Email(), example="user@mail.com")
 
 
 class TagItem(Schema):

@@ -82,7 +82,7 @@ class VolAttachment(Schema):
     attachTime = DateTime(example="2022-02-27T02:20:44+00:00")
 
 
-class volumeConfig(Schema):
+class VolumeConfig(Schema):
     volumeSize = Integer(example=10)
     volumeIops = Integer(example=3000)
     volumeThruput = Integer(example=500)
@@ -123,7 +123,7 @@ class VolumeModel(Schema):
 
 class VolumeDetail(Schema):
     volumeBasic = Nested(VolumeBasic)
-    volumeConfig = Nested(volumeConfig)
+    volumeConfig = Nested(VolumeConfig)
     volumeAttach = Nested(VolAttachment(many=True))
     userTags = Nested(TagItem(many=True))
 
