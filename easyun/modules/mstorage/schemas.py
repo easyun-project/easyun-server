@@ -61,16 +61,54 @@ class AddBucketParm(Schema):
 
 class BucketBasic(Schema):
     bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
-    bucketRegion = String(required=True, example='us-east-1')
-    publicStatus = String(example='private')
-    publicMessage = String(example='All objects are private')
     createTime = DateTime(required=True, example="2022-02-20T09:59:21.61+00:00")
-    bucketSize = Dict()
+    bucketRegion = String(required=True, example='us-east-1')
+    bucketUrl = String(example='my-bucket.s3.amazonaws.com')
+
+
+class BucketAccess(Schema):
+    status = String(example='private')
+    description = String(example='All objects are private')
+
+
+class BucketModel(Schema):
+    bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
+    createTime = DateTime(required=True, example="2022-02-20T09:59:21.61+00:00")
+    bucketRegion = String(required=True, example='us-east-1')
+    bucketUrl = String(example='my-bucket.s3.amazonaws.com')
+    # bucketLifecycle = List(Dict())
+    bucketAccess = Nested(
+        BucketAccess,
+        example={'status': 'private', 'description': 'All objects are private'}
+    )
+    bucketSize = Dict(
+        example={'value': 123, 'unit': 'MiB'}
+    )
+
+
+class BucketPermission(Schema):
+    status = String(example='private')
+    description = String(example='All objects are private')
+    bucketACL = String(example='private')
+    pubBlockConfig = Dict(
+        example={
+            'BlockPublicAcls': True,
+            'IgnorePublicAcls': True,
+            'BlockPublicPolicy': True,
+            'RestrictPublicBuckets': True,
+        }
+    )
+    
+
+class BucketProperty(Schema):
+    isEncryption = Boolean(required=True, example=False)
+    isVersioning = Boolean(required=True, example=False)
 
 
 class BucketDetail(Schema):
     bucketBasic = Nested(BucketBasic)
-    bucketConfig = Dict()
+    bucketPermission = Nested(BucketPermission)
+    bucketProperty = Nested(BucketProperty)
     userTags = Nested(TagItem(many=True))
 
 

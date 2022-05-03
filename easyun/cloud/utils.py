@@ -75,8 +75,8 @@ def query_dc_vpc(dc_name):
 
 def get_easyun_session(dc_name):
     '''设置Boto3 Session 默认region,返回region name'''
-    try:
-        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+    thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+    if thisDC:
         dcRegion = thisDC.region
         # Get or Create Easyun boto3 session
         global _EASYUN_SESSION
@@ -85,8 +85,8 @@ def get_easyun_session(dc_name):
         else:
             _EASYUN_SESSION = Session(region_name=dcRegion)
             return _EASYUN_SESSION
-    except Exception as ex:
-        return str(ex)
+    else:
+        raise ValueError(f'{dc_name} does not exist !')
 
 
 def set_boto3_region(dc_name):

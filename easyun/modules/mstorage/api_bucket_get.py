@@ -10,14 +10,14 @@ from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from .schemas import BucketIdQuery, BucketBasic, BucketDetail
+from .schemas import BucketIdQuery, BucketBasic, BucketModel, BucketDetail
 from . import bp, get_storage_bucket
 
 
 @bp.get('/bucket')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
-@bp.output(BucketBasic(many=True))
+@bp.output(BucketModel(many=True))
 def list_bkt_detail(parm):
     '''获取全部存储桶(Bucket)信息'''
     dcName = parm.get('dc')
@@ -39,7 +39,7 @@ def list_bkt_detail(parm):
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 @bp.output(BucketBasic(many=True))
-def list_bkt_brief(parm):
+def get_bkt_list(parm):
     '''获取全部存储桶(Bucket)列表'''
     dcName = parm.get('dc')
     try:
@@ -64,13 +64,11 @@ def get_bkt_detail(bucket_id, parm):
     '''获取指定存储桶(Bucket)的详细信息【mock】'''
     dcName = parm.get('dc')
     try:
+        bkt = get_storage_bucket(dcName)
+        bucketDetail = bkt.get_bucket_detail(bucket_id)
 
         response = Result(
-            detail={
-                'bucketBasic': {'bucketId':bucket_id},
-                'bucketConfig': {},
-                'userTags': {},
-            },
+            detail=bucketDetail,
             status_code=200,
         )
         return response.make_resp()

@@ -10,6 +10,30 @@ from easyun.common.models import Account
 from .utils import get_easyun_session
 
 
+def query_bucket_flag(bucket):
+    '''查询存储桶(bucket)的Tag:Flag'''
+    try:
+        bktTags = bucket.Tagging().tag_set
+        flagTag = next((tag['Value'] for tag in bktTags if tag["Key"] == 'Flag'), None)
+        return flagTag
+    except ClientError:
+        return None
+
+
+def check_bucket_public(config):
+    '''检查PublicAccessBlock配置对应公开状态'''
+    if config:
+        if config.get('IgnorePublicAcls'):
+            accessStatus = 'private'
+        elif not config.get('IgnorePublicAcls'):
+            accessStatus = 'public'
+        else:
+            accessStatus = 'other'
+    else:
+        accessStatus = 'other'
+    return accessStatus
+
+
 class StorageBucket(object):
     def __init__(self, dcName):
         self.dcName = dcName
@@ -23,17 +47,21 @@ class StorageBucket(object):
             bucketList = []
             allBuckets = self._resource.buckets.all()
             for bkt in allBuckets:
-                if self.query_bucket_flag(bkt) == self.dcName:
+                if query_bucket_flag(bkt) == self.dcName:
+                    bktDomain = self.get_bucket_domain(bkt.name)
                     bktItem = {
                         'bucketId': bkt.name,
                         'createTime': bkt.creation_date,
-                        'bucketRegion': self._session.region_name,
-                        # 'bucketSize': self.query_bucket_size(bkt.name)
-                        'bucketSize': {
-                            'value': 123,
-                            'unit': 'MiB'}
+                        'bucketRegion': bktDomain.get('bucketRegion'),
+                        'bucketUrl': bktDomain.get('bucketUrl'),
+                        # 'bucketSize': self.query_bucket_size(bkt.name),
+                        'bucketAccess': {
+                            'status': 'private',
+                            'description': 'All objects are private',
+                        },
+                        'bucketSize': {'value': 123, 'unit': 'MiB'},
                     }
-                    bktItem.update(self.query_bucket_public(bkt.name))
+                    # bktItem.update(self.query_bucket_public(bkt.name))
                     bucketList.append(bktItem)
             return bucketList
         except ClientError as ex:
@@ -44,37 +72,68 @@ class StorageBucket(object):
             bucketList = []
             allBuckets = self._resource.buckets.all()
             for bkt in allBuckets:
-                if self.query_bucket_flag(bkt) == self.dcName:
+                if query_bucket_flag(bkt) == self.dcName:
                     bucketList.append(
                         {
                             'bucketId': bkt.name,
                             'createTime': bkt.creation_date,
-                            'bucketRegion': self._session.region_name,
+                            'bucketRegion': self.get_bucket_domain(bkt.name)[
+                                'bucketRegion'
+                            ],
                         }
                     )
             return bucketList
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def query_bucket_flag(self, bucket):
-        '''查询存储桶(bucket)的Tag:Flag'''
+    def get_bucket_detail(self, bucket_id):
         try:
-            bktTags = bucket.Tagging().tag_set
-            flagTag = next(
-                (tag['Value'] for tag in bktTags if tag["Key"] == 'Flag'), None
-            )
-            return flagTag
-        except ClientError:
-            return None
+            bucket = self._resource.Bucket(bucket_id)
+            bktDomain = self.get_bucket_domain(bucket_id)
+            bktBasic = {
+                'bucketId': bucket_id,
+                'createTime': bucket.creation_date,
+                'bucketRegion': bktDomain.get('bucketRegion'),
+                'bucketUrl': bktDomain.get('bucketUrl'),
+            }
+            bktPermission = {
+                'status': 'private',
+                'description': 'All objects are private',
+                'bucketACL': 'private',
+                'pubBlockConfig': {
+                    'BlockPublicAcls': True,
+                    'IgnorePublicAcls': True,
+                    'BlockPublicPolicy': True,
+                    'RestrictPublicBuckets': True,
+                },
+            }
+            bktProperty = {
+                'isEncryption': False,
+                'isVersioning': False,
+            }
 
-    def query_bucket_region(self, bucket_id):
+            bucketDetail = {
+                'bucketBasic': bktBasic,
+                'bucketPermission': bktPermission,
+                'bucketProperty': bktProperty,
+                'userTags': {},
+            }
+
+            return bucketDetail
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_bucket_domain(self, bucket_id):
         '''查询存储桶(bucket)所处Region'''
         resp = self._client.get_bucket_location(Bucket=bucket_id)
         bktRegion = resp.get('LocationConstraint')
         # Buckets in Region us-east-1 have a LocationConstraint of null.
-        if not bktRegion:
+        if bktRegion is None:
+            bktUrl = f'{bucket_id}.s3.amazonaws.com'
             bktRegion = 'east-us-1'
-        return bktRegion
+        else:
+            bktUrl = f'{bucket_id}.s3.{bktRegion}.amazonaws.com'
+        return {'bucketRegion': bktRegion, 'bucketUrl': bktUrl}
 
     def query_bucket_size(self, bucket_id):
         '''查询存储桶(bucket)总容量'''
@@ -101,55 +160,58 @@ class StorageBucket(object):
                 bktSize = {'value': metricItem['Average'], 'unit': metricItem['Unit']}
                 return bktSize
             else:
-                raise
-        except ClientError:
-            return None
+                return {'value': None, 'unit': 'N/A'}
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def query_bucket_public(self, bucket_id):
         '''查询存储桶(bucket)公开状态'''
-        priMsg = 'All objects are private'
-        pubMsg = 'Public'
+        privateMsg = 'All objects are private'
+        publicMsg = 'Public'
         otherMsg = 'Objects can be public'
         try:
             # 获取当前Account ID
             thisAccount = Account.query.first()
             # step1: 判断Account Public Access Status
             client_s3ctr = self._session.client('s3control')
-            acnpubConfig = client_s3ctr.get_public_access_block(
+            accountPubConfig = client_s3ctr.get_public_access_block(
                 AccountId=thisAccount.account_id
             ).get('PublicAccessBlockConfiguration')
-            acnpubStatus = self.check_bucket_public(acnpubConfig)
+            acnpubStatus = check_bucket_public(accountPubConfig)
             if acnpubStatus == 'private':
-                return {'pubStatus': acnpubStatus, 'statusMsg': priMsg}
+                return {'pubStatus': acnpubStatus, 'statusMsg': privateMsg}
             elif acnpubStatus == 'public':
                 # step2: 判断Bucket Public Access Status
-                bktpubConfig = self._client.get_public_access_block(Bucket=bucket_id).get(
-                    'PublicAccessBlockConfiguration'
-                )
-                bktpubStatus = self.check_bucket_public(bktpubConfig)
-                if bktpubStatus == 'public':
-                    pubStatus = {'publicStatus': bktpubStatus, 'publicMessage': pubMsg}
-                elif bktpubStatus == 'private':
-                    pubStatus = {'publicStatus': bktpubStatus, 'publicMessage': priMsg}
+                bucketPubConfig = self._client.get_public_access_block(
+                    Bucket=bucket_id
+                ).get('PublicAccessBlockConfiguration')
+                bucketPubStatus = check_bucket_public(bucketPubConfig)
+                if bucketPubStatus == 'public':
+                    pubStatus = {
+                        'publicStatus': bucketPubStatus,
+                        'publicMessage': publicMsg,
+                    }
+                elif bucketPubStatus == 'private':
+                    pubStatus = {
+                        'publicStatus': bucketPubStatus,
+                        'publicMessage': privateMsg,
+                    }
                 else:
-                    pubStatus = {'publicStatus': bktpubStatus, 'publicMessage': otherMsg}
+                    pubStatus = {
+                        'publicStatus': bucketPubStatus,
+                        'publicMessage': otherMsg,
+                    }
             return pubStatus
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
 
-        except Exception as ex:
-            return {'error': str(ex)}
-
-    def check_bucket_public(config):
-        '''检查PublicAccessBlock配置对应公开状态'''
-        if config:
-            if config.get('IgnorePublicAcls'):
-                accessStatus = 'private'
-            elif not config.get('IgnorePublicAcls'):
-                accessStatus = 'public'
-            else:
-                accessStatus = 'other'
-        else:
-            accessStatus = 'other'
-        return accessStatus
+    def query_bucket_lifecycle(self, bucket):
+        try:
+            bktRules = bucket.Lifecycle().rules
+            bucketLifecycle = bktRules[0]
+            return bucketLifecycle
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def vaildate_bucket_name(self, bucket_id):
         try:
