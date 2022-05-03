@@ -82,3 +82,11 @@ class DcNameParm(Schema):
         # validate=OneOf(query_dc_list()),
         example='Easyun',
     )
+
+
+class TaskIdQuery(Schema):
+    id = String(
+        required=True,  # celery task UUID
+        validate=Length(0, 36),
+        example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8",
+    )

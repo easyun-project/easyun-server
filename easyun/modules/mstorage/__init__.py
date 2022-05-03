@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
 from apiflask import APIBlueprint
-from easyun.common.models import Account, Datacenter
 from easyun.cloud.sdk_bucket import StorageBucket
 
 # define api version
 ver = '/api/v1'
 
 bp = APIBlueprint('存储管理', __name__, url_prefix=ver + '/storage')
-
 
 _ST_BUCKET = None
 

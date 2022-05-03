@@ -6,15 +6,13 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
-from apiflask.fields import String
-from apiflask.validators import Length, OneOf
+from apiflask import auth_required
 from celery.result import ResultBase, AsyncResult
 from easyun import log
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
-from easyun.common.schemas import DcNameParm
+from easyun.common.schemas import DcNameParm, TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.cloud.aws_quota import get_quota_value
 from easyun.cloud.utils import set_boto3_region
@@ -85,12 +83,11 @@ def create_dc_async(parm):
 @log.api_error(logger)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
-    dcName = parm['dcName']
-    dcRegion = set_boto3_region(dcName)
+    dcName = parm['dcName']    
     # Check the prerequisites before create datacenter task
     try:
+        dcRegion = set_boto3_region(dcName)
         rgt = RgTagging(dcName)
-
         # step 1: DC resource empty checking - instance
         serverNum = rgt.sum_resources('ec2:instance')
         if serverNum > 0:
@@ -120,8 +117,8 @@ def delete_dc_async(parm):
             )
 
     except Exception as ex:
-        logger.error('[DataCenter]' + str(ex))
-        resp = Result(message=str(ex), status_code=2011)
+        logger.error(f'[DataCenter] {str(ex)}')
+        resp = Result(message=f'[DataCenter] {str(ex)}', status_code=2011)
         resp.err_resp()
 
     # create a datacenter delete async task
@@ -142,17 +139,9 @@ def delete_dc_async(parm):
         resp.err_resp()
 
 
-class TaskIdQuery(Schema):
-    id = String(
-        required=True,  # celery task UUID
-        validate=Length(0, 36),
-        example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8",
-    )
-
-
 @bp.get('/task')
 @auth_required(auth_token)
-@input(TaskIdQuery, location='query')
+@bp.input(TaskIdQuery, location='query')
 # @output(CreateDcResult)
 def get_task_result(parm):
     '''获取异步任务执行结果'''

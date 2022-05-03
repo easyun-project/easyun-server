@@ -91,13 +91,13 @@ def get_easyun_session(dc_name):
 
 def set_boto3_region(dc_name):
     '''设置Boto3会话默认region,返回region name'''
-    try:
-        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+    thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+    if thisDC:
         # 设置 boto3 接口默认 region_name
         boto3.setup_default_session(region_name=thisDC.region)
         return thisDC.region
-    except Exception as ex:
-        return str(ex)
+    else:
+        raise ValueError(f'{dc_name} does not exist !')
 
 
 def get_tag_name(res_type, res_id):
