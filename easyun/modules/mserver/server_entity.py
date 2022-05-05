@@ -6,15 +6,14 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema, auth_required
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
+from easyun.common.schemas import TagItem
 from easyun.cloud.aws_ec2_ami import AMI_Windows, AMI_Linux
-from .schemas import TagItem
 from . import bp
-
 
 
 class DetailOut(Schema):
@@ -28,7 +27,7 @@ class DetailOut(Schema):
     # ssubnet_id = String()
     # key_name = String()
     # category = String()
-    #缺少ipname，publicip,Terminal protection, IAM role
+    # 缺少ipname，publicip,Terminal protection, IAM role
     InstanceType = String()
     VCpu = String()
     Memory = String()
@@ -43,7 +42,7 @@ class DetailOut(Schema):
 
     PlatformDetails = String()
     VirtualizationType = String()
-    UsageOperation = String()    
+    UsageOperation = String()
     Monitoring = String()
 
     ImageId = String()
@@ -57,7 +56,6 @@ class DetailOut(Schema):
     BlockDeviceMappings = List(Dict())
     NetworkInterfaces = List(Dict())
     SecurityGroups = List(Dict())
-    
 
 
 @bp.get('/detail/<svr_id>')
@@ -73,12 +71,14 @@ def get_server_detail(svr_id):
         ec2 = boto3.resource('ec2')
         instance_res1 = ec2.Instance(instance_res['InstanceId'])
 
-        instance_type = CLIENT.describe_instance_types(InstanceTypes=[instance_res['InstanceType']])
+        instance_type = CLIENT.describe_instance_types(
+            InstanceTypes=[instance_res['InstanceType']]
+        )
         VCpu = instance_type['InstanceTypes'][0]["VCpuInfo"]["DefaultVCpus"]
-        Memory = instance_type['InstanceTypes'][0]["MemoryInfo"]["SizeInMiB"]/1024
+        Memory = instance_type['InstanceTypes'][0]["MemoryInfo"]["SizeInMiB"] / 1024
 
         images = CLIENT.describe_images(ImageIds=[instance_res['ImageId']])
-        if  len(images['Images'])==0:
+        if len(images['Images']) == 0:
             # tip = "EC2 can't retrieve the {} because the AMI was either deleted or made private"
             # arch = tip.format('arch')
             # instance_res['ImageName'] = tip.format('ImageName')
@@ -96,20 +96,28 @@ def get_server_detail(svr_id):
             instance_res['ImageFullName'] = images["Images"][0]["Name"]
             print(instance_res['ImageFullName'])
             AMI = AMI_Windows[arch] + AMI_Linux[arch]
-            amitmp = [ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']]
+            amitmp = [
+                ami for ami in AMI if ami['amiName'] == instance_res['ImageFullName']
+            ]
             # print(amitmp)
             # instance_res['ImagePath'] = images["Images"][0]["ImageLocation"]
-            instance_res['ImagePath'] = '/'.join(images["Images"][0]["ImageLocation"].split('/')[1:])
-        protection = CLIENT.describe_instance_attribute(InstanceId = instance_res['InstanceId'],Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
+            instance_res['ImagePath'] = '/'.join(
+                images["Images"][0]["ImageLocation"].split('/')[1:]
+            )
+        protection = CLIENT.describe_instance_attribute(
+            InstanceId=instance_res['InstanceId'], Attribute='disableApiTermination'
+        )['DisableApiTermination']['Value']
         # print(images["Images"][0]["ImageLocation"])
         # print(images["Images"][0]["Name"])
         # print(instance_type)
         # print(instance_res)
-        
+
         instance_res['Monitoring'] = instance_res['Monitoring']['State']
         instance_res['VCpu'] = VCpu
         instance_res['Memory'] = Memory
-        instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile']['Arn'].split('/')[-1]
+        instance_res['IamInstanceProfile'] = instance_res['IamInstanceProfile'][
+            'Arn'
+        ].split('/')[-1]
 
         instance_res['ServerState'] = instance_res['State']['Name']
         instance_res['PublicIpAddress'] = instance_res1.public_ip_address
@@ -117,75 +125,75 @@ def get_server_detail(svr_id):
         instance_res['TerminalProtection'] = 'disabled' if protection else 'enabled'
         association = instance_res["NetworkInterfaces"][0].get("Association")
         svrProperty = {
-            "instanceName":[t for t in instance_res["Tags"] if t['Key'] == "Name"][0]['Value'],
-            "instanceType":instance_res["InstanceType"],
-            "vCpu":instance_res["VCpu"],
-            "memory":instance_res["Memory"],
-            "privateIp":instance_res["PrivateIpAddress"],
-            "publicIp":instance_res["PublicIpAddress"],
-            "isEip": True if association and association["IpOwnerId"]!='amazon' else False ,
-            "status":instance_res["ServerState"],
-
+            "instanceName": [t for t in instance_res["Tags"] if t['Key'] == "Name"][0][
+                'Value'
+            ],
+            "instanceType": instance_res["InstanceType"],
+            "vCpu": instance_res["VCpu"],
+            "memory": instance_res["Memory"],
+            "privateIp": instance_res["PrivateIpAddress"],
+            "publicIp": instance_res["PublicIpAddress"],
+            "isEip": True
+            if association and association["IpOwnerId"] != 'amazon'
+            else False,
+            "status": instance_res["ServerState"],
             # "":instance_res[""],
-            "instanceId":instance_res['InstanceId'],
-            "launchTime":instance_res["LaunchTime"].isoformat(),
-            "privateIpv4Dns":instance_res["PrivateDnsName"],
-            "publicIpv4Dns":instance_res["PublicDnsName"],
-
-
-            "platformDetails":instance_res["PlatformDetails"],
-            "virtualization":instance_res["VirtualizationType"],
-            "tenancy":instance_res["Tenancy"],
-            "usageOperation":instance_res["UsageOperation"],
-            "monitoring":instance_res["Monitoring"],
-            "terminationProtection":instance_res["TerminalProtection"],
-            
-            "amiId":instance_res["ImageId"],
-            "amiName":instance_res["ImageName"],
-            "amiPath":instance_res["ImagePath"],
-            "keyPairName":instance_res["KeyName"],
-            "iamRole":instance_res["IamInstanceProfile"],
+            "instanceId": instance_res['InstanceId'],
+            "launchTime": instance_res["LaunchTime"].isoformat(),
+            "privateIpv4Dns": instance_res["PrivateDnsName"],
+            "publicIpv4Dns": instance_res["PublicDnsName"],
+            "platformDetails": instance_res["PlatformDetails"],
+            "virtualization": instance_res["VirtualizationType"],
+            "tenancy": instance_res["Tenancy"],
+            "usageOperation": instance_res["UsageOperation"],
+            "monitoring": instance_res["Monitoring"],
+            "terminationProtection": instance_res["TerminalProtection"],
+            "amiId": instance_res["ImageId"],
+            "amiName": instance_res["ImageName"],
+            "amiPath": instance_res["ImagePath"],
+            "keyPairName": instance_res["KeyName"],
+            "iamRole": instance_res["IamInstanceProfile"],
         }
-        svrConfig = {
-            "arch":arch,
-            "os":amitmp[0]['osCode'] if amitmp else 'amzn2'
-        }
+        svrConfig = {"arch": arch, "os": amitmp[0]['osCode'] if amitmp else 'amzn2'}
         svrDisk = {
-            "volumeIds": [v["Ebs"]['VolumeId'] for v in instance_res["BlockDeviceMappings"]]
+            "volumeIds": [
+                v["Ebs"]['VolumeId'] for v in instance_res["BlockDeviceMappings"]
+            ]
         }
         svrNetworking = {
-            "privateIp":instance_res["PrivateIpAddress"],
-            "publicIp":instance_res["PublicIpAddress"],
-        } 
-        svrSecurity = [{"sgId":g['GroupId'],"sgName":g['GroupName']} for g in instance_res["SecurityGroups"]]        # {
+            "privateIp": instance_res["PrivateIpAddress"],
+            "publicIp": instance_res["PublicIpAddress"],
+        }
+        svrSecurity = [
+            {"sgId": g['GroupId'], "sgName": g['GroupName']}
+            for g in instance_res["SecurityGroups"]
+        ]  # {
         #     "sgId":[g['GroupId'] for g in instance_res["SecurityGroups"]],
         #     "sgName":[g['GroupName'] for g in instance_res["SecurityGroups"]],
         # }
-        svrTags = [t for t in instance_res["Tags"] if t['Key'] not in ["Flag","Name"]]
+        svrTags = [t for t in instance_res["Tags"] if t['Key'] not in ["Flag", "Name"]]
         # {
         #     # "":instance_res[""],
         #     "tags":instance_res["Tags"],
         #     # "":instance_res[""],
         # }
         svrConnect = {
-            "userName":amitmp[0]['userName'] if amitmp else ['ec2-user'],
-            "publicIp":instance_res["PublicIpAddress"],
+            "userName": amitmp[0]['userName'] if amitmp else ['ec2-user'],
+            "publicIp": instance_res["PublicIpAddress"],
         }
         detail = {
-            "svrProperty":svrProperty,
-            "svrConfig":svrConfig,
-            "svrDisk":svrDisk,
-            "svrNetworking":svrNetworking,
-            "svrSecurity":svrSecurity,
-            "svrTags":svrTags,
-            "svrConnect":svrConnect,
+            "svrProperty": svrProperty,
+            "svrConfig": svrConfig,
+            "svrDisk": svrDisk,
+            "svrNetworking": svrNetworking,
+            "svrSecurity": svrSecurity,
+            "svrTags": svrTags,
+            "svrConnect": svrConnect,
         }
-        res = Result(detail , status_code=200)
+        res = Result(detail, status_code=200)
         return res.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3001, http_status_code=400
-        )
+        response = Result(message=str(e), status_code=3001, http_status_code=400)
         response.err_resp()
 
 
@@ -201,36 +209,29 @@ def get_ins_types(svr_id):
             'insArch': thisSvr.architecture,
             'insHyper': thisSvr.hypervisor,
             'insType': thisSvr.instance_type,
-            'imgID': thisSvr.image_id
+            'imgID': thisSvr.image_id,
         }
 
-        resp = Result(
-            detail = instypeParam, 
-            status_code=200
-            )
+        resp = Result(detail=instypeParam, status_code=200)
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=3001, 
-            http_status_code=400
-        )
+        response = Result(message=str(ex), status_code=3001, http_status_code=400)
         response.err_resp()
-
 
 
 class DiskInfoIn(Schema):
     action = String(required=True, example='attach')
-    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
+    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  # 云服务器ID
     diskPath = String(required=True, example='/dev/sdf')
-    volumeId = String(required=True, example='vol-0fcb3e28f8687f74d')  #volumn ID
+    volumeId = String(required=True, example='vol-0fcb3e28f8687f74d')  # volumn ID
+
 
 @bp.put('/disk')
 @auth_required(auth_token)
-@input(DiskInfoIn)
+@bp.input(DiskInfoIn)
 def attach_disk(param):
-    '''云服务器关联与解绑磁盘(volume)'''  
+    '''云服务器关联与解绑磁盘(volume)'''
     try:
         # CLIENT = boto3.client('ec2')
         RESOURCE = boto3.resource('ec2')
@@ -243,8 +244,7 @@ def attach_disk(param):
         # )
         if param["action"] == "attach":
             volume.attach_to_instance(
-                Device=param["diskPath"],
-                InstanceId=param["svrId"]
+                Device=param["diskPath"], InstanceId=param["svrId"]
             )
         elif param["action"] == "detach":
             # disks = CLIENT.describe_instances(InstanceIds=[param['svrId']])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
@@ -255,21 +255,18 @@ def attach_disk(param):
             # volume = RESOURCE.Volume(vid[0])
 
             volume.detach_from_instance(
-                Device=param['diskPath'],
-                InstanceId=param['svrId']
+                Device=param['diskPath'], InstanceId=param['svrId']
             )
         else:
-            raise ValueError('invalid action') 
+            raise ValueError('invalid action')
         response = Result(
-            detail={'msg':'{} disk success'.format(param["action"])},
-            status_code=200
-            )
+            detail={'msg': '{} disk success'.format(param["action"])}, status_code=200
+        )
         return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3001, http_status_code=400
-        )
+        response = Result(message=str(e), status_code=3001, http_status_code=400)
         response.err_resp()
+
 
 # class DiskDetachInfoIn(Schema):
 #     svrId = String(required=True, example='i-03b15ba2fbe4f3a14')  #云服务器ID
@@ -303,7 +300,7 @@ def attach_disk(param):
 #         #         volume.id,
 #         #     ]
 #         # )
-#         from time import sleep 
+#         from time import sleep
 #         while True:
 #             volume1 = RESOURCE.Volume(volume.volume_id)
 #             print(volume1.state)
@@ -311,11 +308,11 @@ def attach_disk(param):
 #                 # volume1.delete()
 #                 break
 #             sleep(0.5)
-        
+
 #         response = Result(
 #             detail={'msg':'detach {} success'.format(param['diskPath'])},
 #             status_code=200
-#             )   
+#             )
 
 #         return response.make_resp()
 #     except Exception as e:
@@ -326,44 +323,44 @@ def attach_disk(param):
 
 
 class EipAttachInfoIn(Schema):
-    action = String(required=True, validate=OneOf(['attach', 'detach']), example='attach')
-    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
+    action = String(
+        required=True, validate=OneOf(['attach', 'detach']), example='attach'
+    )
+    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  # 云服务器ID
     publicIp = String(required=True, example='34.192.222.116')
 
 
 @bp.put('/eip')
 @auth_required(auth_token)
-@input(EipAttachInfoIn)
+@bp.input(EipAttachInfoIn)
 def attach_eip(param):
     '''云服务器关联和解绑静态IP(eip)'''
     try:
         CLIENT = boto3.client('ec2')
         if param["action"] == "attach":
             CLIENT.associate_address(
-            InstanceId=param['svrId'],
-            PublicIp=param['publicIp'],
+                InstanceId=param['svrId'],
+                PublicIp=param['publicIp'],
             )
         elif param["action"] == "detach":
             publicIp = CLIENT.describe_addresses(
-            PublicIps = [param['publicIp']],
+                PublicIps=[param['publicIp']],
             )
             associationId = publicIp['Addresses'][0]['AssociationId']
             CLIENT.disassociate_address(
                 AssociationId=associationId,
-                )
+            )
         else:
-            raise ValueError('invalid action') 
+            raise ValueError('invalid action')
         response = Result(
-            detail={'msg':'{} eip success'.format(param["action"])},
-            status_code=200
-            )   
+            detail={'msg': '{} eip success'.format(param["action"])}, status_code=200
+        )
 
         return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3001, http_status_code=400
-        )
+        response = Result(message=str(e), status_code=3001, http_status_code=400)
         response.err_resp()
+
 
 # class EipDetachInfoIn(Schema):
 #     publicIp = String(required=True, example='52.70.138.156')
@@ -385,7 +382,7 @@ def attach_eip(param):
 #         response = Result(
 #             detail={'msg':'detach eip success'},
 #             status_code=200
-#             )   
+#             )
 
 #         return response.make_resp()
 #     except Exception as e:
@@ -394,15 +391,18 @@ def attach_eip(param):
 #         )
 #         response.err_resp()
 
+
 class SgAttachInfoIn(Schema):
-    action = String(required=True, validate=OneOf(['attach', 'detach']), example='attach')
-    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  #云服务器ID
+    action = String(
+        required=True, validate=OneOf(['attach', 'detach']), example='attach'
+    )
+    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  # 云服务器ID
     secgroupId = String(required=True, example='sg-0bb69bb599b303a1e')
 
 
 @bp.put('/secgroup')
 @auth_required(auth_token)
-@input(SgAttachInfoIn)
+@bp.input(SgAttachInfoIn)
 def attach_secgroup(param):
     '''云服务器关联和解绑安全组(secgroup)'''
     try:
@@ -415,26 +415,29 @@ def attach_secgroup(param):
         elif param["action"] == "detach":
             for network_interface in ec2.Instance(param['svrId']).network_interfaces:
                 # group_ids = [group['GroupId'] for group in network_interface.groups]
-                group_ids = [group['GroupId'] for group in network_interface.groups if group['GroupId'] !=param['secgroupId']]
+                group_ids = [
+                    group['GroupId']
+                    for group in network_interface.groups
+                    if group['GroupId'] != param['secgroupId']
+                ]
                 # print(group_ids)
-                if len(group_ids)>0:
+                if len(group_ids) > 0:
                     network_interface.modify_attribute(Groups=group_ids)
                 else:
                     raise ValueError('You must specify at least one group')
         else:
-            raise ValueError('invalid action')  
-        
+            raise ValueError('invalid action')
+
         response = Result(
-            detail={'msg':'{} secgroup success'.format(param["action"])},
-            status_code=200
-            )   
+            detail={'msg': '{} secgroup success'.format(param["action"])},
+            status_code=200,
+        )
 
         return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3001, http_status_code=400
-        )
+        response = Result(message=str(e), status_code=3001, http_status_code=400)
         response.err_resp()
+
 
 # @bp.put('/detach/secgroup')
 # @auth_required(auth_token)
@@ -450,8 +453,8 @@ def attach_secgroup(param):
 #         response = Result(
 #             detail={'msg':'detach secgroup success'},
 #             status_code=200
-#             ) 
-#         return response.make_resp() 
+#             )
+#         return response.make_resp()
 #     except Exception as e:
 #         response = Result(
 #             message=str(e), status_code=3001, http_status_code=400
@@ -467,17 +470,18 @@ def list_svr_tags(svr_id):
     try:
         resource_ec2 = boto3.resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
-        userTags = [tag for tag in thisSvr.tags if tag['Key'] not in ["Flag",]]
-        response = Result(
-            detail= userTags,
-            status_code=200
-            ) 
-        return response.make_resp() 
+        userTags = [
+            tag
+            for tag in thisSvr.tags
+            if tag['Key']
+            not in [
+                "Flag",
+            ]
+        ]
+        response = Result(detail=userTags, status_code=200)
+        return response.make_resp()
     except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=3031
-        )
+        response = Result(message=str(ex), status_code=3031)
         response.err_resp()
 
 
@@ -493,24 +497,15 @@ def mod_svr_tags(svr_id, parm):
         #     if tag["Key"] == 'Flag':
         if parm["Key"] == 'Flag':
             raise ValueError('Flag tag unsupported')
-        
+
         resource_ec2 = boto3.resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
-        newTags = thisSvr.create_tags(
-            Tags=[parm]
-        )
+        newTags = thisSvr.create_tags(Tags=[parm])
         userTags = [t for t in thisSvr.tags if t['Key'] != "Flag"]
-        response = Result(
-            detail= userTags,
-            status_code=200
-            ) 
-        return response.make_resp() 
+        response = Result(detail=userTags, status_code=200)
+        return response.make_resp()
     except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=3032, 
-            http_status_code=400
-        )
+        response = Result(message=str(ex), status_code=3032, http_status_code=400)
         response.err_resp()
 
 
@@ -526,21 +521,11 @@ def del_svr_tags(svr_id, parm):
 
         resource_ec2 = boto3.resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
-        delTags = thisSvr.delete_tags(
-            Tags=[parm]
-        )
+        delTags = thisSvr.delete_tags(Tags=[parm])
 
         userTags = [t for t in thisSvr.tags if t['Key'] != "Flag"]
-        response = Result(
-            detail= userTags,
-            status_code=200
-            ) 
-        return response.make_resp() 
+        response = Result(detail=userTags, status_code=200)
+        return response.make_resp()
     except Exception as ex:
-        response = Result(
-            message=str(ex), 
-            status_code=3033, 
-            http_status_code=400
-        )
+        response = Result(message=str(ex), status_code=3033, http_status_code=400)
         response.err_resp()
-

@@ -83,7 +83,7 @@ def create_dc_async(parm):
 @log.api_error(logger)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
-    dcName = parm['dcName']    
+    dcName = parm['dcName']
     # Check the prerequisites before create datacenter task
     try:
         dcRegion = set_boto3_region(dcName)
@@ -147,7 +147,8 @@ def get_task_result(parm):
     '''获取异步任务执行结果'''
     try:
         # task = AsyncResult(parm['id'], app=celery)
-        task: AsyncResult = create_dc_task.AsyncResult(parm['id'])
+        task_id = parm['id'].replace('_', '-')
+        task: AsyncResult = create_dc_task.AsyncResult(task_id)
         # .ready() Return `True` if the task has executed.
         if task.ready():
             # 通过task.info 获得 task return 数据
