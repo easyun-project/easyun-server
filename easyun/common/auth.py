@@ -84,9 +84,9 @@ def login_user(user):
         else:
             raise ValueError('Username and Password do not match.')
     except Exception as ex:
-        response = Result(message=str(ex), status_code=1004, http_status_code=401)
+        response = Result(message=str(ex), status_code=1004, http_status_code=400)
         response.err_resp()
-        
+
 
 @bp.delete('/logout')
 @auth_required(auth_token)

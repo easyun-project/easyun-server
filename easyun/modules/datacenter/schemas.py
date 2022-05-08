@@ -169,6 +169,13 @@ class DefaultParmsOut(Schema):
     dropDown = Nested(DropDownList)
 
 
+class DeleteDcParms(Schema):
+    dcName = String(
+        required=True, validate=Length(0, 60), example="Easyun"  # Datacenter name
+    )
+    isForceDel = Boolean(example=False)
+
+
 '''
 Schemas for Datacenter APIs
 ==================================================================

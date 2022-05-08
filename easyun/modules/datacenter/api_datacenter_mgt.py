@@ -12,12 +12,12 @@ from easyun import log
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
-from easyun.common.schemas import DcNameParm, TaskIdQuery
+from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.cloud.aws_quota import get_quota_value
 from easyun.cloud.utils import set_boto3_region
 from easyun.cloud.sdk_tagging import RgTagging
-from .schemas import CreateDcParms
+from .schemas import CreateDcParms, DeleteDcParms
 from .task_create import create_dc_task
 from .task_delete import delete_dc_task
 from . import bp, logger
@@ -78,12 +78,13 @@ def create_dc_async(parm):
 
 @bp.delete('')
 @auth_required(auth_token)
-@bp.input(DcNameParm)
+@bp.input(DeleteDcParms)
 # @output(CreateDcResult)
 @log.api_error(logger)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
     dcName = parm['dcName']
+    isForceDel = parm.get('isForceDel')
     # Check the prerequisites before create datacenter task
     try:
         dcRegion = set_boto3_region(dcName)
@@ -110,11 +111,12 @@ def delete_dc_async(parm):
             )
 
         # step 4: DC resource empty checking - NAT Gateway
-        natgwNum = rgt.sum_resources('ec2:natgateway')
-        if natgwNum > 0:
-            raise ValueError(
-                f'DataCenter NOT Empty, contains {natgwNum} NatGateway(s) resources.'
-            )
+        if not isForceDel:
+            natgwNum = rgt.sum_resources('ec2:natgateway')
+            if natgwNum > 0:
+                raise ValueError(
+                    f'[Option] {natgwNum} NatGateway(s) associated with the Datacenter.'
+                )
 
     except Exception as ex:
         logger.error(f'[DataCenter] {str(ex)}')
