@@ -21,7 +21,7 @@ class UsernameParm(Schema):
 
 
 class PasswordParm(Schema):
-    password = String(required=True, validate=Length(0, 20), example="Passw0rd")
+    passWord = String(required=True, validate=Length(0, 20), example="Passw0rd")
 
 
 class UserModel(Schema):
@@ -29,12 +29,12 @@ class UserModel(Schema):
     username = String()
     email = String()
     token = String()
-    token_expiration = DateTime()
+    tokenExpiration = DateTime()
     # cloud account info
-    account_id = String()
-    account_type = String()
+    accountId = String()
+    accountType = String()
     role = String()
-    deploy_region = String()
+    deployRegion = String()
 
 
 class UserBasic(Schema):
@@ -45,7 +45,7 @@ class UserBasic(Schema):
 
 class AddUserParm(Schema):
     username = String(required=True, validate=Length(0, 20), example="user")
-    password = String(required=True, validate=Length(0, 30), example="password")
+    password = String(required=True, validate=Length(0, 30), example="passWord")
     email = String(required=True, validate=Email(), example="user@mail.com")
 
 

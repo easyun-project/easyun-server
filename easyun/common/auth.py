@@ -14,7 +14,7 @@ from apiflask import (
 )
 from .result import Result
 from .models import User, Account
-from .schemas import LoginParm, UsernameParm, UserModel, PasswordParm, AddUserParm
+from .schemas import LoginParm, UsernameParm, PasswordParm, UserModel, AddUserParm
 from .. import db
 
 # define api version
@@ -72,11 +72,12 @@ def login_user(user):
             cloudAccount: Account = Account.query.first()
             resp = Result(
                 detail={
+                    'username': userName,
                     'token': authToken,
-                    'account_id': cloudAccount.account_id,
-                    'account_type': cloudAccount.aws_type,
+                    'accountId': cloudAccount.account_id,
+                    'accountType': cloudAccount.aws_type,
                     'role': cloudAccount.role,
-                    'deploy_region': cloudAccount.get_region(),
+                    'deployRegion': cloudAccount.get_region(),
                 },
                 status_code=200,
             )
