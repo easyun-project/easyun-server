@@ -7,7 +7,7 @@
 
 import boto3
 from apiflask import auth_required
-from celery.result import ResultBase, AsyncResult
+from celery.result import AsyncResult
 from easyun import log
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
@@ -65,7 +65,7 @@ def create_dc_async(parm):
         resp = Result(
             task={
                 'taskId': task.id,
-                'description': 'CREATING',
+                'status': task.status,
             },
             status_code=200,
         )
@@ -130,7 +130,7 @@ def delete_dc_async(parm):
         resp = Result(
             task={
                 'taskId': task.id,
-                'description': 'DELETING',
+                'status': task.status,
             },
             status_code=200,
         )
@@ -147,29 +147,30 @@ def delete_dc_async(parm):
 # @output(CreateDcResult)
 def get_task_result(parm):
     '''获取异步任务执行结果'''
+    # workaround: replace '-' back in query parameter
+    task_id = parm['id'].replace('_', '-')
     try:
-        # task = AsyncResult(parm['id'], app=celery)
-        task_id = parm['id'].replace('_', '-')
+        # task = AsyncResult(task_id, app=celery)
         task: AsyncResult = create_dc_task.AsyncResult(task_id)
-        # .ready() Return `True` if the task has executed.
+        # task.ready() Return `True` if the task has executed.
         if task.ready():
-            # 通过task.info 获得 task return 数据
+            # 等同 task.status == 'SUCCESS':
+            # task.state: PENDING/STARTED/PROGRESS/SUCCESS/FAILURE
+            # 从 task.info 获得 task return 数据
             resp = Result(
                 detail=task.info.get('detail'),
                 message=task.info.get('message', 'success'),
                 status_code=task.info.get('status_code', 200),
-                task={'taskId': task.id},
-                http_status_code=task.info.get('http_status_code', 200),
+                task={'taskId': task.id, 'status': task.status},
             )
-        # task.state: PENDING/STARTED/SUCCESS/FAILURE
         else:
             # 通过task.info.get()获得 update_state() meta数据
             resp = Result(
                 # detail = {}, # 任务执行的最终结果
                 message=task.info.get('message', 'success'),
-                status_code=200,
+                status_code=task.info.get('status_code', 200),
                 task={
-                    'taskId': task.id,
+                    'taskId': task.id, 'status': task.status,
                     'current': task.info.get('current', 0),  # 当前循环进度
                     'total': task.info.get('total', 100),  # 总循环进度
                     'description': task.info.get('stage', ''),  # 阶段描述
@@ -177,11 +178,11 @@ def get_task_result(parm):
             )
         return resp.make_resp()
 
-    # 如查询过程出现了一些问题
+    # 如果Celery查询操作报错
     except Exception as ex:
         resp = Result(
             message=str(ex),
             status_code=task.info.get('status_code'),
-            task={'taskId': task.id},
+            task={'taskId': task.id, 'status': task.status},
         )
         resp.err_resp()

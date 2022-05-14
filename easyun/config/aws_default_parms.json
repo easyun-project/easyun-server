@@ -1,0 +1,48 @@
+{
+    "version": "2021.11.21",
+    "description": "Default DataCenter Parameters",
+    "config":{
+        "secgroup": {
+            "webPerm" : [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 80,
+                    "ToPort": 80,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                }
+            ],
+            "dbPerm" : [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 3306,
+                    "ToPort": 3306,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5432,
+                    "ToPort": 5432,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 1521,
+                    "ToPort": 1521,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 1443,
+                    "ToPort": 1443,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                }
+            ]
+        }
+    }
+}

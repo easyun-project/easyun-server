@@ -17,7 +17,7 @@ def generate_payload(
     detail: Any = None,
     message: str = "success",
     status_code: int = 200,
-    task: Any = None
+    task: Any = None,
 ) -> dict:
     """生成格式化的响应体
 
@@ -29,26 +29,34 @@ def generate_payload(
     Returns:
         dict: 格式化好的载体
     """
-    return {'detail': detail,'message': message, 'status_code': status_code, 'task': task}
+    return {
+        'detail': detail,
+        'message': message,
+        'status_code': status_code,
+        'task': task,
+    }
+
 
 class Result:
     """
-        >>> result = Result()
-        >>> result.make_resp()
-        {
-            'detail': None,
-            'message': "success",
-            'status_code': 200,
-            'task': None
-        }, 200
+    >>> result = Result()
+    >>> result.make_resp()
+    {
+        'detail': None,
+        'message': "success",
+        'status_code': 200,
+        'task': None
+    }, 200
     """
+
     # 构造函数
-    def __init__(self,
-                 detail: Any = None,
-                 message: str = "success",
-                 status_code: int = 200,
-                 task: Any = None,
-                 http_status_code: int = 200
+    def __init__(
+        self,
+        detail: Any = None,
+        message: str = "success",
+        status_code: int = 200,
+        task: Any = None,
+        http_status_code: int = 200,
     ) -> None:
         """初始化响应数据类
 
@@ -79,25 +87,30 @@ class Result:
         Returns:
             Tuple[dict, int]: 响应体与http状态码
         """
-        return generate_payload(detail=self.detail, message=self.message,
-                                status_code=self.status_code,
-                                task=self.task), self.http_status_code
+        return (
+            generate_payload(
+                detail=self.detail,
+                message=self.message,
+                status_code=self.status_code,
+                task=self.task,
+            ),
+            self.http_status_code,
+        )
 
     def err_resp(self) -> None:
         """构建error响应
 
-            ```example
-                result = Result(detail=None, status_code=1001,
-                            message="catch an error", http_status_code=400)
-                result.err_resp()
-            ```
+        ```example
+            result = Result(detail=None, status_code=1001,
+                        message="catch an error", http_status_code=400)
+            result.err_resp()
+        ```
         """
         if self.http_status_code == 200:
             self.http_status_code = 400
-        abort(self.http_status_code,
-              extra_data=generate_payload(
-                  self.detail,
-                  self.message,
-                  self.status_code,
-                  self.task
-              ))
+        abort(
+            self.http_status_code,
+            extra_data=generate_payload(
+                self.detail, self.message, self.status_code, self.task
+            ),
+        )

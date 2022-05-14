@@ -4,8 +4,9 @@
   @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
   @auth:    aleck
 """
-
 import boto3
+from easyun.libs.utils import load_json_config
+# from botocore.exceptions import ClientError
 from datetime import datetime
 from easyun import db, celery
 from easyun.common.models import Datacenter, Account
@@ -52,7 +53,10 @@ def create_dc_task(self, parm, user):
         )
     except Exception as ex:
         logger.error('[VPC]' + str(ex))
-        return {'message': str(ex), 'status_code': 2010, 'http_status_code': 400}
+        # 如果出错任务结束,更新状态为:FAILURE
+        # fix-me: 遇Exception 返回 update_state() 信息丢失
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2010}
 
     # step 2: Write VPC metadata to local database
     try:
@@ -71,11 +75,10 @@ def create_dc_task(self, parm, user):
 
         stage = f"[DataCenter] {newDC.name} metadata updated"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 10, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 10, 'total': 100, 'stage': stage})
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2020, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2020}
 
     # step 3: create Internet Gateway
     try:
@@ -91,18 +94,15 @@ def create_dc_task(self, parm, user):
         # got Error：ValueError: Waiter does not exist: internet_gateway_exists
         stage = f"[InternetGateway] {igw.id} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 15, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 15, 'total': 100, 'stage': stage})
         # and Attach the igw to vpc
         igw.attach_to_vpc(DryRun=DryRun, VpcId=vpc.id)
         stage = f"[InternetGateway] {igw.id} attached to {vpc.id}"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 20, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 20, 'total': 100, 'stage': stage})
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2030, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2030}
 
     # step 4: create 2x Public Subnets
     try:
@@ -115,9 +115,7 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[Subnet] {pubsbn1.id} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 25, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 25, 'total': 100, 'stage': stage})
 
         nameTag = {"Key": "Name", "Value": parm['pubSubnet2']['tagName']}
         pubsbn2 = resource_ec2.create_subnet(
@@ -128,12 +126,11 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[Subnet] {pubsbn2.id} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 30, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 30, 'total': 100, 'stage': stage})
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2040, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2040}
 
     # step 5: update main route table （as route-igw）
     try:
@@ -152,9 +149,7 @@ def create_dc_task(self, parm, user):
                 )
                 stage = f"[RouteTable] {irt.destination_cidr_block} created"
                 logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 35, 'total': 100, 'stage': stage}
-                )
+                self.update_state(state='PROGRESS', meta={'current': 35, 'total': 100, 'stage': stage})
                 # associate the route table with the pub subnets 1
                 rtb.associate_with_subnet(DryRun=DryRun, SubnetId=pubsbn1.id)
                 # associate the route table with the pub subnets 2
@@ -163,7 +158,8 @@ def create_dc_task(self, parm, user):
 
         self.update_state(state='PROGRESS', meta={'current': 40, 'total': 100})
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2050, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2050}
 
     # step 6: create 2x Private Subnets
     try:
@@ -176,9 +172,7 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[Subnet] {prisbn1.id} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 45, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 45, 'total': 100, 'stage': stage})
 
         nameTag = {"Key": "Name", "Value": parm['priSubnet2']['tagName']}
         prisbn2 = resource_ec2.create_subnet(
@@ -189,11 +183,10 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[Subnet] {prisbn2.id} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 50, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 50, 'total': 100, 'stage': stage})
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2060, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2060}
 
     # step 7: create NAT Gateway with EIP
     # 7-1: Allocate EIP for NAT Gateway
@@ -207,12 +200,11 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[StaticIP] {eip['PublicIp']} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 55, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 55, 'total': 100, 'stage': stage})
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2071, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2071}
 
     # 7-2: create nat gateway
     try:
@@ -229,9 +221,7 @@ def create_dc_task(self, parm, user):
         natgwID = natgw['NatGateway']['NatGatewayId']
         stage = f"[NatGateway] {natgwID} creating"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 65, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 65, 'total': 100, 'stage': stage})
 
         # waite natgw created
         waiter = resource_ec2.meta.client.get_waiter('nat_gateway_available')
@@ -239,12 +229,10 @@ def create_dc_task(self, parm, user):
 
         stage = f"[NatGateway] {natgwID} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 70, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'stage': stage})
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2070, 'http_status_code': 400}
+        return {'message': str(ex), 'status_code': 2070}
 
     # step 8: create NAT route table and route to natgw
     # 8-1 create route table for natgw
@@ -264,9 +252,7 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[Route] {nrt.destination_cidr_block} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 75, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 75, 'total': 100, 'stage': stage})
         # associate the route table with the pri subnets 1
         nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn1.id)
         # associate the route table with the pri subnets 2
@@ -274,49 +260,13 @@ def create_dc_task(self, parm, user):
         self.update_state(state='PROGRESS', meta={'current': 80, 'total': 100})
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2080, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2080}
 
     # step 9: update and create Security Groups
-    webPerm = [
-        {
-            'IpProtocol': 'tcp',
-            'FromPort': 80,
-            'ToPort': 80,
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-        },
-        {
-            'IpProtocol': 'tcp',
-            'FromPort': 443,
-            'ToPort': 443,
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-        },
-    ]
-    dbPerm = [
-        {
-            'IpProtocol': 'tcp',
-            'FromPort': 3306,
-            'ToPort': 3306,
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-        },
-        {
-            'IpProtocol': 'tcp',
-            'FromPort': 5432,
-            'ToPort': 5432,
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-        },
-        {
-            'IpProtocol': 'tcp',
-            'FromPort': 1521,
-            'ToPort': 1521,
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-        },
-        {
-            'IpProtocol': 'tcp',
-            'FromPort': 1443,
-            'ToPort': 1443,
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-        },
-    ]
+    secgroupParms = load_json_config('aws_default_parms').get('secgroup')
+    webPerm = secgroupParms.get('webPerm')
+    dbPerm = secgroupParms.get('dbPerm')
 
     # 9-1: update default security group
     try:
@@ -333,12 +283,11 @@ def create_dc_task(self, parm, user):
                 break
         stage = f"[SecurityGroup] {sg.group_name} updated"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 85, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 85, 'total': 100, 'stage': stage})
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2091, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2091}
 
     # 9-2: create webapp security group
     try:
@@ -361,11 +310,10 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[SecurityGroup] {sgWeb.group_name} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 90, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 90, 'total': 100, 'stage': stage})
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2092, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2092}
 
     # 9-3: create database security group
     try:
@@ -388,12 +336,11 @@ def create_dc_task(self, parm, user):
         )
         stage = f"[SecurityGroup] {sgWeb.group_name} created"
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 95, 'total': 100, 'stage': stage}
-        )
+        self.update_state(state='PROGRESS', meta={'current': 95, 'total': 100, 'stage': stage})
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2093, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2093}
 
     # step 10: Update Datacenter name list to DynamoDB
     try:
@@ -416,7 +363,8 @@ def create_dc_task(self, parm, user):
         }
 
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2099, 'http_status_code': 400}
+        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        return {'message': str(ex), 'status_code': 2099}
 
 
 def check_perm(sg):

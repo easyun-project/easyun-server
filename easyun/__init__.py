@@ -1,20 +1,22 @@
 # -*- coding: UTF-8 -*-
 '''
 @Description: The app module, containing the app factory function.
-@LastEditors: 
+@LastEditors:
 '''
-
 import os
 import logging
 from apiflask import APIFlask, Schema
-from apiflask.fields import String, Integer, Field, Nested
-from logging.handlers import RotatingFileHandler
+from apiflask.fields import String, Integer, Field
+
+# from logging.handlers import RotatingFileHandler
 import click
 from flask_sqlalchemy import SQLAlchemy
+
 # from flask_redis import FlaskRedis
 from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
+
 # from .common.result import BaseResponseSchema
 from config import Config
 from easyun.libs.celery import FlaskCelery
@@ -23,7 +25,7 @@ from easyun.libs.log import EasyunLogging
 # define api version
 ver = '/api/v1'
 
-#保留 FLAG 用于兼容旧代码
+# 保留 FLAG 用于兼容旧代码
 FLAG = "Easyun"
 
 # extensions initialization
@@ -31,18 +33,16 @@ db = SQLAlchemy()
 cors = CORS()
 migrate = Migrate()
 celery = FlaskCelery(
-        __name__,
-        broker=Config.CELERY_broker_url,
-        backend=Config.result_backend
-    )
+    __name__, broker=Config.CELERY_broker_url, backend=Config.result_backend
+)
 log = EasyunLogging()
 # redis_client = FlaskRedis()
 
 
 class BaseResponseSchema(Schema):
     message = String()
-    status_code = Integer()     # the HTTP_STATUS_CODES
-    detail = Field()      # the data key
+    detail = Field()  # the data key
+    status_code = Integer()  # the HTTP_STATUS_CODES
 
 
 def create_app(run_env=None):
@@ -59,36 +59,29 @@ def create_app(run_env=None):
 
     # 初始化扩展
     register_extensions(app=app)
-
     # 注册自定义命令
     register_commands(app=app)
-
-    register_blueprints(app)
-
+    # 全局日志
     app.logger.setLevel(logging.INFO)
     if run_env != 'test':
-        app.logger.info('Easyun API Start')
+        app.logger.info(f'Easyun API Start [{run_env}]')
 
     # 初始化AWS云环境账号基础信息
     register_cloud_account(app)
 
+    @app.route('/', methods=['GET'])
+    def get_server_status():
+        resp: BaseResponseSchema = {
+            'detail': {'status': 'running'},
+            'message': 'success'
+        }
+        return resp
+
+    # 注册子模块blueprint
+    register_blueprints(app)
+
     return app
 
-
-# 注册 Flask blueprints
-def register_blueprints(app: APIFlask):
-    """Register Flask blueprints."""
-    from .common import auth
-    from .modules import mserver, mstorage, datacenter, account, dashboard, mdatabase
-
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(datacenter.bp)
-    app.register_blueprint(mserver.bp)
-    app.register_blueprint(mdatabase.bp)
-    app.register_blueprint(mstorage.bp)
-    app.register_blueprint(account.bp)    
-    app.register_blueprint(dashboard.bp)
-    return None
 
 def register_extensions(app: APIFlask):
     """初始化扩展
@@ -105,6 +98,7 @@ def register_extensions(app: APIFlask):
     with app.app_context():
         # 初始化数据库
         from easyun.common.models import User, Account, Datacenter
+
         db.create_all()
         if db.engine.url.drivername == 'sqlite':
             # dev test
@@ -117,23 +111,40 @@ def register_cloud_account(app: APIFlask):
     """注册后端服务器部署的云账号信息"""
     from easyun.common.models import Account
     from easyun.cloud.aws_basic import get_deploy_env
+
     # 获取 AWS云环境信息
     cloudEvn = get_deploy_env('aws')
     # 数据写入 database
     with app.app_context():
-        existAccount:Account = Account.query.filter_by(cloud='aws').first()
+        existAccount: Account = Account.query.filter_by(cloud='aws').first()
         if existAccount:
             existAccount.update_dict(cloudEvn)
         else:
             thisAccount = Account(
-                cloud='aws', 
-                account_id = cloudEvn.get('account_id'), 
-                role = cloudEvn.get('role'),  
-                deploy_region = cloudEvn.get('deploy_region'), 
-                aws_type = cloudEvn.get('aws_type'), 
-                )
+                cloud='aws',
+                account_id=cloudEvn.get('account_id'),
+                role=cloudEvn.get('role'),
+                deploy_region=cloudEvn.get('deploy_region'),
+                aws_type=cloudEvn.get('aws_type'),
+            )
             db.session.add(thisAccount)
         db.session.commit()
+
+
+# 注册 Flask blueprints
+def register_blueprints(app: APIFlask):
+    """Register Flask blueprints."""
+    from .common import auth
+    from .modules import mserver, mstorage, datacenter, account, dashboard, mdatabase
+
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(datacenter.bp)
+    app.register_blueprint(mserver.bp)
+    app.register_blueprint(mdatabase.bp)
+    app.register_blueprint(mstorage.bp)
+    app.register_blueprint(account.bp)
+    app.register_blueprint(dashboard.bp)
+    return None
 
 
 def register_commands(app: APIFlask):
@@ -141,14 +152,16 @@ def register_commands(app: APIFlask):
     Args:
         app (APIFlask): application实例
     """
+
     @app.cli.command()
     def initdb():
         from easyun.common.models import User, Account, Datacenter, KeyStore, KeyPairs
+
         db.create_all()
-        # 预设 admin user
-        admin = User(username='demo', email='demo@easyun.com')
-        admin.set_password('easyun')
-        db.session.add(admin)
+        # 预设 demo user
+        demoUser = User(username='demo', email='demo@easyun.com')
+        demoUser.set_password('easyun')
+        db.session.add(demoUser)
 
         db.session.commit()
         click.echo("init dev database.")

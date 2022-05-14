@@ -77,7 +77,7 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2110,
-                    'http_status_code': 400,
+                    # 'http_status_code': 400,
                 }
 
             # You must detach or delete all gateways and resources that are associated with the VPC before you can delete it.
@@ -99,7 +99,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2110,
-                    'http_status_code': 400,
                 }
 
             # Step 3: delete all security groups associated with the VPC (except the default one)
@@ -120,7 +119,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2120,
-                    'http_status_code': 400,
                 }
 
             # Step 4: delete all eip associated with the datacenter
@@ -137,7 +135,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2130,
-                    'http_status_code': 400,
                 }
 
             # Step 5: delete requested_vpc_peering_connections associated with the VPC
@@ -161,7 +158,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2150,
-                    'http_status_code': 400,
                 }
 
             # Step 6: delete all route tables associated with the VPC (except the default one)
@@ -184,7 +180,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2160,
-                    'http_status_code': 400,
                 }
 
             # Step 7: delete internet_gateways associated with the VPC
@@ -205,7 +200,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2170,
-                    'http_status_code': 400,
                 }
 
             # Step 8: delete  easyun vpc, including:
@@ -221,7 +215,6 @@ def delete_dc_task(self, parm, region):
                 return {
                     'message': str(ex),
                     'status_code': 2180,
-                    'http_status_code': 400,
                 }
 
         # step 9: Update local Datacenter metadata
