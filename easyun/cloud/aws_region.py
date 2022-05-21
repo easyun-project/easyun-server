@@ -8,13 +8,15 @@ import boto3
 from easyun.libs.utils import load_json_config
 
 
-
 '''AWS Region 列表 (26)'''
 AWS_Regions = load_json_config('aws_region')
 
+
 def get_region_codes(account_type='global'):
     if account_type == 'gcr':
-        regionCodes = boto3._get_default_session().get_available_regions('ec2', 'aws-cn')
+        regionCodes = boto3._get_default_session().get_available_regions(
+            'ec2', 'aws-cn'
+        )
     else:
         regionCodes = boto3._get_default_session().get_available_regions('ec2')
     return regionCodes

@@ -6,19 +6,38 @@
 """
 
 import boto3
-from boto3.session import Session
-from easyun.common.models import Datacenter, Account
+from easyun.common.models import Datacenter
 
 
-_EASYUN_SESSION = None
-
+_EASYUN_SESSION = boto3.session.Session()
 _EC2_RESOURCE = None
+
+
+def get_easyun_session(dc_name=None):
+    '''设置Boto3 Session 默认region,返回region name'''
+    global _EASYUN_SESSION
+    # return current session if no dc_name is specified
+    if dc_name is None:
+        return _EASYUN_SESSION
+    else:
+        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+    if thisDC:
+        dcRegion = thisDC.region
+        # Get or Create Easyun boto3 session
+        if _EASYUN_SESSION is not None and _EASYUN_SESSION.region_name == dcRegion:
+            return _EASYUN_SESSION
+        else:
+            _EASYUN_SESSION = boto3.session.Session(region_name=dcRegion)
+            return _EASYUN_SESSION
+    else:
+        raise ValueError(f'{dc_name} does not exist !')
 
 
 def get_ec2_resource():
     global _EC2_RESOURCE
     if _EC2_RESOURCE is None:
-        _EC2_RESOURCE = boto3.resource('ec2')
+        eySession = get_easyun_session()
+        _EC2_RESOURCE = eySession.resource('ec2')
     return _EC2_RESOURCE
 
 
@@ -73,22 +92,6 @@ def query_dc_vpc(dc_name):
         return 'Datacenter not existed, kindly create it first!'
 
 
-def get_easyun_session(dc_name):
-    '''设置Boto3 Session 默认region,返回region name'''
-    thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
-    if thisDC:
-        dcRegion = thisDC.region
-        # Get or Create Easyun boto3 session
-        global _EASYUN_SESSION
-        if _EASYUN_SESSION is not None and _EASYUN_SESSION.region_name == dcRegion:
-            return _EASYUN_SESSION
-        else:
-            _EASYUN_SESSION = Session(region_name=dcRegion)
-            return _EASYUN_SESSION
-    else:
-        raise ValueError(f'{dc_name} does not exist !')
-
-
 def set_boto3_region(dc_name):
     '''设置Boto3会话默认region,返回region name'''
     thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
@@ -132,9 +135,8 @@ def get_tag_name(res_type, res_id):
 
 def get_server_name(svr_id):
     '''通过instanceID 查询服务器 tag:Name'''
-    resource_ec2 = get_ec2_resource()
     try:
-        if svr_id == None:
+        if svr_id is None:
             raise ValueError('svr_id is None')
         # server = resource_ec2.Instance(svr_id)
         # tagName = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
@@ -149,7 +151,7 @@ def get_eni_type(eni_id):
     # 'InterfaceType': 'interface'|'natGateway'|'efa'|'trunk'|'load_balancer'|'network_load_balancer'|'vpc_endpoint'|'transit_gateway',
     resource_ec2 = get_ec2_resource()
     try:
-        if eni_id == None:
+        if eni_id is None:
             raise ValueError('subnet_id is None')
         thisEni = resource_ec2.NetworkInterface(eni_id)
         return thisEni.interface_type

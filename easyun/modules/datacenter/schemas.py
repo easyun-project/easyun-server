@@ -7,7 +7,7 @@
 """
 
 from apiflask import Schema
-from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested
+from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Number
 from apiflask.validators import Length, OneOf
 from easyun.cloud.aws_region import get_region_codes
 
@@ -148,15 +148,6 @@ class CreateDcParms(Schema):
     )
 
 
-# 定义api返回数据格式
-class CreateDcResult(Schema):
-    name = String()
-    cloud = String()
-    region = String()
-    vpc_id = String()
-    create_date = DateTime()
-
-
 # 定义DC参数返回格式
 class DropDownList(Schema):
     azList = List(String)
@@ -214,15 +205,15 @@ class DcParmSubnetSchema(Schema):
     route_table = String(data_key='routeTable')
 
 
-class DcParmPsecurityGroupSchema(Schema):
+class DcParmSecGroupSchema(Schema):
     """
     DcParm嵌套Schema
     {
-                    "enableRDP": "true",
-                    "enablePing": "true",
-                    "enableSSH": "true",
-                    "name": "easyun-sg-default"
-                      }
+        "enableRDP": "true",
+        "enablePing": "true",
+        "enableSSH": "true",
+        "name": "easyun-sg-default"
+    }
     """
 
     enable_RDP = String(data_key='enableRDP')
@@ -243,19 +234,23 @@ class DcParmIn(Schema):
     pubSubnet1 = List(Nested(DcParmSubnetSchema()), required=True)
     pubSubnet2 = List(Nested(DcParmSubnetSchema()), required=True)
 
-    securityGroup1 = List(Nested(DcParmPsecurityGroupSchema()), required=True)
-    securityGroup2 = List(Nested(DcParmPsecurityGroupSchema()), required=True)
-    securityGroup3 = List(Nested(DcParmPsecurityGroupSchema()), required=True)
+    securityGroup1 = List(Nested(DcParmSecGroupSchema()), required=True)
+    securityGroup2 = List(Nested(DcParmSecGroupSchema()), required=True)
+    securityGroup3 = List(Nested(DcParmSecGroupSchema()), required=True)
     # keypair = String(required=True, example="key_easyun_user")
-
-
-class DataCenterResultOut(Schema):
-    region_name = String(data_key='regionName')
-    vpc_id = String(data_key='vpcId')
 
 
 class VpcListIn(Schema):
     vpc_id = String(data_key='vpcId')
+
+
+class DataCenterListIn(Schema):
+    dcName = String()
+
+
+class DataCenterListsIn(Schema):
+    dcName = String()
+    type = String()
 
 
 class VpcListOut(Schema):
@@ -268,44 +263,33 @@ class VpcListOut(Schema):
     keypair = String()
 
 
-class DataCenterListIn(Schema):
-    dcName = String()
+# 定义api返回数据格式
+class DataCenterBasic(Schema):
+    dcName = String(example='Easyun')
+    regionCode = String(example='us-east-1')
+    vpcID = String(example='vpc-057f0e3d715c24147')
 
 
-class DataCenterListsIn(Schema):
-    dcName = String()
-    type = String()
+class DataCenterModel(Schema):
+    dcName = String(example='Easyun')
+    regionCode = String(example='us-east-1')
+    vpcID = String(example='vpc-057f0e3d715c24147')
+    cidrBlock = String(example='10.10.0.0/16')
+    createDate = DateTime()
+    createUser = String(example='admin')
+    accountId = String(example='567812345678')
+
+
+class RegionModel(Schema):
+    regionCode = String(example='us-east-1')
+    regionName = String(example='US East (N. Virginia)')
+    countryCode = String(example='USA')
 
 
 '''
-Schemas for Eip APIs
+Schemas for Subnet APIs
 ==================================================================
 '''
-
-
-class DelEipParm(Schema):
-    dcName = String(required=True, example="Easyun")
-    alloId = String(required=True, example="eipalloc-0fdb6c5e3a254c937")
-    pubIp = String(required=False, example="12.34.56.78")
-
-
-class DataCenterEIPIn(Schema):
-    dcName = String()
-    alloId = String()
-
-
-class DataCenterNewEIPIn(Schema):
-    dcName = String()
-
-
-class DCInfoOut(Schema):
-    dcName = String()
-    dcRegion = String()
-    rgName = String()
-    vpcID = String()
-    vpcCidr = String()
-    dcUser = String()
-    dcAccount = String()
 
 
 class DataCenterSubnetIn(Schema):
@@ -318,37 +302,62 @@ class DataCenterSubnetInsert(Schema):
     subnetCDIR = String()
 
 
-class DataCenterListOut(Schema):
-    dcList = List(
-        Nested(DCInfoOut),
-        example=[
-            {
-                "dcName": "Easyun",
-                "dcRegion": "us-east-1",
-                # "rgName" : "US East (N. Virginia)",
-                "vpcID": "vpc-04b38448e58d715c2",
-                "vpcCidr": "10.10.0.0/16",
-                "dcUser": "admin",
-                "dcAccount": "565521295678",
-            }
-        ],
-    )
+'''
+Schemas for StaticIP(Eip) APIs
+==================================================================
+'''
 
 
-class ResourceListOut(Schema):
-    """
-    默认返回参数
-    """
+class DataCenterNewEIPIn(Schema):
+    dcName = String()
 
-    region = String()
-    az = String()
-    key = String()
-    vpc_cidr = String(data_key='vpcCidr')
-    pub_subnet1 = String(data_key='pubSubnet1')
-    pub_subnet2 = String(data_key='pubSubnet2')
-    pri_subnet1 = String(data_key='priSubnet1')
-    pri_subnet2 = String(data_key='priSubnet2')
-    secure_group1 = String(data_key='secureGroup1')
-    secure_group2 = String(data_key='secureGroup2')
-    secure_group3 = String(data_key='secureGroup3')
-    tag_spec = List(Dict, data_key='tagSpec')
+
+class DataCenterEIPIn(Schema):
+    dcName = String()
+    alloId = String()
+
+
+class DelEipParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    alloId = String(required=True, example="eipalloc-0fdb6c5e3a254c937")
+    pubIp = String(required=False, example="12.34.56.78")
+
+
+''' Schemas for SecGropu APIs
+==================================================================
+'''
+
+
+class IpPermission(Schema):
+    FromPort = Number(example=3306)
+    ToPort = Number(example=3306)
+    IpProtocol = String(required=True, example='tcp')
+    IpRanges = List(Dict())
+    Ipv6Ranges = List(Dict())
+    PrefixListIds = List(Dict())
+    UserIdGroupPairs = List(Dict())
+
+
+class SecGroupBasic(Schema):
+    sgId = String(required=True, example="sg-05df5c8e8396d06e9")
+    sgName = String(example="easyun-sg-web")
+    tagName = String(example="Secgroup_for_Web")
+    sgDes = String(example="allow web application")
+
+
+class SecGroupModel(Schema):
+    sgId = String(required=True, example="sg-05df5c8e8396d06e9")
+    sgName = String(example="easyun-sg-web")
+    tagName = String(example="Secgroup_for_Web")
+    sgDes = String(example="allow web application")
+    # Inbound Ip Permissions
+    ibrulesNum = Number(example=3)
+    ibPermissions = List(Dict())
+    # Outbound Ip Permissions
+    obrulesNum = Number(example=1)
+    obPermissions = List(Dict())
+
+
+class SecGroupDetail(Schema):
+    sgBasic = Nested(SecGroupBasic)
+
