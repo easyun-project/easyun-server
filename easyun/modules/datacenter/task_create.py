@@ -354,11 +354,12 @@ def create_dc_task(self, parm, user):
         return {
             'detail': {
                 'dcName': newDC.name,
-                'accountId': newDC.account_id,
-                'dcRegion': newDC.region,
+                'regionCode': newDC.region,
                 'vpcId': newDC.vpc_id,
+                # 'cidrBlock' : vpc.cidr_block,
                 'createDate': newDC.create_date,
                 'createUser': newDC.create_user,
+                'accountId': newDC.account_id
             }
         }
 

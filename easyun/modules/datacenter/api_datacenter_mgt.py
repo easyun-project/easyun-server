@@ -17,7 +17,7 @@ from easyun.libs.utils import len_iter
 from easyun.cloud.aws_quota import get_quota_value
 from easyun.cloud.utils import set_boto3_region
 from easyun.cloud.sdk_tagging import RgTagging
-from .schemas import CreateDcParms, DeleteDcParms
+from .schemas import CreateDcParms, DeleteDcParms, DataCenterModel
 from .task_create import create_dc_task
 from .task_delete import delete_dc_task
 from . import bp, logger
@@ -26,7 +26,6 @@ from . import bp, logger
 @bp.post('')
 @auth_required(auth_token)
 @bp.input(CreateDcParms)
-# @output(CreateDcResult)
 @log.api_error(logger)
 def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
@@ -79,7 +78,6 @@ def create_dc_async(parm):
 @bp.delete('')
 @auth_required(auth_token)
 @bp.input(DeleteDcParms)
-# @output(CreateDcResult)
 @log.api_error(logger)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
@@ -144,7 +142,7 @@ def delete_dc_async(parm):
 @bp.get('/task')
 @auth_required(auth_token)
 @bp.input(TaskIdQuery, location='query')
-# @output(CreateDcResult)
+@bp.output(DataCenterModel)
 def get_task_result(parm):
     '''获取异步任务执行结果'''
     # workaround: replace '-' back in query parameter
@@ -155,7 +153,6 @@ def get_task_result(parm):
         # task.ready() Return `True` if the task has executed.
         if task.ready():
             # 等同 task.status == 'SUCCESS':
-            # task.state: PENDING/STARTED/PROGRESS/SUCCESS/FAILURE
             # 从 task.info 获得 task return 数据
             resp = Result(
                 detail=task.info.get('detail'),

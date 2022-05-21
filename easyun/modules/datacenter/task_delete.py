@@ -51,9 +51,10 @@ def delete_dc_task(self, parm, region):
                     ]
                 )['NatGateways']
                 for natgw in natgws:
-                    delNatGw = resource_ec2.meta.client.delete_nat_gateway(
-                        NatGatewayId=natgw['NatGatewayId']
-                    )['NatGatewayId']
+                    if natgw.get('State') != 'deleted':
+                        delNatGw = resource_ec2.meta.client.delete_nat_gateway(
+                            NatGatewayId=natgw['NatGatewayId']
+                        )['NatGatewayId']
 
                     stage = f"[NatGateway] {natgw['NatGatewayId']} deleting ..."
                     logger.info(stage)
@@ -247,9 +248,9 @@ def delete_dc_task(self, parm, region):
         return {
             'detail': {
                 'dcName': thisDC.name,
-                'accountId': thisDC.account_id,
-                'dcRegion': thisDC.region,
+                'regionCode': thisDC.region,
                 'vpcId': thisDC.vpc_id,
+                'accountId': thisDC.account_id,
             }
         }
     except Exception as ex:

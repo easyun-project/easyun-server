@@ -8,17 +8,18 @@
 import boto3
 from botocore.exceptions import ClientError
 from apiflask import auth_required
+from sqlalchemy import true
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.result import Result
 from easyun.cloud.aws_region import query_country_code, query_region_name
-from .schemas import DefaultParmQuery, DefaultParmsOut
+from .schemas import DefaultParmQuery, DefaultParmsOut, DataCenterBasic, DataCenterModel
 from . import bp
 
 
 @bp.get('')
 @auth_required(auth_token)
-# @output(DataCenterListOut, description='Get DataCenter List')
+@bp.output(DataCenterModel(many=true), description='List all DataCenter')
 def list_datacenter_detail():
     '''获取Easyun管理的所有数据中心信息'''
     try:
@@ -32,12 +33,12 @@ def list_datacenter_detail():
                 vpc = resource_ec2.Vpc(dc.vpc_id)
                 dcItem = {
                     'dcName': dc.name,
-                    'dcRegion': dc.region,
+                    'regionCode': dc.region,
                     'vpcID': dc.vpc_id,
-                    'vpcCidr': vpc.cidr_block,
-                    'createDate': dc.create_date.isoformat(),
+                    'cidrBlock': vpc.cidr_block,
+                    'createDate': dc.create_date,
                     'createUser': dc.create_user,
-                    'dcAccount': dc.account_id,
+                    'accountId': dc.account_id,
                 }
                 dcList.append(dcItem)
             except ClientError:
@@ -52,7 +53,7 @@ def list_datacenter_detail():
 
 @bp.get('/list')
 @auth_required(auth_token)
-# @output(DataCenterListOut, description='Get DataCenter List')
+@bp.output(DataCenterBasic(many=true), description='Get DataCenter List')
 def list_datacenter_brief():
     '''获取Easyun管理的数据中心列表[仅基础字段]'''
     try:
@@ -60,7 +61,7 @@ def list_datacenter_brief():
         dcs = Datacenter.query.filter_by(account_id=thisAccount.account_id)
         dcList = []
         for dc in dcs:
-            dcItem = {'dcName': dc.name, 'dcRegion': dc.region, 'vpcID': dc.vpc_id}
+            dcItem = {'dcName': dc.name, 'regionCode': dc.region, 'vpcID': dc.vpc_id}
             dcList.append(dcItem)
 
         resp = Result(detail=dcList, status_code=200)

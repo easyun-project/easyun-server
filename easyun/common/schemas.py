@@ -2,11 +2,11 @@
 """
   @module:  Easyun Common Schema
   @desc:    Easyun通用Schema定义
-  @auth:    
+  @auth:
 """
 
 from apiflask import Schema
-from apiflask.fields import Integer, String, DateTime, Field, Nested
+from apiflask.fields import Integer, String, DateTime, Number, Nested, Field
 from apiflask.validators import Length, OneOf, Email
 from easyun.cloud.aws_region import get_region_codes
 
@@ -90,3 +90,12 @@ class TaskIdQuery(Schema):
         validate=Length(0, 36),
         example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8",
     )
+
+
+class TaskModel(Schema):
+    taskId = String(example="1603a978-e5a0-4e6a-b38c-4c751ff5fff8")
+    # task.state: PENDING/STARTED/PROGRESS/SUCCESS/FAILURE
+    status = String(example="STARTED")
+    description = String(example="Pubic subnet1 created.")
+    current = Number(example=25)
+    total = Number(example=100)
