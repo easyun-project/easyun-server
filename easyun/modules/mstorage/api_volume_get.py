@@ -10,20 +10,8 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.utils import set_boto3_region
-from easyun.cloud.sdk_volume import StorageVolume
 from .schemas import VolumeModel, VolumeBasic, VolumeDetail
-from . import bp
-
-
-_ST_VOLUME = None
-
-
-def get_ST_VOLUME(dcName):
-    global _ST_VOLUME
-    if _ST_VOLUME is not None and _ST_VOLUME.dcName == dcName:
-        return _ST_VOLUME
-    else:
-        return StorageVolume(dcName)
+from . import bp, get_st_volume
 
 
 @bp.get('/volume')
@@ -37,7 +25,7 @@ def list_volume_detail(parm):
     dcRegion = set_boto3_region(dcName)
     try:
         # vol = StorageVolume(dcName)
-        vol = get_ST_VOLUME(dcName)
+        vol = get_st_volume(dcName)
         volumeList = vol.list_all_volume()
 
         resp = Result(detail=volumeList, status_code=200)
@@ -59,7 +47,7 @@ def list_volume_brief(parm):
     dcRegion = set_boto3_region(dcName)
     try:
         # vol = StorageVolume(dcName)
-        vol = get_ST_VOLUME(dcName)
+        vol = get_st_volume(dcName)
         volumeList = vol.get_volume_list()
 
         resp = Result(detail=volumeList, status_code=200)
@@ -80,7 +68,7 @@ def get_volume_detail(volume_id, parm):
     # 设置 boto3 接口默认 region_name
     dcRegion = set_boto3_region(dcName)
     try:
-        vol = get_ST_VOLUME(dcName)
+        vol = get_st_volume(dcName)
         volumeDetail = vol.get_volume_detail(volume_id)
 
         response = Result(detail=volumeDetail, status_code=200)

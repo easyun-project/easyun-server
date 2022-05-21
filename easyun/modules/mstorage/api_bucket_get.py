@@ -11,7 +11,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from .schemas import BucketIdQuery, BucketBasic, BucketModel, BucketDetail
-from . import bp, get_storage_bucket
+from . import bp, get_st_bucket
 
 
 @bp.get('/bucket')
@@ -22,7 +22,7 @@ def list_bkt_detail(parm):
     '''获取全部存储桶(Bucket)信息'''
     dcName = parm.get('dc')
     try:
-        bkt = get_storage_bucket(dcName)
+        bkt = get_st_bucket(dcName)
         bucketList = bkt.list_all_bucket()
 
         response = Result(detail=bucketList, status_code=200)
@@ -43,7 +43,7 @@ def get_bkt_list(parm):
     '''获取全部存储桶(Bucket)列表'''
     dcName = parm.get('dc')
     try:
-        bkt = get_storage_bucket(dcName)
+        bkt = get_st_bucket(dcName)
         bucketList = bkt.get_bucket_list()
 
         response = Result(detail=bucketList, status_code=200)
@@ -64,7 +64,7 @@ def get_bkt_detail(bucket_id, parm):
     '''获取指定存储桶(Bucket)的详细信息【mock】'''
     dcName = parm.get('dc')
     try:
-        bkt = get_storage_bucket(dcName)
+        bkt = get_st_bucket(dcName)
         bucketDetail = bkt.get_bucket_detail(bucket_id)
 
         response = Result(

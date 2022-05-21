@@ -10,7 +10,7 @@ from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from .schemas import AddBucketParm, BucketIdQuery, BucketIdParm, BucketPubBlockParm, BucketBasic
-from . import bp, get_storage_bucket
+from . import bp, get_st_bucket
 
 
 @bp.get('/bucket/vaildate')
@@ -21,7 +21,7 @@ def vaildate_bkt(parm):
     dcName = parm['dc']
     bucketId = parm['bkt']
     try:
-        bkt = get_storage_bucket(dcName)
+        bkt = get_st_bucket(dcName)
         isAvailable = bkt.vaildate_bucket_name(bucketId)
 
         resp = Result(detail={'isAvailable': isAvailable}, status_code=200)
@@ -44,7 +44,7 @@ def add_bucket_s3(parm):
     bucketId = parm['bucketId']
     bucketOptions = parm['bucketCreateParm']
     try:
-        bkt = get_storage_bucket(dcName)
+        bkt = get_st_bucket(dcName)
         newBucket = bkt.create_bucket(bucketId, bucketOptions)
 
         resp = Result(
@@ -73,7 +73,7 @@ def delete_bucket(parm):
     dcName = parm['dcName']
     bucketId = parm['bucketId']
     try:
-        bkt = get_storage_bucket(dcName)
+        bkt = get_st_bucket(dcName)
         bkt.delete_bucket(bucketId)
         response = Result(
             detail={'bucketId': bucketId}, message='bucket delete successfully'
