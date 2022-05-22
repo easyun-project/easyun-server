@@ -302,6 +302,26 @@ class DataCenterSubnetInsert(Schema):
     subnetCDIR = String()
 
 
+class SubnetBasic(Schema):
+    subnetId = String(example='subnet-06bfe659f6ecc2eed')
+    subnetType = String(validate=OneOf(['public', 'private']), example='public')
+    cidrBlock = String(example='10.10.1.0/24')
+    subnetAz = String(example='us-east-1a')
+    tagName = String(example="public_subnet_1")
+
+
+class SubnetModel(Schema):
+    subnetId = String(example='subnet-06bfe659f6ecc2eed')
+    subnetState = String(example='available')
+    subnetType = String(validate=OneOf(['public', 'private']), example='public')
+    cidrBlock = String(example='10.10.1.0/24')
+    subnetAz = String(example='us-east-1a')
+    vpcId = String(example='vpc-057f0e3d715c24147')
+    tagName = String(example="public_subnet_1")
+    availableIpNum = Number(example=242)
+    isMapPublicIp = Boolean(example=True)
+
+
 '''
 Schemas for StaticIP(Eip) APIs
 ==================================================================
@@ -323,7 +343,8 @@ class DelEipParm(Schema):
     pubIp = String(required=False, example="12.34.56.78")
 
 
-''' Schemas for SecGropu APIs
+''' 
+Schemas for SecGropu APIs
 ==================================================================
 '''
 
@@ -342,22 +363,54 @@ class SecGroupBasic(Schema):
     sgId = String(required=True, example="sg-05df5c8e8396d06e9")
     sgName = String(example="easyun-sg-web")
     tagName = String(example="Secgroup_for_Web")
-    sgDes = String(example="allow web application")
+    sgDesc = String(example="allow web application")
 
 
 class SecGroupModel(Schema):
     sgId = String(required=True, example="sg-05df5c8e8396d06e9")
     sgName = String(example="easyun-sg-web")
     tagName = String(example="Secgroup_for_Web")
-    sgDes = String(example="allow web application")
+    sgDesc = String(example="allow web application")
     # Inbound Ip Permissions
-    ibrulesNum = Number(example=3)
+    ibRulesNum = Number(example=3)
     ibPermissions = List(Dict())
     # Outbound Ip Permissions
-    obrulesNum = Number(example=1)
+    obRulesNum = Number(example=1)
     obPermissions = List(Dict())
 
 
 class SecGroupDetail(Schema):
     sgBasic = Nested(SecGroupBasic)
+
+
+class DelSecGroupParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    sgId = String(required=True, example="sg-05df5c8e8396d06e9")
+
+
+class AddSecGroupParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    sgName = String(required=True, example="easyun-sg-web")
+    sgDesc = String(required=True, example="allow web application")    
+    tagName = String(example="Secgroup_for_Web")
+
+
+''' 
+Schemas for Gateway APIs
+==================================================================
+'''
+
+
+class AddIntGateway(Schema):
+    dcName = String(required=True, example="Easyun") 
+    tagName = String(example="Secgroup_for_Web")
+
+
+class AddNatGateway(Schema):
+    dcName = String(required=True, example="Easyun")
+    connectType = String(required=True, example="easyun-sg-web")
+    subnetId = String(required=True, example='subnet-06bfe659f6ecc2eed')
+    allocationId = String(required=True, example='allo-xxxxxx')
+    tagName = String(example="Secgroup_for_Web")
+
 

@@ -42,9 +42,9 @@ def list_secgroups(dcName):
             'sgId':sg['GroupId'],
             'tagName': nameTag,
             'sgName': sg['GroupName'],                
-            'sgDes':sg['Description'],
-            'ibrulesNum':len(sg['IpPermissions']),                
-            'obrulesNum':len(sg['IpPermissionsEgress']),
+            'sgDesc':sg['Description'],
+            'ibRulesNum':len(sg['IpPermissions']),                
+            'obRulesNum':len(sg['IpPermissionsEgress']),
             # 'ibPermissions':sg['IpPermissions'],
             # 'obPermissions':sg['IpPermissionsEgress'] 
         }

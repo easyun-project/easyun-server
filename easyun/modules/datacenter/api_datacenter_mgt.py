@@ -17,7 +17,7 @@ from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.cloud.aws_quota import get_quota_value
 from easyun.cloud.utils import set_boto3_region
-from easyun.cloud.sdk_tagging import RgTagging
+from easyun.cloud.sdk_tagging import ResGroupTagging
 from .schemas import DefaultParmQuery, DefaultParmsOut, CreateDcParms, DeleteDcParms, DataCenterModel
 from .task_create import create_dc_task
 from .task_delete import delete_dc_task
@@ -225,7 +225,7 @@ def delete_dc_async(parm):
     # Check the prerequisites before create datacenter task
     try:
         dcRegion = set_boto3_region(dcName)
-        rgt = RgTagging(dcName)
+        rgt = ResGroupTagging(dcName)
         # step 1: DC resource empty checking - instance
         serverNum = rgt.sum_resources('ec2:instance')
         if serverNum > 0:

@@ -164,7 +164,7 @@ def get_subnet_type(subnet_id):
     # 偷个懒仅以名称判断，完整功能待实现
     resource_ec2 = get_ec2_resource()
     try:
-        if subnet_id == None:
+        if subnet_id is None:
             raise ValueError('subnet_id is None')
         thisSubnet = resource_ec2.Subnet(subnet_id)
         nameTag = next(

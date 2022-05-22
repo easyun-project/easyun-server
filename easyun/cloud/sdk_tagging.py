@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
   @module:  The API Wrapper Module
-  @desc:    AWS SDK Boto3 Client and Resource Wrapper.  
-  @auth:    
+  @desc:    AWS SDK Boto3 ResourceGroups Tagging Client and Resource Wrapper.
+  @auth:    aleck
 """
 import boto3
 
@@ -26,16 +26,15 @@ ResourcesDict = {
     'database': 'rds:db',
     'ddb': 'dynamodb:table',
     'elb': 'elasticloadbalancing:loadbalancer',
-    'elb': 'elasticloadbalancing:targetgroup',
+    'targetgroup': 'elasticloadbalancing:targetgroup',
     'volbackup': 'ec2:snapshot',
     'rdsbackup': 'rds:snapshot',
     'efsbackup': 'backup:recovery-point',
 }
 
+
 # SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/resourcegroupstaggingapi.html
-
-
-class RgTagging(object):
+class ResGroupTagging(object):
     def __init__(self, dc_tag):
         self._client = boto3.client('resourcegroupstaggingapi')
         self.filterTag = {'Key': 'Flag', 'Values': [dc_tag]}

@@ -7,11 +7,11 @@
 
 from apiflask import auth_required
 from easyun.common.auth import auth_token
-from easyun.common.models import Account, Datacenter
+from easyun.common.models import Account
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud import AWSCloud
-from .schemas import DataCenterBasic, DataCenterModel, RegionModel, SecGroupBasic, SecGroupModel
+from easyun.cloud.aws import AWSCloud
+from .schemas import DataCenterBasic, DataCenterModel, RegionModel, SecGroupBasic, SecGroupModel, SubnetBasic, SubnetModel
 from . import bp, get_datacenter
 
 
@@ -40,7 +40,7 @@ def list_datacenter_detail():
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(message=str(ex), status_code=2001, http_status_code=400)
+        response = Result(message=str(ex), status_code=2001)
         response.err_resp()
 
 
@@ -58,7 +58,7 @@ def list_datacenter_brief():
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(message=str(ex), status_code=2003, http_status_code=400)
+        response = Result(message=str(ex), status_code=2002)
         response.err_resp()
 
 
@@ -77,14 +77,13 @@ def list_aws_region():
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(message=str(ex), status_code=2000, http_status_code=400)
+        response = Result(message=str(ex), status_code=2005)
         response.err_resp()
 
 
 @bp.get('/zones')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
-# @bp.output(RegionModel(many=True), description='Get Region List')
 def get_available_zones(parm):
     '''获取可用的Region列表'''
     dcName = parm['dc']
@@ -96,8 +95,46 @@ def get_available_zones(parm):
         return resp.make_resp()
 
     except Exception as ex:
-        response = Result(message=str(ex), status_code=2000, http_status_code=400)
+        response = Result(message=str(ex), status_code=2006)
         response.err_resp()
+
+
+@bp.get('/subnet')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(SubnetModel(many=True), description='List DataCenter Subnets Resources')
+def list_subnet_detail(parm):
+    '''获取 全部subnet子网信息'''
+    dcName = parm['dc']
+    try:
+        dc = get_datacenter(dcName)
+        subnetList = dc.list_all_subnet()
+
+        resp = Result(detail=subnetList, status_code=200)
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(detail=str(ex), status_code=2101)
+        resp.err_resp()
+
+
+@bp.get('/subnet/list')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(SubnetBasic(many=True), description='List DataCenter Subnets Resources')
+def list_subnet_brief(parm):
+    '''获取 全部subnet子网列表[仅基础字段]'''
+    dcName = parm['dc']
+    try:
+        dc = get_datacenter(dcName)
+        subnetList = dc.get_subnet_list()
+
+        resp = Result(detail=subnetList, status_code=200)
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(detail=str(ex), status_code=2102)
+        resp.err_resp()
 
 
 @bp.get('/secgroup')
@@ -113,7 +150,7 @@ def list_secgroup_detail(parm):
         resp = Result(detail=sgList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
-        resp = Result(message=str(ex), status_code=2030)
+        resp = Result(message=str(ex), status_code=2201)
         resp.err_resp()
 
 
@@ -130,5 +167,89 @@ def list_secgroup_brief(parm):
         resp = Result(detail=sgList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
-        resp = Result(message=str(ex), status_code=2031)
+        resp = Result(message=str(ex), status_code=2202)
+        resp.err_resp()
+
+
+@bp.get('/staticip')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def list_eip_detail(param):
+    '''获取 全部静态IP(EIP)信息'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_staticip()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2301)
+        resp.err_resp()
+
+
+@bp.get('/staticip/list')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+def list_eip_brief(param):
+    '''获取 全部静态IP列表(EIP)[仅基础字段]'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_staticip()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2302)
+        resp.err_resp()
+
+
+@bp.get('/gateway/internet')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def list_all_igw(param):
+    '''获取全部Internet网关(igw)信息'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_intgateway()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2401)
+        resp.err_resp()
+
+
+@bp.get('/gateway/nat')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def list_all_natgw(param):
+    '''获取全部NAT网关(natgw)信息'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_natgateway()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2501)
+        resp.err_resp()
+
+
+@bp.get('/routetable')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def list_all_route(param):
+    '''获取 全部路由表(route table)信息'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        rtbList = dc.list_all_routetable()
+        resp = Result(detail=rtbList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2601)
         resp.err_resp()

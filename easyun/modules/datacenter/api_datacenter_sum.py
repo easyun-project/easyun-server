@@ -14,7 +14,7 @@ from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.libs.utils import len_iter, filter_list_by_key, filter_list_by_value
 from easyun.cloud.utils import gen_dc_tag, get_subnet_type, set_boto3_region
-from easyun.cloud.sdk_tagging import RgTagging
+from easyun.cloud.sdk_tagging import ResGroupTagging
 from easyun.cloud.sdk_cost import CostExplorer, get_ce_region
 from . import bp, logger
 
@@ -113,7 +113,7 @@ def get_res_summary(parm):
     dcName = parm['dc']
     dcRegion = set_boto3_region(dcName)
     try:
-        rgt = RgTagging(dcName)
+        rgt = ResGroupTagging(dcName)
         resSummary = {
             'serverNum': rgt.sum_resources('ec2:instance'),
             'volumeNum': rgt.sum_resources('ec2:volume'),
