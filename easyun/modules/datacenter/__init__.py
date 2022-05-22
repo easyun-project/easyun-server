@@ -6,7 +6,7 @@
 
 from apiflask import APIBlueprint
 from easyun import log
-from easyun.cloud import DataCenter, SecurityGroup
+from easyun.cloud.aws import DataCenter, SecurityGroup, Subnet, StaticIP
 
 
 # define api version
@@ -26,6 +26,7 @@ DryRun = False
 
 _DATA_CENTER = None
 _SEC_GROUP = None
+_SUB_NET = None
 
 
 def get_datacenter(dc_name):
@@ -36,18 +37,29 @@ def get_datacenter(dc_name):
         return DataCenter(dc_name)
 
 
-def get_sec_group(dc_name):
-    global _SEC_GROUP
-    if _SEC_GROUP is not None and _SEC_GROUP.dcName == dc_name:
-        return _SEC_GROUP
+def get_sub_net(dc_name):
+    global _SUB_NET
+    if _SUB_NET is not None and _SUB_NET.dcName == dc_name:
+        return _SUB_NET
     else:
         return SecurityGroup(dc_name)
+
+
+def get_secgroup(sg_id, dc_name):
+    global _SEC_GROUP
+    if _SEC_GROUP is not None and _SEC_GROUP.sgId == sg_id:
+        return _SEC_GROUP
+    else:
+        return SecurityGroup(sg_id, dc_name)
+
 
 from . import (
     api_datacenter_get,
     api_datacenter_mgt,
     api_datacenter_sum,
+    api_subnet_mgt,
     api_secgroup_mgt,
     api_staticip_mgt,
-    apt_subnet_mgt,
+    api_gateway_mgt,
+    api_routetab_mgt
 )

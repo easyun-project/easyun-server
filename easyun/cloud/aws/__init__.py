@@ -7,12 +7,9 @@
 
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
-from .aws_region import query_country_code, query_region_name
-from .utils import get_easyun_session
-from .sdk_datacenter import DataCenter
-from .sdk_subnet import Subnet
-from .sdk_secgroup import SecurityGroup
-from .sdk_staticip import StaticIP
+from ..aws_region import query_country_code, query_region_name
+from ..utils import get_easyun_session
+from .sdk_datacenter import DataCenter, Subnet, InternetGateway, NatGateway, SecurityGroup, StaticIP
 
 
 class AWSCloud(object):

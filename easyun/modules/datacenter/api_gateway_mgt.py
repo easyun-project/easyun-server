@@ -5,56 +5,99 @@
   @auth:    aleck
 """
 
-import boto3
 from apiflask import auth_required
 from easyun.common.auth import auth_token
-from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from . import bp
+from easyun.common.schemas import DcNameQuery
+from .schemas import AddIntGateway, AddNatGateway
+from easyun.cloud.aws import InternetGateway, NatGateway
+from . import bp, get_datacenter
 
 
-@bp.get('/igw')
+_INTERNET_GATEWAY = None
+_NAT_GATEWAY = None
+
+
+def get_int_gw(igw_id, dc_name):
+    global _INTERNET_GATEWAY
+    if _INTERNET_GATEWAY is not None and _INTERNET_GATEWAY.igwId == igw_id:
+        return _INTERNET_GATEWAY
+    else:
+        return InternetGateway(igw_id, dc_name)
+
+
+def get_nat_gw(igw_id, dc_name):
+    global _NAT_GATEWAY
+    if _NAT_GATEWAY is not None and _NAT_GATEWAY.igwId == igw_id:
+        return _NAT_GATEWAY
+    else:
+        return NatGateway(igw_id, dc_name)
+
+
+@bp.post('/gateway/internet')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-def list_igw_detail(param):
-    '''获取全部Internet网关(IGW)信息 [Mock]'''
-    pass
-
-    igwList = [
-        {
-            'tagName': 'easyun-igw',
-            'igwId': 'igw-0ac4fceed4468d269',
-            'vpcId': 'vpc-0cb099babd31f03d1',
-            'vpcName': 'VPC-Easyun1',
-            'igwState': 'attached',
-            'userTags': [{'Key': 'Env', 'Value': 'development'}],
-        },
-    ]
-
-    response = Result(detail=igwList, status_code=200)
-    return response.make_resp()
+@bp.input(AddIntGateway)
+def create_intgateway(parm):
+    '''新建 Internet Gateway'''
+    dcName = parm['dcName']
+    tagName = parm['tagName']
+    try:
+        dc = get_datacenter(dcName)
+        newIgw = dc.create_int_gateway(tagName)
+        resp = Result(detail=dict(newIgw), status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2031)
+        resp.err_resp()
 
 
-@bp.get('/natgw')
+@bp.post('/gateway/nat')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
-def list_natgw_detail(param):
-    '''获取全部NAT网关(NAT GW)信息 [Mock]'''
+@bp.input(AddNatGateway)
+def create_natgateway(parm):
+    '''新建 NAT Gateway'''
+    dcName = parm['dcName']
+    connectType = parm['connectType']
+    subnetId = parm['subnetId']
+    allocationId = parm['allocationId']
+    tagName = parm['tagName']
+    try:
+        dc = get_datacenter(dcName)
+        netNat = dc.create_nat_gateway(connectType, subnetId, allocationId, tagName)
+        resp = Result(detail=dict(netNat), status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2031)
+        resp.err_resp()
 
-    natgwList = [
-        {
-            'tagName': 'easyun-natgw',
-            'natgwId': 'nat-06f2da484710f7da0',
-            'vpcId': 'vpc-057f0e3d715c24147',
-            'vpcName': 'VPC-Easyun',
-            'natgwState': 'available',
-            'connType': 'Public',
-            'subnetId': 'subnet-06bfe659f6ecc2eed',
-            'pubIp': '3.229.72.25',
-            'priIp': '10.11.1.32',
-            'userTags': [{'Key': 'Env', 'Value': 'demo'}],
-        },
-    ]
 
-    response = Result(detail=natgwList, status_code=200)
-    return response.make_resp()
+@bp.get('/gateway/internet/<igw_id>')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+def get_igw_detail(igw_id, parm):
+    '''查看 Internet Gateway 详细信息'''
+    dcName = parm['dc']
+    try:
+        igw = get_int_gw(igw_id, dcName)
+        igwDetail = igw.get_detail()
+        resp = Result(detail=igwDetail, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2031)
+        resp.err_resp()
+
+
+@bp.get('/gateway/nat/<natgw_id>')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+def get_natgw_detail(natgw_id, parm):
+    '''查看 Internet Gateway 详细信息'''
+    dcName = parm['dc']
+    try:
+        natgw = get_nat_gw(natgw_id, dcName)
+        natDetail = natgw.get_detail()
+        resp = Result(detail=natDetail, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2031)
+        resp.err_resp()

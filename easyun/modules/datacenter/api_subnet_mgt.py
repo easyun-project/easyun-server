@@ -5,76 +5,20 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import auth_required
 from easyun.common.auth import auth_token
-from easyun.common.models import Account, Datacenter
+from easyun.common.models import Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.libs.utils import len_iter
-from easyun.cloud.utils import gen_dc_tag, query_dc_region, get_subnet_type
-from . import bp, DryRun
+from easyun.cloud.utils import get_subnet_type
 from .schemas import DataCenterSubnetIn, DataCenterSubnetInsert
-
-
-@bp.get('/subnet')
-@auth_required(auth_token)
-@input(DcNameQuery, location='query')
-# # @output(SubnetsOut, description='List DataCenter Subnets Resources')
-def list_subnet_detail(param):
-    '''获取 全部subnet子网信息'''
-    # only for globa regions
-    # dc_name=request.args.get("dc_name")
-    # type=request.args.get("subnet")
-
-    dcName = param.get('dc')
-    try:
-        # thisDC:Datacenter = Datacenter.query.filter_by(name = dcName).first()
-        # if thisDC == None:
-        #     response = Result(detail ={'Result' : 'Errors'}, message='No Datacenter available, kindly create it first!', status_code=3001,http_status_code=400)
-        #     response.err_resp()
-        dcRegion = query_dc_region(dcName)
-        # 设置 boto3 接口默认 region_name
-        boto3.setup_default_session(region_name=dcRegion)
-        client_ec2 = boto3.client('ec2')
-
-        filterTag = gen_dc_tag(dcName, 'filter')
-        subnets = client_ec2.describe_subnets(
-            Filters=[filterTag],
-        ).get('Subnets')
-        subnetList = []
-        for subnet in subnets:
-            # 获取Tag:Name
-            nameTag = next(
-                (tag['Value'] for tag in subnet.get('Tags') if tag["Key"] == 'Name'),
-                None,
-            )
-            # 判断subnet type是 public 还是 private
-            subnetType = get_subnet_type(subnet['SubnetId'])
-            subnet_record = {
-                # 'tagName': [tag.get('Value') for tag in subnet['Tags'] if tag.get('Key') == 'Name'][0],
-                'tagName': nameTag,
-                'subnetType': subnetType,
-                'subnetState': subnet['State'],
-                'subnetId': subnet['SubnetId'],
-                'subnetVpc': subnet['VpcId'],
-                'subnetAz': subnet['AvailabilityZone'],
-                'cidrBlock': subnet['CidrBlock'],
-                # 'cidrBlockv6':subnet['Ipv6CidrBlockAssociationSet'][0].get('Ipv6CidrBlock'),
-                'avlipNum': subnet['AvailableIpAddressCount'],
-                'isMappubip': subnet['MapPublicIpOnLaunch'],
-            }
-            subnetList.append(subnet_record)
-
-        resp = Result(detail=subnetList, status_code=200)
-        return resp.make_resp()
-    except Exception as ex:
-        resp = Result(detail=str(ex), status_code=2030)
-        resp.err_resp()
+from . import bp, get_sub_net
 
 
 @bp.get('/subnet/<subnet_id>')
 @auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.input(DcNameQuery, location='query')
 # # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def get_subnet_detail(subnet_id, param):
     '''获取 指定subnet子网信息'''
@@ -117,51 +61,10 @@ def get_subnet_detail(subnet_id, param):
         return resp.err_resp()
 
 
-@bp.get('/subnet/list')
-@auth_required(auth_token)
-@input(DcNameQuery, location='query')
-# # @output(SubnetsOut, description='List DataCenter Subnets Resources')
-def list_subnet_brief(param):
-    '''获取 全部subnet子网列表[仅基础字段]'''
-    dcName = param.get('dc')
-    try:
-        dcRegion = query_dc_region(dcName)
-        client_ec2 = boto3.client('ec2', region_name=dcRegion)
-
-        subnets = client_ec2.describe_subnets(
-            Filters=[
-                {'Name': 'tag:Flag', 'Values': [dcName]},
-            ]
-        )['Subnets']
-        subnetList = []
-        for subnet in subnets:
-            # 获取Tag:Name
-            nameTag = next(
-                (tag['Value'] for tag in subnet.get('Tags') if tag["Key"] == 'Name'),
-                None,
-            )
-            # 判断subnet type是 public 还是 private
-            subnetType = get_subnet_type(subnet['SubnetId'])
-            subnet_record = {
-                'tagName': nameTag,
-                'subnetType': subnetType,
-                'subnetId': subnet['SubnetId'],
-                'subnetAz': subnet['AvailabilityZone'],
-                'cidrBlock': subnet['CidrBlock'],
-            }
-            subnetList.append(subnet_record)
-
-        resp = Result(detail=subnetList, status_code=200)
-        return resp.make_resp()
-
-    except Exception as e:
-        resp = Result(detail=str(e), status_code=2032)
-        resp.err_resp()
-
 
 @bp.delete('/subnet')
-# @auth_required(auth_token)
-@input(DataCenterSubnetIn)
+@auth_required(auth_token)
+@bp.input(DataCenterSubnetIn)
 def delete_subnet(param):
     '''删除 指定subnet【未完成】'''
     dcName = param.get('dcName')
@@ -204,8 +107,8 @@ def delete_subnet(param):
 
 
 @bp.post('/subnet')
-# @auth_required(auth_token)
-@input(DataCenterSubnetInsert)
+@auth_required(auth_token)
+@bp.input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_subnet(param):
     '''新增 subnet 【未完成】'''
@@ -233,7 +136,6 @@ def add_subnet(param):
             CidrBlock=subnetCIDR,
             VpcId=thisDC.vpc_id,
             TagSpecifications=[{'ResourceType': 'subnet', "Tags": [dcTag, nameTag]}],
-            DryRun=DryRun,
         )
 
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:

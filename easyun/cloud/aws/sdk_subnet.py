@@ -6,7 +6,7 @@
 """
 
 from botocore.exceptions import ClientError
-from .utils import get_easyun_session
+from ..utils import get_easyun_session
 
 
 class Subnet(object):

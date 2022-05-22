@@ -62,7 +62,7 @@ def delete_dc_task(self, parm, region):
                         state='PROGRESS', meta={'current': 5, 'total': 100, 'stage': stage}
                     )
 
-                    # waite natgw created
+                    # waite natgw deleted
                     waiter = resource_ec2.meta.client.get_waiter('nat_gateway_deleted')
                     waiter.wait(NatGatewayIds=[natgw['NatGatewayId']])
 
