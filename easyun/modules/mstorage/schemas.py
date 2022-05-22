@@ -12,8 +12,8 @@ from easyun.common.schemas import TagItem
 
 
 class BucketIdQuery(Schema):
-    dc = String(required=True, example='Easyun')
-    bkt = String(required=True, validate=Length(0, 30))
+    dcName = String(required=True, example='Easyun')
+    bucketId = String(required=True, validate=Length(0, 30))
 
 
 class ObjectKeyQuery(Schema):
