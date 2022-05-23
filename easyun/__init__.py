@@ -43,6 +43,7 @@ class BaseResponseSchema(Schema):
     message = String()
     detail = Field()  # the data key
     status_code = Integer()  # the HTTP_STATUS_CODES
+    task = Field()  # the task status
 
 
 def create_app(run_env=None):

@@ -395,7 +395,7 @@ class AddSecGroupParm(Schema):
     tagName = String(example="Secgroup_for_Web")
 
 
-''' 
+'''
 Schemas for Gateway APIs
 ==================================================================
 '''
@@ -403,7 +403,7 @@ Schemas for Gateway APIs
 
 class AddIntGateway(Schema):
     dcName = String(required=True, example="Easyun") 
-    tagName = String(example="Secgroup_for_Web")
+    tagName = String(example="Easyun_Internet_Gateway")
 
 
 class AddNatGateway(Schema):
@@ -411,6 +411,4 @@ class AddNatGateway(Schema):
     connectType = String(required=True, example="easyun-sg-web")
     subnetId = String(required=True, example='subnet-06bfe659f6ecc2eed')
     allocationId = String(required=True, example='allo-xxxxxx')
-    tagName = String(example="Secgroup_for_Web")
-
-
+    tagName = String(example="Easyun_NAT_Gateway")
