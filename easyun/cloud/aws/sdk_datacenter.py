@@ -7,6 +7,8 @@
 
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
+from easyun.libs.utils import len_iter, filter_list_by_value
+from .sdk_tagging import ResGroupTagging
 from .sdk_subnet import Subnet
 from .sdk_secgroup import SecurityGroup
 from .sdk_staticip import StaticIP
@@ -15,22 +17,69 @@ from ..utils import get_easyun_session, get_subnet_type, get_eni_type, get_tag_n
 
 
 class DataCenter(object):
-    def __init__(self, dcName):
-        session = get_easyun_session(dcName)
-        thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
-        self.dcName = dcName
+    def __init__(self, dc_name):
+        session = get_easyun_session(dc_name)
+        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+        self.dcName = dc_name
+        self.vpcId = thisDC.vpc_id
         self._resource = session.resource('ec2')
         self._client = self._resource.meta.client
-        self.vpc = self._resource.Vpc(thisDC.vpc_id)
-        self.tagFilter = {'Name': 'tag:Flag', 'Values': [dcName]}
-        self.flagTag = {'Key': 'Flag', "Value": dcName}
+        self.vpc = self._resource.Vpc(self.vpcId)
+        self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
+        self.flagTag = {'Key': 'Flag', "Value": dc_name}
+        self.tagging = ResGroupTagging(dc_name)
 
     def get_azone_list(self):
         try:
-            azs = self._client.describe_availability_zones()
-            azoneList = [az['ZoneName'] for az in azs['AvailabilityZones']]
+            azs = self._client.describe_availability_zones(
+                Filters=[
+                    {'Name': 'state', 'Values': ['available']}
+                ]
+            )['AvailabilityZones']
+            azoneList = [az['ZoneName'] for az in azs]
             return azoneList
         except Exception as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def count_resource(self, resource='all'):
+        '''
+        the VPC's available collections
+            subnet:     subnets,
+            rtb:        route_tables,
+            igw:        internet_gateways,
+            secgroup:   security_groups,
+            nacl:       network_acls,
+            eni:        network_interfaces,
+            instances, requested_vpc_peering_connections, accepted_vpc_peering_connections
+        '''
+        try:
+            if resource == 'subnet':
+                resIterator = self.vpc.subnets.all()
+            elif resource == 'rtb':
+                resIterator = self.vpc.route_tables.all()
+            elif resource == 'igw':
+                resIterator = self.vpc.internet_gateways.filter(Filters=[self.tagFilter])
+            elif resource == 'natgw':
+                natgws = self._client.describe_nat_gateways(Filters=[self.tagFilter]).get('NatGateways')
+                return len(natgws)
+            elif resource == 'secgroup':
+                resIterator = self.vpc.security_groups.filter(Filters=[self.tagFilter])
+            elif resource == 'nacl':
+                resIterator = self.vpc.network_acls.filter(Filters=[self.tagFilter])
+            elif resource == 'staticip':
+                resIterator = self._resource.vpc_addresses.filter(Filters=[self.tagFilter])
+            else:
+                raise ValueError('bad collection name')
+            # resSum = 0
+            # for r in resIterator:
+            #     flagValue = next(
+            #         (tag['Value'] for tag in r.tags if tag['Key'] == 'Flag'), None
+            #     )
+            #     if flagValue == self.dcName:
+            #         resSum += 1
+            resNum = len_iter(resIterator)
+            return resNum
+        except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def list_all_subnet(self):
@@ -249,40 +298,6 @@ class DataCenter(object):
                 rtbList.append(rtbItem)
 
             return rtbList
-        except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def count_dc_resource(self, collection='all'):
-        '''
-        the VPC's available collections
-          subnets, route_tables, internet_gateways,
-          security_groups, network_acls,
-          instances, network_interfaces,
-          requested_vpc_peering_connections,
-          accepted_vpc_peering_connections
-        '''
-        try:
-            if collection == 'subnet':
-                resIterator = self.vpc.route_tables.all()
-            elif collection == 'rtb':
-                resIterator = self.vpc.route_tables.all()
-            elif collection == 'igw':
-                resIterator = self.vpc.internet_gateways.all()
-            elif collection == 'secgroup':
-                resIterator = self.vpc.security_groups.all()
-            elif collection == 'nacl':
-                resIterator = self.vpc.network_acls.all()
-            else:
-                raise ValueError('bad collection name')
-
-            rtbSum = 0
-            for r in resIterator:
-                flagValue = next(
-                    (tag['Value'] for tag in r.tags if tag['Key'] == 'Flag'), None
-                )
-                if flagValue == self.dcName:
-                    rtbSum += 1
-            return rtbSum
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 

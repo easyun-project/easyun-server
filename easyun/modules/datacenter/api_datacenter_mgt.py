@@ -17,14 +17,19 @@ from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.cloud.aws_quota import get_quota_value
 from easyun.cloud.utils import set_boto3_region
-from easyun.cloud.sdk_tagging import ResGroupTagging
-from .schemas import DefaultParmQuery, DefaultParmsOut, CreateDcParms, DeleteDcParms, DataCenterModel
+from easyun.cloud.aws.sdk_tagging import ResGroupTagging
+from .schemas import (
+    DefaultParmQuery,
+    DefaultParmsOut,
+    CreateDcParms,
+    DeleteDcParms,
+    DataCenterModel,
+)
 from .task_create import create_dc_task
 from .task_delete import delete_dc_task
 from . import bp, logger
 
 
-       
 @bp.get('/default')
 @auth_required(auth_token)
 @bp.input(DefaultParmQuery, location='query')
@@ -306,7 +311,8 @@ def get_task_result(parm):
                 message=task.info.get('message', 'success'),
                 status_code=task.info.get('status_code', 200),
                 task={
-                    'taskId': task.id, 'status': task.status,
+                    'taskId': task.id,
+                    'status': task.status,
                     'current': task.info.get('current', 0),  # 当前循环进度
                     'total': task.info.get('total', 100),  # 总循环进度
                     'description': task.info.get('stage', ''),  # 阶段描述

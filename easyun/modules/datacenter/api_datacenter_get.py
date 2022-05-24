@@ -81,7 +81,7 @@ def list_aws_region():
         response.err_resp()
 
 
-@bp.get('/zones')
+@bp.get('/region/zones')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 def get_available_zones(parm):

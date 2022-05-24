@@ -4,7 +4,8 @@
   @desc:    AWS SDK Boto3 ResourceGroups Tagging Client and Resource Wrapper.
   @auth:    aleck
 """
-import boto3
+
+from ..utils import get_easyun_session
 
 
 ResourcesDict = {
@@ -35,9 +36,10 @@ ResourcesDict = {
 
 # SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/resourcegroupstaggingapi.html
 class ResGroupTagging(object):
-    def __init__(self, dc_tag):
-        self._client = boto3.client('resourcegroupstaggingapi')
-        self.filterTag = {'Key': 'Flag', 'Values': [dc_tag]}
+    def __init__(self, dc_name):
+        session = get_easyun_session(dc_name)
+        self._client = session.client('resourcegroupstaggingapi')
+        self.flagTag = {'Key': 'Flag', 'Values': [dc_name]}
 
     # ResourceGroupsTaggingAPI.Client.get_resources
     def get_resources(self, resource):
@@ -45,7 +47,7 @@ class ResGroupTagging(object):
         res_iterator = paginator.paginate(
             # 'TARGET_ID'|'REGION'|'RESOURCE_TYPE',
             ResourceTypeFilters=[resource],
-            TagFilters=[self.filterTag],
+            TagFilters=[self.flagTag],
         )
         resList = [
             res for page in res_iterator for res in page['ResourceTagMappingList']
