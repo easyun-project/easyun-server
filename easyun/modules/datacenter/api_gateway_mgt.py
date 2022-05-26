@@ -5,36 +5,35 @@
   @auth:    aleck
 """
 
-from apiflask import auth_required
+from apiflask import APIBlueprint, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from .schemas import AddIntGateway, AddNatGateway
-from easyun.cloud.aws import InternetGateway, NatGateway
-from . import bp, get_datacenter
+from easyun.cloud.aws import get_datacenter, get_int_gateway, get_nat_gateway
 
 
-_INTERNET_GATEWAY = None
-_NAT_GATEWAY = None
+bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')
 
 
-def get_int_gw(igw_id, dc_name):
-    global _INTERNET_GATEWAY
-    if _INTERNET_GATEWAY is not None and _INTERNET_GATEWAY.igwId == igw_id:
-        return _INTERNET_GATEWAY
-    else:
-        return InternetGateway(igw_id, dc_name)
+@bp.get('/internet')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def list_all_igw(param):
+    '''获取全部Internet网关(igw)信息'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_intgateway()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2401)
+        resp.err_resp()
 
 
-def get_nat_gw(igw_id, dc_name):
-    global _NAT_GATEWAY
-    if _NAT_GATEWAY is not None and _NAT_GATEWAY.igwId == igw_id:
-        return _NAT_GATEWAY
-    else:
-        return NatGateway(igw_id, dc_name)
-
-
-@bp.post('/gateway/internet')
+@bp.post('/internet')
 @auth_required(auth_token)
 @bp.input(AddIntGateway)
 def create_intgateway(parm):
@@ -51,7 +50,24 @@ def create_intgateway(parm):
         resp.err_resp()
 
 
-@bp.post('/gateway/nat')
+@bp.get('/nat')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def list_all_natgw(param):
+    '''获取全部NAT网关(natgw)信息'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_natgateway()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2501)
+        resp.err_resp()
+
+
+@bp.post('/nat')
 @auth_required(auth_token)
 @bp.input(AddNatGateway)
 def create_natgateway(parm):
@@ -71,14 +87,14 @@ def create_natgateway(parm):
         resp.err_resp()
 
 
-@bp.get('/gateway/internet/<igw_id>')
+@bp.get('/internet/<igw_id>')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 def get_igw_detail(igw_id, parm):
     '''查看 Internet Gateway 详细信息'''
     dcName = parm['dc']
     try:
-        igw = get_int_gw(igw_id, dcName)
+        igw = get_int_gateway(igw_id, dcName)
         igwDetail = igw.get_detail()
         resp = Result(detail=igwDetail, status_code=200)
         return resp.make_resp()
@@ -87,14 +103,14 @@ def get_igw_detail(igw_id, parm):
         resp.err_resp()
 
 
-@bp.get('/gateway/nat/<natgw_id>')
+@bp.get('/nat/<natgw_id>')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 def get_natgw_detail(natgw_id, parm):
     '''查看 Internet Gateway 详细信息'''
     dcName = parm['dc']
     try:
-        natgw = get_nat_gw(natgw_id, dcName)
+        natgw = get_nat_gateway(natgw_id, dcName)
         natDetail = natgw.get_detail()
         resp = Result(detail=natDetail, status_code=200)
         return resp.make_resp()

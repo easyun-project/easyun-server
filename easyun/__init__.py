@@ -3,15 +3,14 @@
 @Description: The app module, containing the app factory function.
 @LastEditors:
 '''
+
 import os
 import logging
 from apiflask import APIFlask, Schema
 from apiflask.fields import String, Integer, Field
-
 # from logging.handlers import RotatingFileHandler
 import click
 from flask_sqlalchemy import SQLAlchemy
-
 # from flask_redis import FlaskRedis
 from config import env_config
 from flask_cors import CORS
@@ -111,10 +110,10 @@ def register_extensions(app: APIFlask):
 def register_cloud_account(app: APIFlask):
     """注册后端服务器部署的云账号信息"""
     from easyun.common.models import Account
-    from easyun.cloud.aws_basic import get_deploy_env
+    from easyun.cloud import get_deploy_env
 
     # 获取 AWS云环境信息
-    cloudEvn = get_deploy_env('aws')
+    cloudEvn = get_deploy_env()
     # 数据写入 database
     with app.app_context():
         existAccount: Account = Account.query.filter_by(cloud='aws').first()
@@ -123,10 +122,10 @@ def register_cloud_account(app: APIFlask):
         else:
             thisAccount = Account(
                 cloud='aws',
-                account_id=cloudEvn.get('account_id'),
+                account_id=cloudEvn.get('accountId'),
                 role=cloudEvn.get('role'),
-                deploy_region=cloudEvn.get('deploy_region'),
-                aws_type=cloudEvn.get('aws_type'),
+                deploy_region=cloudEvn.get('deployRegion'),
+                aws_type=cloudEvn.get('regionType'),
             )
             db.session.add(thisAccount)
         db.session.commit()
@@ -143,8 +142,8 @@ def register_blueprints(app: APIFlask):
     app.register_blueprint(mserver.bp)
     app.register_blueprint(mdatabase.bp)
     app.register_blueprint(mstorage.bp)
-    app.register_blueprint(account.bp)
     app.register_blueprint(dashboard.bp)
+    app.register_blueprint(account.bp)
     return None
 
 

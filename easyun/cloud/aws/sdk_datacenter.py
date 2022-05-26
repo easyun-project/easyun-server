@@ -13,6 +13,7 @@ from .sdk_subnet import Subnet
 from .sdk_secgroup import SecurityGroup
 from .sdk_staticip import StaticIP
 from .sdk_gateway import InternetGateway, NatGateway
+from .resources import Resources
 from ..utils import get_easyun_session, get_subnet_type, get_eni_type, get_tag_name
 
 
@@ -28,6 +29,7 @@ class DataCenter(object):
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
         self.tagging = ResGroupTagging(dc_name)
+        self.resources = Resources(dc_name)
 
     def get_azone_list(self):
         try:
@@ -47,6 +49,7 @@ class DataCenter(object):
             subnet:     subnets,
             rtb:        route_tables,
             igw:        internet_gateways,
+            natgw:      nat_gateways,
             secgroup:   security_groups,
             nacl:       network_acls,
             eni:        network_interfaces,
@@ -137,23 +140,24 @@ class DataCenter(object):
                     None,
                 )
                 eniType = get_eni_type(eip.get('NetworkInterfaceId'))
+                assoTarget = {}
+                if eip.get('AssociationId'):
+                    assoTarget = {
+                        'svrId': eip.get('InstanceId'),
+                        'tagName': get_tag_name('server', eip.get('InstanceId')) if eniType == 'interface' else get_tag_name('natgw', ''),
+                        'eniId': eip.get('NetworkInterfaceId'),
+                        'eniType': get_eni_type(eip.get('NetworkInterfaceId')),
+                    }
                 eipItem = {
-                    'pubIp': eip['PublicIp'],
+                    'eipId': eip['AllocationId'],
+                    'publicIp': eip['PublicIp'],
                     'tagName': nameTag,
-                    'alloId': eip['AllocationId'],
                     'eipDomain': eip['Domain'],
                     'ipv4Pool': eip['PublicIpv4Pool'],
                     'boarderGroup': eip['NetworkBorderGroup'],
-                    'assoId': eip.get('AssociationId'),
+                    'associationId': eip.get('AssociationId'),
                     # eip关联的目标ID及Name
-                    'assoTarget': {
-                        'svrId': eip.get('InstanceId'),
-                        'tagName': get_tag_name('server', eip.get('InstanceId'))
-                        if eniType == 'interface'
-                        else get_tag_name('natgw', ''),
-                        'eniId': eip.get('NetworkInterfaceId'),
-                        'eniType': get_eni_type(eip.get('NetworkInterfaceId')),
-                    },
+                    'assoTarget': assoTarget,
                 }
                 eipList.append(eipItem)
             return eipList
@@ -173,11 +177,11 @@ class DataCenter(object):
                 )
                 eipItem = {
                     'publicIp': eip['PublicIp'],
-                    'allocationId': eip['AllocationId'],
+                    'eipId': eip['AllocationId'],
                     'tagName': nameTag,
                     # 可基于AssociationId判断eip是否可用
                     'associationId': eip.get('AssociationId'),
-                    'isAvailable': True if not eip.get('AssociationId') else False,
+                    'isAvailable': False if eip.get('AssociationId') else True
                 }
                 eipList.append(eipItem)
             return eipList
@@ -309,7 +313,21 @@ class DataCenter(object):
                 Description=sg_desc,
                 TagSpecifications=[{'ResourceType': 'security-group', "Tags": [self.flagTag, nameTag]}],
             )
-            return SecurityGroup(self.dcName, newSg.id)
+            return SecurityGroup(newSg.id, self.dcName)
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def create_staticip(self, tag_name=None):
+        if tag_name:
+            nameTag = {"Key": "Name", "Value": tag_name}
+        else:
+            nameTag = {"Key": "Name", "Value": self.dcName.lower() + "-static-ip"}        
+        try:
+            newEip = self._client.allocate_address(
+                Domain='vpc',
+                TagSpecifications=[{'ResourceType': 'elastic-ip', "Tags": [self.flagTag, nameTag]}],
+            )
+            return StaticIP(newEip['AllocationId'], self.dcName)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 

@@ -7,8 +7,9 @@
 """
 
 from apiflask import Schema
-from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Number
+from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Number, Field
 from apiflask.validators import Length, OneOf
+from easyun.common.schemas import TagItem
 from easyun.cloud.aws_region import get_region_codes
 
 
@@ -328,19 +329,35 @@ Schemas for StaticIP(Eip) APIs
 '''
 
 
-class DataCenterNewEIPIn(Schema):
-    dcName = String()
+class StaticIPBasic(Schema):
+    eipId = String()
+    publicIp = String()
+    tagName = String(example="web_staticip")
+    associationId = String()
+    isAvailable = Boolean(example=True)
 
 
-class DataCenterEIPIn(Schema):
-    dcName = String()
-    alloId = String()
+class StaticIPModel(Schema):
+    eipId = String()
+    publicIp = String()
+    tagName = String(example="web_staticip")
+    associationId = String()
+    eipDomain = String()
+    ipv4Pool = String()
+    boarderGroup = String()
+    assoTarget = Field()
+
+
+class StaticIPDetail(Schema):
+    eipBasic = Nested(StaticIPBasic)
+    eipProperty = Field()
+    assoTarget = Field()
+    userTags = Nested(TagItem(many=True))
 
 
 class DelEipParm(Schema):
     dcName = String(required=True, example="Easyun")
-    alloId = String(required=True, example="eipalloc-0fdb6c5e3a254c937")
-    pubIp = String(required=False, example="12.34.56.78")
+    eipId = String(required=True, example="eipalloc-0fdb6c5e3a254c937")
 
 
 ''' 

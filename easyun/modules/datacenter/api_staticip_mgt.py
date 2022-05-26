@@ -4,132 +4,111 @@
   @LastEditors: aleck
 """
 
-import boto3
+from apiflask import APIBlueprint
 from apiflask import auth_required
-from apiflask.fields import String, List, Nested, Boolean, Date
-from easyun.common.result import Result
-from . import bp, DryRun
 from easyun.common.auth import auth_token
-from easyun.common.models import Account, Datacenter
+from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, DcNameParm
-from easyun.cloud.utils import gen_dc_tag, set_boto3_region, get_tag_name, get_eni_type
-from .schemas import (
-    DelEipParm,
-    DataCenterListsIn,
-    DataCenterListIn,
-    DcParmIn
-)
+from easyun.cloud.aws import get_staticip, get_datacenter
+from .schemas import DelEipParm, StaticIPBasic, StaticIPModel
 
 
-@bp.get('/staticip/<pub_ip>')
+bp = APIBlueprint('StaticIP', __name__, url_prefix='/staticip')
+
+
+@bp.get('')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
-# @output(SubnetsOut, description='List DataCenter Subnets Resources')
-def get_eip_detail(pub_ip, param):
-    '''获取 指定静态IP(EIP)信息'''
-
-    dcName = param.get('dc')
-    filterTag = gen_dc_tag(dcName, 'filter')
+@bp.output(StaticIPModel(many=True), description='List all StaticIP')
+def list_eip_detail(param):
+    '''获取 全部静态IP(EIP)信息'''
+    dcName = param['dc']
     try:
-        client_ec2 = boto3.client('ec2')
-        eips = client_ec2.describe_addresses(
-            Filters=[filterTag],
-            PublicIps=[pub_ip],
-            # AllocationIds=[ eip_id ]
-        )
-
-        # 从describe_addresses返回结果筛选出所需的字段
-        eip = eips.get('Addresses')[0]
-
-        if eip:
-            nameTag = next(
-                (tag['Value'] for tag in eip.get('Tags') if tag["Key"] == 'Name'), None
-            )
-            eniType = get_eni_type(eip.get('NetworkInterfaceId'))
-            eipAttributes = {
-                'pubIp': eip['PublicIp'],
-                'tagName': nameTag,
-                'alloId': eip['AllocationId'],
-                'eipDomain': eip['Domain'],
-                'ipv4Pool': eip['PublicIpv4Pool'],
-                'boarderGroup': eip['NetworkBorderGroup'],
-                'assoId': eip.get('AssociationId'),
-                # eip关联的目标ID及Name
-                'assoTarget': {
-                    'svrId': eip.get('InstanceId'),
-                    'tagName': get_tag_name('server', eip.get('InstanceId'))
-                    if eniType == 'interface'
-                    else get_tag_name('natgw', ''),
-                    'eniId': eip.get('NetworkInterfaceId'),
-                    'eniType': eniType,
-                },
-                # 基于AssociationId判断 eip是否可用
-                'isAvailable': True if not eip.get('AssociationId') else False,
-            }
-
-        resp = Result(detail=eipAttributes, status_code=200)
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_staticip()
+        resp = Result(detail=eipList, status_code=200)
         return resp.make_resp()
-
     except Exception as ex:
-        resp = Result(message=str(ex), status_code=2101, http_status_code=400)
+        resp = Result(message=str(ex), status_code=2301)
         resp.err_resp()
 
 
+@bp.get('/list')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(StaticIPBasic(many=True), description='Get StaticIP brief List')
+def list_eip_brief(param):
+    '''获取 全部静态IP列表(EIP)[仅基础字段]'''
+    dcName = param['dc']
+    try:
+        dc = get_datacenter(dcName)
+        eipList = dc.list_all_staticip()
+        resp = Result(detail=eipList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2302)
+        resp.err_resp()
 
-@bp.post('/staticip')
+
+@bp.post('')
 @auth_required(auth_token)
 @bp.input(DcNameParm)
 # @output(DcResultOut, 201, description='add A new Datacenter')
-def add_eip(param):
+def add_eip(parm):
     '''新增 静态IP(EIP)'''
-    dcName = param.get('dcName')
-    thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
-
-    client_ec2 = boto3.client('ec2', region_name=thisDC.region)
-
-    flagTag = {"Key": "Flag", "Value": dcName}
-    nameTag = {"Key": "Name", "Value": dcName.lower() + "-extra-eip"}
-
+    dcName = parm['dcName']
+    tagName = parm.get('tagName')
     try:
-        eip = client_ec2.allocate_address(
-            DryRun=DryRun,
-            Domain='vpc',
-            TagSpecifications=[
-                {'ResourceType': 'elastic-ip', "Tags": [flagTag, nameTag]}
-            ],
-        )
-        eipItem = {'pubIp': eip['PublicIp'], 'alloId': eip['AllocationId']}
-
-        resp = Result(detail=eipItem, status_code=200)
-        return resp.make_resp()
-
-    except Exception as ex:
-        resp = Result(message=str(ex), status_code=2061, http_status_code=400)
-        resp.err_resp()
-
-
-@bp.delete('/staticip')
-@auth_required(auth_token)
-@bp.input(DelEipParm)
-def delete_eip(parm):
-    '''删除 指定静态IP(EIP)'''
-
-    dcName = parm.get('dcName')
-    alloId = parm.get('alloId')
-
-    thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
-    client_ec2 = boto3.client('ec2', region_name=thisDC.region)
-
-    try:
-        response = client_ec2.release_address(AllocationId=alloId, DryRun=DryRun)
+        dc = get_datacenter(dcName)
+        newEip = dc.create_staticip(tagName)
         resp = Result(
-            # detail = [{'AllocationId': eipId}],
-            detail=f'{alloId} Static IP(EIP) released',
+            detail=newEip,
             status_code=200,
         )
         return resp.make_resp()
 
     except Exception as ex:
         resp = Result(message=str(ex), status_code=2061, http_status_code=400)
-        # resp = Result(message=ex, status_code=2061,http_status_code=400)
+        resp.err_resp()
+
+
+@bp.get('/<eip_id>')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+def get_eip_detail(eip_id, parm):
+    '''获取 指定静态IP(EIP)信息'''
+    dcName = parm['dc']
+    try:
+        eip = get_staticip(eip_id, dcName)
+        eipDetail = eip.get_detail()
+        resp = Result(
+            detail=eipDetail,
+            status_code=200,
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2101)
+        resp.err_resp()
+
+
+@bp.delete('')
+@auth_required(auth_token)
+@bp.input(DelEipParm)
+def delete_eip(parm):
+    '''删除 指定静态IP(EIP)'''
+    dcName = parm['dcName']
+    eipId = parm['eipId']
+    try:
+        eip = get_staticip(eipId, dcName)
+        oprtRes = eip.delete()
+        resp = Result(
+            detail=oprtRes,
+            status_code=200,
+        )
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2061)
         resp.err_resp()

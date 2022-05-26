@@ -5,25 +5,66 @@
 """
 
 import boto3
-from apiflask import auth_required
+from apiflask import APIBlueprint, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.libs.utils import len_iter
 from easyun.cloud.utils import get_subnet_type
-from .schemas import DataCenterSubnetIn, DataCenterSubnetInsert
-from . import bp, get_sub_net
+from easyun.cloud.aws import get_datacenter, get_subnet
+from .schemas import DataCenterSubnetIn, DataCenterSubnetInsert, SubnetBasic, SubnetModel
+from . import DryRun
 
 
-@bp.get('/subnet/<subnet_id>')
+bp = APIBlueprint('Subnet', __name__, url_prefix='/subnet')
+
+
+@bp.get('')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(SubnetModel(many=True), description='List DataCenter Subnets Resources')
+def list_subnet_detail(parm):
+    '''获取 全部subnet子网信息'''
+    dcName = parm['dc']
+    try:
+        dc = get_datacenter(dcName)
+        subnetList = dc.list_all_subnet()
+
+        resp = Result(detail=subnetList, status_code=200)
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(detail=str(ex), status_code=2101)
+        resp.err_resp()
+
+
+@bp.get('/list')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(SubnetBasic(many=True), description='List DataCenter Subnets Resources')
+def list_subnet_brief(parm):
+    '''获取 全部subnet子网列表[仅基础字段]'''
+    dcName = parm['dc']
+    try:
+        dc = get_datacenter(dcName)
+        subnetList = dc.get_subnet_list()
+
+        resp = Result(detail=subnetList, status_code=200)
+        return resp.make_resp()
+
+    except Exception as ex:
+        resp = Result(detail=str(ex), status_code=2102)
+        resp.err_resp()
+
+
+@bp.get('/<subnet_id>')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 # # @output(SubnetsOut, description='List DataCenter Subnets Resources')
-def get_subnet_detail(subnet_id, param):
-    '''获取 指定subnet子网信息'''
-
-    dcName = param.get('dc')
+def get_subnet_detail(subnet_id, parm):
+    '''获取 指定subnet子网信息【fix-me】'''
+    dcName = parm['dc']
     try:
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
         resource_ec2 = boto3.resource('ec2', region_name=thisDC.region)
@@ -33,7 +74,7 @@ def get_subnet_detail(subnet_id, param):
         svrNum = len_iter(svrCollection)
         # 统计subnet下的网卡数量
         eniCollection = thisSubnet.network_interfaces.all()
-        eniNum = len_iter(svrCollection)
+        eniNum = len_iter(eniCollection)
         # 判断subnet type是 public 还是 private
         subnetType = get_subnet_type(subnet_id)
 
@@ -61,12 +102,11 @@ def get_subnet_detail(subnet_id, param):
         return resp.err_resp()
 
 
-
-@bp.delete('/subnet')
+@bp.delete('')
 @auth_required(auth_token)
 @bp.input(DataCenterSubnetIn)
 def delete_subnet(param):
-    '''删除 指定subnet【未完成】'''
+    '''删除 指定subnet【refactor】'''
     dcName = param.get('dcName')
     subnetID = param.get('subnetID')
 
@@ -95,7 +135,8 @@ def delete_subnet(param):
             resp.err_resp()
     except Exception as ex:
         resp = Result(
-            message='delete subnet failed due to invalid subnetID',
+            # message='delete subnet failed due to invalid subnetID',
+            message=str(ex),
             status_code=2061,
             http_status_code=400,
         )
@@ -106,12 +147,12 @@ def delete_subnet(param):
     return resp.make_resp()
 
 
-@bp.post('/subnet')
+@bp.post('')
 @auth_required(auth_token)
 @bp.input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_subnet(param):
-    '''新增 subnet 【未完成】'''
+    '''新增 subnet 指定subnet【refactor】'''
     dcName = param.get('dcName')
     subnetCIDR = param.get('subnetCDIR')
 
@@ -148,7 +189,8 @@ def add_subnet(param):
             resp.err_resp()
     except Exception as ex:
         resp = Result(
-            message='create subnet failed due to invalid subnetID',
+            # message='delete subnet failed due to invalid subnetID',
+            message=str(ex),
             status_code=2061,
             http_status_code=400,
         )
@@ -159,12 +201,12 @@ def add_subnet(param):
     return resp.make_resp()
 
 
-@bp.put('/subnet')
-# @auth_required(auth_token)
+@bp.put('')
+@auth_required(auth_token)
 # @input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def mod_subnet(param):
-    '''修改数据中心subnet 【未完成】'''
+    '''修改数据中心Subnet 【fix-me】'''
 
     resp = Result(detail={"subnetId", 'subnet-123456'}, status_code=200)
     return resp.make_resp()

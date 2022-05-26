@@ -2,12 +2,12 @@
 """
   @module:  Bucket (S3) SDK Module
   @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper. 
-  @auth:    
+  @auth:
 """
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
 from easyun.common.models import Account
-from .utils import get_easyun_session
+from ...utils import get_easyun_session
 
 
 def query_bucket_flag(bucket):

@@ -162,7 +162,7 @@ def get_default_parms(parm):
         )
         return response.make_resp()
 
-    except ClientError as ex:
+    except Exception as ex:
         resp = Result(message=str(ex), status_code=2005, http_status_code=400)
         resp.err_resp()
 

@@ -3,15 +3,53 @@
   @desc:    DataCenter module mock API
   @LastEditors: aleck
 """
-from apiflask import auth_required
+
+from apiflask import APIBlueprint, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from .schemas import AddSecGroupParm, DelSecGroupParm, SecGroupDetail
-from . import bp, get_secgroup, get_datacenter
+from easyun.cloud.aws import get_datacenter, get_secgroup
+from .schemas import AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
 
 
-@bp.post('/secgroup')
+bp = APIBlueprint('SecurityGroup', __name__, url_prefix='/secgroup')
+
+
+@bp.get('')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(SecGroupModel(many=True), description='List all SecurityGroups Resources')
+def list_secgroup_detail(parm):
+    '''获取数据中心全部SecurityGroup信息'''
+    dcName = parm['dc']
+    try:
+        dc = get_datacenter(dcName)
+        sgList = dc.list_all_secgroup()
+        resp = Result(detail=sgList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2201)
+        resp.err_resp()
+
+
+@bp.get('/list')
+@auth_required(auth_token)
+@bp.input(DcNameQuery, location='query')
+@bp.output(SecGroupBasic(many=True), description='Get SecurityGroup brief list')
+def list_secgroup_brief(parm):
+    '''获取 全部SecurityGroup列表[仅基础字段]'''
+    dcName = parm['dc']
+    try:
+        dc = get_datacenter(dcName)
+        sgList = dc.get_secgroup_list()
+        resp = Result(detail=sgList, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2202)
+        resp.err_resp()
+
+
+@bp.post('')
 @auth_required(auth_token)
 @bp.input(AddSecGroupParm)
 def create_secgroup(parm):
@@ -22,16 +60,15 @@ def create_secgroup(parm):
     tagName = parm['tagName']
     try:
         dc = get_datacenter(dcName)
-        sg = dc.create_secgroup(tgName, tgDesc, tagName)
-        sgList = sg.get_secgroup_list()
-        resp = Result(detail=sgList, status_code=200)
+        newSg = dc.create_secgroup(tgName, tgDesc, tagName)
+        resp = Result(detail=newSg, status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=2031)
         resp.err_resp()
 
 
-@bp.get('/secgroup/<sg_id>')
+@bp.get('/<sg_id>')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 # @bp.output(SecGroupDetail)
@@ -48,7 +85,7 @@ def get_secgroup_detail(sg_id, parm):
         resp.err_resp()
 
 
-@bp.delete('/secgroup')
+@bp.delete('')
 @auth_required(auth_token)
 @bp.input(DelSecGroupParm)
 def delete_secgroup(parm):
@@ -65,7 +102,7 @@ def delete_secgroup(parm):
         resp.err_resp()
 
 
-@bp.put('/secgroup')
+@bp.put('')
 @auth_required(auth_token)
 @bp.input(AddSecGroupParm)
 def update_secgroup(parm):

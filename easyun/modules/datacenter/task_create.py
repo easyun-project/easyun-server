@@ -11,7 +11,7 @@ from datetime import datetime
 from easyun import db, celery
 from easyun.common.models import Datacenter, Account
 from easyun.cloud.utils import gen_dc_tag
-from . import logger, DryRun
+from . import logger
 
 
 @celery.task(bind=True)

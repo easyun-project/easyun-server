@@ -14,7 +14,9 @@ from easyun.common.result import Result
 from easyun.libs.utils import filter_list_by_value
 from easyun.cloud.utils import get_subnet_type
 from easyun.cloud.sdk_cost import CostExplorer, get_ce_region
-from . import bp, logger, get_datacenter
+from easyun.cloud.aws import get_datacenter
+from easyun.cloud.utils import set_boto3_region
+from . import bp, logger
 
 
 @bp.get('/summary/basic')
@@ -28,7 +30,7 @@ def get_vpc_summary(parm):
         dc = get_datacenter(dcName)
 
         subnetList = dc._client.describe_subnets(
-            Filters=[ dc.tagFilter, {'Name': 'vpc-id', 'Values': [dc.vpcId]} ],
+            Filters=[dc.tagFilter, {'Name': 'vpc-id', 'Values': [dc.vpcId]}],
         )['Subnets']
         countList = [
             {
@@ -51,7 +53,7 @@ def get_vpc_summary(parm):
             'rtbNum': dc.count_resource('rtb'),
             # 'eipNum': len_iter(resource_ec2.vpc_addresses.all()),
             'eipNum': dc.count_resource('staticip'),
-            "natNum": dc.count_resource('natgw')
+            "natNum": dc.count_resource('natgw'),
         }
 
         # 获取当前数据中心Availability Zones分布信息
@@ -60,9 +62,9 @@ def get_vpc_summary(parm):
         azSummary = [
             {
                 'azName': az,
-                'subnetNum': filter_list_by_value(
-                    countList, 'subnetAz', az
-                ).get('countNum'),
+                'subnetNum': filter_list_by_value(countList, 'subnetAz', az).get(
+                    'countNum'
+                ),
             }
             for az in azList
         ]
@@ -84,6 +86,9 @@ def get_res_summary(parm):
     '''获取指定的数据中心Resource统计信息'''
     dcName = parm['dc']
     try:
+        # 设置默认region兼容旧api写法
+        set_boto3_region(dcName)
+
         dc = get_datacenter(dcName)
         rgt = dc.tagging
         resSummary = {

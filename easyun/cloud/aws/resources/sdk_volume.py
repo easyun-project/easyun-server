@@ -2,11 +2,12 @@
 """
   @module:  Volume (ebs) SDK Module
   @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper. 
-  @auth:    
+  @auth:
 """
+
 import boto3
 from easyun.libs.utils import load_json_config
-from .utils import set_boto3_region, get_server_name
+from ...utils import set_boto3_region, get_server_name
 
 
 # 定义系统盘路径

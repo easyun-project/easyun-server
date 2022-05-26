@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
 from apiflask import APIBlueprint
-from easyun.cloud.sdk_volume import StorageVolume
-from easyun.cloud.sdk_bucket import StorageBucket
+from easyun.cloud.aws.resources import StorageVolume, StorageBucket
+
 
 # define api version
 ver = '/api/v1'
@@ -26,8 +26,7 @@ def get_st_bucket(dcName):
     if _ST_BUCKET is not None and _ST_BUCKET.dcName == dcName:
         return _ST_BUCKET
     else:
-        _ST_BUCKET = StorageBucket(dcName)
-        return _ST_BUCKET
+        return StorageBucket(dcName)
 
 
 from . import (
