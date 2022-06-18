@@ -37,3 +37,7 @@ from . import (
     api_volume_get,
     api_volume_mgt,
 )
+
+
+bp.register_blueprint(api_bucket_mgt.bp)
+bp.register_blueprint(api_volume_mgt.bp)

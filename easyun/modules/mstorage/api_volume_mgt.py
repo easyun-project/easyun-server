@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import auth_required, Schema, input, output
+from apiflask import APIBlueprint, auth_required, Schema, input, output
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.cloud.utils import (
@@ -22,14 +22,16 @@ from .schemas import (
     AttachVolParm,
     DetachVolParm,
 )
-from . import bp
+
+
+bp = APIBlueprint('Volume', __name__, url_prefix='/volume')
 
 
 # 定义系统盘路径
 SystemDisk = ['/dev/xvda', '/dev/sda1']
 
 
-@bp.post('/volume')
+@bp.post('')
 @auth_required(auth_token)
 @bp.input(AddVolumeParm)
 @bp.output(VolumeDetail)
@@ -132,7 +134,7 @@ def add_volume(parms):
         response.err_resp()
 
 
-@bp.delete('/volume')
+@bp.delete('')
 @auth_required(auth_token)
 @bp.input(DelVolumeParm)
 def del_volume(parm):
@@ -158,7 +160,7 @@ def del_volume(parm):
         response.err_resp()
 
 
-@bp.put('/volume/attach')
+@bp.put('/attach')
 @bp.input(AttachVolParm)
 @auth_required(auth_token)
 def attach_server(parm):
@@ -189,7 +191,7 @@ def attach_server(parm):
     return response.make_resp()
 
 
-@bp.put('/volume/detach')
+@bp.put('/detach')
 @bp.input(DetachVolParm)
 @auth_required(auth_token)
 def detach_server(parm):

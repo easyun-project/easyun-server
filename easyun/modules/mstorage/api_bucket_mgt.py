@@ -6,14 +6,15 @@
 """
 
 import boto3
-from apiflask import auth_required
+from apiflask import APIBlueprint, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from .schemas import AddBucketParm, BucketIdQuery, BucketIdParm, BucketPubBlockParm, BucketBasic
-from . import bp, get_st_bucket
+from . import get_st_bucket
 
+bp = APIBlueprint('Bucket', __name__, url_prefix='/bucket')
 
-@bp.get('/bucket/vaildate')
+@bp.get('/vaildate')
 @auth_required(auth_token)
 @bp.input(BucketIdQuery, location='query')
 def vaildate_bkt(parm):
@@ -34,7 +35,7 @@ def vaildate_bkt(parm):
         resp.err_resp()
 
 
-@bp.post('/bucket')
+@bp.post('')
 @auth_required(auth_token)
 @bp.input(AddBucketParm)
 @bp.output(BucketBasic)
@@ -65,7 +66,7 @@ def add_bucket_s3(parm):
         resp.err_resp()
 
 
-@bp.delete('/bucket')
+@bp.delete('')
 @auth_required(auth_token)
 @bp.input(BucketIdParm)
 def delete_bucket(parm):
@@ -84,7 +85,7 @@ def delete_bucket(parm):
         return response.err_resp()
 
 
-@bp.put('/bucket/pubblock')
+@bp.put('/pubblock')
 @auth_required(auth_token)
 @bp.input(BucketPubBlockParm)
 def modify_bucket_policy(parm):
@@ -123,7 +124,7 @@ def modify_bucket_policy(parm):
         return response.err_resp()
 
 
-@bp.post('/bucket/add')
+@bp.post('/add')
 @auth_required(auth_token)
 @bp.input(AddBucketParm)
 def add_bucket_cc(parm):

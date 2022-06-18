@@ -156,6 +156,7 @@ class VolumeModel(Schema):
     volumeIops = Integer(example=3000)
     volumeThruput = Integer(example=500)
     isEncrypted = Boolean(example=False)
+    isMultiAttach = Boolean(example=False)
     volumeAttach = Nested(VolAttachment(many=True))
 
 

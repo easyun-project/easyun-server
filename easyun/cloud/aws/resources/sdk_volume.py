@@ -24,94 +24,6 @@ class StorageVolume(object):
         self.dcName = dcName
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dcName]}
 
-    def list_all_volume(self):
-        try:
-            volumes = self._client.describe_volumes(Filters=[self.tagFilter])['Volumes']
-            volumeList = []
-            for vol in volumes:
-                nameTag = next(
-                    (tag['Value'] for tag in vol.get('Tags') if tag["Key"] == 'Name'),
-                    None,
-                )
-                attachList = []
-                attachs = vol.get('Attachments')
-                if attachs:
-                    for a in attachs:
-                        # 基于卷挂载路径判断disk类型是 system 还是 user
-                        diskType = 'system' if a['Device'] in SystemDisk else 'user'
-                        attachList.append(
-                            {
-                                'attachPath': a['Device'],
-                                'svrId': a['InstanceId'],
-                                'tagName': get_server_name(a['InstanceId']),
-                                'attachTime': a['AttachTime'],
-                                'diskType': diskType,
-                            }
-                        )
-                isAttachable = (
-                    True
-                    if vol['MultiAttachEnabled'] or vol['State'] == 'available'
-                    else False
-                )
-                volItem = {
-                    'volumeId': vol['VolumeId'],
-                    'tagName': nameTag,
-                    'volumeAz': vol['AvailabilityZone'],
-                    'volumeType': vol['VolumeType'],
-                    'volumeSize': vol['Size'],
-                    'volumeState': vol['State'],
-                    'isAttachable': isAttachable,
-                    'createTime': vol['CreateTime'],
-                    'isEncrypted': vol['Encrypted'],
-                    'isMultiAttach': vol['MultiAttachEnabled'],
-                    #             'usedSize': none,
-                    'volumeIops': vol.get('Iops'),
-                    'volumeThruput': vol.get('Throughput'),
-                    'volumeAttach': attachList,
-                }
-                volumeList.append(volItem)
-            return volumeList
-        except Exception as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def get_volume_list(self):
-        try:
-            # volumeList = self.list_all_volume()
-            # 从volumeList中筛选出基础字段返回
-            # listKeys = ['volumeId', 'tagName', 'volumeAz', 'volumeType', 'volumeSize', 'volumeState', 'isAttachable']
-            # newVolList = [{k:v for k,v in vol.items() if k in listKeys} for vol in volumeList]
-            # return newVolList
-            volumes = self._client.describe_volumes(Filters=[self.tagFilter])['Volumes']
-            volumeList = []
-            for vol in volumes:
-                nameTag = next(
-                    (tag['Value'] for tag in vol.get('Tags') if tag["Key"] == 'Name'),
-                    None,
-                )
-                isAttachable = (
-                    True
-                    if vol['MultiAttachEnabled'] or vol['State'] == 'available'
-                    else False
-                )
-                volItem = {
-                    'volumeId': vol['VolumeId'],
-                    'tagName': nameTag,
-                    'volumeAz': vol['AvailabilityZone'],
-                    'volumeType': vol['VolumeType'],
-                    'volumeSize': vol['Size'],
-                    'volumeState': vol['State'],
-                    'isAttachable': isAttachable,
-                    'createTime': vol['CreateTime'],
-                    'isEncrypted': vol['Encrypted'],
-                    'isMultiAttach': vol['MultiAttachEnabled'],
-                    'volumeIops': vol.get('Iops'),
-                    'volumeThruput': vol.get('Throughput'),
-                }
-                volumeList.append(volItem)
-            return volumeList
-        except Exception as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
     def get_volume_detail(self, volume_id):
         try:
             thisVol = self._resource.Volume(volume_id)
@@ -171,13 +83,13 @@ class StorageVolume(object):
                 ]
             ]
 
-            VolumeDetail = {
+            volumeDetail = {
                 'volumeBasic': volumeBasic,
                 'volumeConfig': volumeConfig,
                 'volumeAttach': attachList,
                 'userTags': userTags,
             }
-            return VolumeDetail
+            return volumeDetail
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 

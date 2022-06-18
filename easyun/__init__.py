@@ -135,13 +135,14 @@ def register_cloud_account(app: APIFlask):
 def register_blueprints(app: APIFlask):
     """Register Flask blueprints."""
     from .common import auth
-    from .modules import mserver, mstorage, datacenter, account, dashboard, mdatabase
+    from .modules import mserver, mstorage, datacenter, account, dashboard, mdatabase, mloadbalancer
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(datacenter.bp)
     app.register_blueprint(mserver.bp)
     app.register_blueprint(mdatabase.bp)
     app.register_blueprint(mstorage.bp)
+    app.register_blueprint(mloadbalancer.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(account.bp)
     return None

@@ -9,7 +9,7 @@ from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.utils import set_boto3_region
+from easyun.cloud.aws import get_datacenter
 from .schemas import VolumeModel, VolumeBasic, VolumeDetail
 from . import bp, get_st_volume
 
@@ -22,11 +22,12 @@ def list_volume_detail(parm):
     '''获取数据中心全部块存储信息'''
     dcName = parm.get('dc')
     # 设置 boto3 接口默认 region_name
-    dcRegion = set_boto3_region(dcName)
+    # dcRegion = set_boto3_region(dcName)
     try:
-        # vol = StorageVolume(dcName)
-        vol = get_st_volume(dcName)
-        volumeList = vol.list_all_volume()
+        # vol = get_st_volume(dcName)
+        # volumeList = vol.list_all_volume()
+        dc = get_datacenter(dcName)
+        volumeList = dc.resources.list_all_volume()
 
         resp = Result(detail=volumeList, status_code=200)
         return resp.make_resp()
@@ -44,11 +45,13 @@ def list_volume_brief(parm):
     '''获取数据中心全部块存储列表[仅基础字段]'''
     dcName = parm.get('dc')
     # 设置 boto3 接口默认 region_name
-    dcRegion = set_boto3_region(dcName)
+    # dcRegion = set_boto3_region(dcName)
     try:
         # vol = StorageVolume(dcName)
-        vol = get_st_volume(dcName)
-        volumeList = vol.get_volume_list()
+        # vol = get_st_volume(dcName)
+        # volumeList = vol.get_volume_list()
+        dc = get_datacenter(dcName)
+        volumeList = dc.resources.get_volume_list()
 
         resp = Result(detail=volumeList, status_code=200)
         return resp.make_resp()
@@ -66,7 +69,7 @@ def get_volume_detail(volume_id, parm):
     '''获取指定块存储(Volume)详细信息'''
     dcName = parm.get('dc')
     # 设置 boto3 接口默认 region_name
-    dcRegion = set_boto3_region(dcName)
+    # dcRegion = set_boto3_region(dcName)
     try:
         vol = get_st_volume(dcName)
         volumeDetail = vol.get_volume_detail(volume_id)

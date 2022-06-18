@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
   @module:  Server (ec2) SDK Module
-  @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper.  
-  @auth:    
+  @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper.
+  @auth:
 """
 import boto3
 
@@ -12,7 +12,7 @@ class EC2Server(object):
         self._client = boto3.resource('ec2')
         self._resource = boto3.resource('ec2')
 
-    #SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.describe_services
+    # SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.describe_services
     def get_service_codes(self):
         '''Retrieve all AWS service codes'''
         try:
@@ -31,10 +31,6 @@ class EC2Server(object):
                 if 'NextToken' not in describe_result:
                     break
                 describe_args['NextToken'] = describe_result['NextToken']
-            return {
-                'count':len(svcodeList),
-                'data':svcodeList
-            }
+            return {'count': len(svcodeList), 'data': svcodeList}
         except Exception as ex:
-            return '%s: %s' %(self.__class__.__name__ ,ex)
-            
+            return '%s: %s' % (self.__class__.__name__, ex)
