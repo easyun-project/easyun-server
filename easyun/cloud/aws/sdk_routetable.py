@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  SecurityGroup SDK Module
-  @desc:    AWS SDK Boto3 Security Group Client and Resource Wrapper.
-  @auth:
+  @module:  Route and Route Table SDK Module
+  @desc:    AWS SDK Boto3 Route Table Client and Resource Wrapper.
+  @auth:    aleck
 """
 
 from botocore.exceptions import ClientError
@@ -20,7 +20,7 @@ TagEasyunSecurityGroup = [
 ]
 
 
-class SecurityGroup(object):
+class RouteTable(object):
     def __init__(self, sg_id, dc_name=None):
         session = get_easyun_session(dc_name)
         self.id = sg_id

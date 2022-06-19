@@ -2,22 +2,21 @@
 """
   @module:  Object Storage Data(object) Management API
   @desc:    Object data management, like ls, copy, upload, download, delete
-  @auth:    
-"""  
+  @auth:
+"""
 
 
 import boto3
 from apiflask import auth_required
 from easyun.common.auth import auth_token
-from easyun.libs.utils import len_iter
 from easyun.cloud.utils import query_dc_region
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from .schemas import ObjectKeyQuery
-from . import bp
+from .api_bucket_mgt import bp
 
 
-@bp.get('/bucket/<bkt_id>/object')
+@bp.get('/<bkt_id>/object')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 def get_object_list(bucket_id, parm):
@@ -54,7 +53,7 @@ def get_object_list(bucket_id, parm):
         return response.err_resp()
 
 
-@bp.get('/bucket/<bucket_id>/<object_key>')
+@bp.get('/<bucket_id>/<object_key>')
 @auth_required(auth_token)
 @bp.input(ObjectKeyQuery, location='query')
 def get_object_detail(bucket_id, object_key, parm):

@@ -293,21 +293,12 @@ Schemas for Subnet APIs
 '''
 
 
-class DataCenterSubnetIn(Schema):
-    dcName = String()
-    subnetID = String()
-
-
-class DataCenterSubnetInsert(Schema):
-    dcName = String()
-    subnetCDIR = String()
-
-
 class SubnetBasic(Schema):
     subnetId = String(example='subnet-06bfe659f6ecc2eed')
+    subnetState = String(example='available')
     subnetType = String(validate=OneOf(['public', 'private']), example='public')
     cidrBlock = String(example='10.10.1.0/24')
-    subnetAz = String(example='us-east-1a')
+    azName = String(example='us-east-1a')
     tagName = String(example="public_subnet_1")
 
 
@@ -316,11 +307,81 @@ class SubnetModel(Schema):
     subnetState = String(example='available')
     subnetType = String(validate=OneOf(['public', 'private']), example='public')
     cidrBlock = String(example='10.10.1.0/24')
-    subnetAz = String(example='us-east-1a')
-    vpcId = String(example='vpc-057f0e3d715c24147')
+    azName = String(example='us-east-1a')
     tagName = String(example="public_subnet_1")
+    vpcId = String(example='vpc-057f0e3d715c24147')
     availableIpNum = Number(example=242)
     isMapPublicIp = Boolean(example=True)
+
+
+class SubnetDetail(Schema):
+    subnetId = String(example='subnet-06bfe659f6ecc2eed')
+    subnetState = String(example='available')
+    subnetType = String(validate=OneOf(['public', 'private']), example='public')
+    cidrBlock = String(example='10.10.1.0/24')
+    azName = String(example='us-east-1a')
+    tagName = String(example="public_subnet_1")
+    vpcId = String(example='vpc-057f0e3d715c24147')    
+    availableIpNum = Number(example=242)
+    isMapPublicIp = Boolean(example=True)
+    serverNum = Number(example=1)
+    eniNum = Number(example=3)
+    userTags = Nested(TagItem(many=True))
+
+
+class DelSubnetParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    subnetId = String(required=True, example='subnet-06bfe659f6ecc2eed')
+
+
+class AddSubnetParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    cidrBlock = String(required=True, example='10.10.1.0/24')
+    azName = String(required=True, example='us-east-1a')
+    tagName = String(example="Secgroup_for_Web")
+
+
+'''
+Schemas for RouteTable APIs
+==================================================================
+'''
+
+
+class RouteTableBasic(Schema):
+    rtbId = String(example='rtb-040ac5d25869f45ab')
+    tagName = String(example="route-nat-easyun")
+    vpcId = String(example='vpc-057f0e3d715c24147')
+
+
+class RouteTableModel(Schema):
+    rtbId = String(example='rtb-040ac5d25869f45ab')
+    tagName = String(example="route-nat-easyun")
+    vpcId = String(example='vpc-057f0e3d715c24147')
+    associations = List(Dict)
+    routes = List(Dict)
+    propagateVgws = List(Dict)
+
+
+class RouteTableDetail(Schema):
+    rtbId = String(example='rtb-040ac5d25869f45ab')
+    tagName = String(example="route-nat-easyun")
+    vpcId = String(example='vpc-057f0e3d715c24147')
+    associations = List(Dict)
+    routes = List(Dict)
+    propagateVgws = List(Dict)
+    userTags = Nested(TagItem(many=True))
+
+
+class DelRouteTableParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    subnetId = String(required=True, example='subnet-06bfe659f6ecc2eed')
+
+
+class AddRouteTableParm(Schema):
+    dcName = String(required=True, example="Easyun")
+    cidrBlock = String(required=True, example='10.10.1.0/24')
+    azName = String(required=True, example='us-east-1a')
+    tagName = String(example="Secgroup_for_Web")
 
 
 '''
@@ -360,7 +421,7 @@ class DelEipParm(Schema):
     eipId = String(required=True, example="eipalloc-0fdb6c5e3a254c937")
 
 
-''' 
+'''
 Schemas for SecGropu APIs
 ==================================================================
 '''

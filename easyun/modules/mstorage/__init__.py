@@ -31,10 +31,7 @@ def get_st_bucket(dcName):
 
 from . import (
     api_mock,
-    api_bucket_get,
     api_bucket_mgt,
-    api_object_mgt,
-    api_volume_get,
     api_volume_mgt,
 )
 

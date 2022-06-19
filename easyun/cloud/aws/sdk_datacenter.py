@@ -10,6 +10,7 @@ from easyun.common.models import Datacenter
 from easyun.libs.utils import len_iter, filter_list_by_value
 from .sdk_tagging import ResGroupTagging
 from .sdk_subnet import Subnet
+from .sdk_routetable import RouteTable
 from .sdk_secgroup import SecurityGroup
 from .sdk_staticip import StaticIP
 from .sdk_gateway import InternetGateway, NatGateway
@@ -110,7 +111,7 @@ class DataCenter(object):
                     'subnetType': subnetType,
                     'subnetState': subnet['State'],
                     'vpcId': subnet['VpcId'],
-                    'subnetAz': subnet['AvailabilityZone'],
+                    'azName': subnet['AvailabilityZone'],
                     'cidrBlock': subnet['CidrBlock'],
                     # 'cidrBlockv6':subnet['Ipv6CidrBlockAssociationSet'][0].get('Ipv6CidrBlock'),
                     'availableIpNum': subnet['AvailableIpAddressCount'],
@@ -281,10 +282,9 @@ class DataCenter(object):
 
     def list_all_routetable(self):
         try:
-            rtbs = self._client.describe_route_tables(Filters=[self.tagFilter]).get(
-                'RouteTables'
-            )
-
+            rtbs = self._client.describe_route_tables(
+                Filters=[self.tagFilter]
+            ).get('RouteTables')
             rtbList = []
             for rtb in rtbs:
                 nameTag = next(
@@ -295,13 +295,25 @@ class DataCenter(object):
                     'rtbId': rtb['RouteTableId'],
                     'tagName': nameTag,
                     'vpcId': rtb.get('VpcId'),
-                    'rtbAssociations': rtb.get('Associations'),
+                    'associations': rtb.get('Associations'),
                     'propagateVgws': rtb.get('PropagatingVgws'),
-                    'rtbRoutes': rtb.get('Routes'),
+                    'routes': rtb.get('Routes'),
                 }
                 rtbList.append(rtbItem)
 
             return rtbList
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def create_subnet(self, cidr_block, az_name, tag_name=None):
+        nameTag = {"Key": "Name", "Value": tag_name}
+        try:
+            newSubnet = self.vpc.create_subnet(
+                CidrBlock= cidr_block,
+                AvailabilityZone= az_name,
+                TagSpecifications=[{'ResourceType': 'security-group', "Tags": [self.flagTag, nameTag]}],
+            )
+            return Subnet(newSubnet.id, self.dcName)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 

@@ -12,11 +12,11 @@ from ..utils import get_easyun_session, get_eni_type, get_tag_name
 class StaticIP(object):
     def __init__(self, eip_id, dc_name):
         session = get_easyun_session(dc_name)
-        self.eipId = eip_id
+        self.id = eip_id
         self._resource = session.resource('ec2')
         self._client = self._resource.meta.client
         try:
-            self.eipObj = self._resource.VpcAddress(self.eipId)
+            self.eipObj = self._resource.VpcAddress(self.id)
             self.publicIp = self.eipObj.public_ip
             self.tagName = next(
                 (tag['Value'] for tag in self.eipObj.tags if tag["Key"] == 'Name'), None
@@ -63,7 +63,7 @@ class StaticIP(object):
             eip.release()
             oprtRes = {
                 'operation': 'Delete StaticIP',
-                'eipId': self.eipId,
+                'eipId': self.id,
                 'tagName': self.tagName,
             }
             # del self

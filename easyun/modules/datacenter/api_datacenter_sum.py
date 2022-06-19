@@ -35,7 +35,7 @@ def get_vpc_summary(parm):
         countList = [
             {
                 'subnetType': get_subnet_type(subnet['SubnetId']),
-                'subnetAz': subnet['AvailabilityZone'],
+                'azName': subnet['AvailabilityZone'],
             }
             for subnet in subnetList
         ]
@@ -62,7 +62,7 @@ def get_vpc_summary(parm):
         azSummary = [
             {
                 'azName': az,
-                'subnetNum': filter_list_by_value(countList, 'subnetAz', az).get(
+                'subnetNum': filter_list_by_value(countList, 'azName', az).get(
                     'countNum'
                 ),
             }

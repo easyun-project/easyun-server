@@ -29,13 +29,14 @@ from . import (
     api_datacenter_mgt,
     api_datacenter_sum,
     api_subnet_mgt,
+    api_routetab_mgt,
     api_secgroup_mgt,
     api_staticip_mgt,
-    api_gateway_mgt,
-    api_routetab_mgt
+    api_gateway_mgt
 )
 
 bp.register_blueprint(api_subnet_mgt.bp)
+bp.register_blueprint(api_routetab_mgt.bp)
 bp.register_blueprint(api_gateway_mgt.bp)
 bp.register_blueprint(api_secgroup_mgt.bp)
 bp.register_blueprint(api_staticip_mgt.bp)

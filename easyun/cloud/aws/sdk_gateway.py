@@ -12,11 +12,11 @@ from ..utils import get_easyun_session
 class InternetGateway(object):
     def __init__(self, igw_id, dc_name=None):
         session = get_easyun_session(dc_name)
-        self.igwId = igw_id
+        self.id = igw_id
         self._resource = session.resource('ec2')
         self._client = self._resource.meta.client
         try:
-            self.igwObj = self._resource.InternetGateway(self.igwId)
+            self.igwObj = self._resource.InternetGateway(self.id)
             self.tagName = next(
                 (tag['Value'] for tag in self.igwObj.tags if tag["Key"] == 'Name'), None
             )
@@ -49,7 +49,7 @@ class InternetGateway(object):
             igw.delete()
             oprtRes = {
                 'operation': 'Delete Internet Gateway',
-                'igwId': self.igwId,
+                'igwId': self.id,
                 'tagName': self.tagName,
             }
             # del self
@@ -61,7 +61,7 @@ class InternetGateway(object):
 class NatGateway(object):
     def __init__(self, natgw_id, dc_name=None):
         session = get_easyun_session(dc_name)
-        self.natgwId = natgw_id
+        self.id = natgw_id
         self._resource = session.resource('ec2')
         self._client = self._resource.meta.client
         try:
@@ -106,13 +106,13 @@ class NatGateway(object):
         try:
             if nat['State'] != 'deleted':
                 self._client.delete_nat_gateway(
-                    NatGatewayId=self.natgwId
+                    NatGatewayId=self.id
                 )
             else:
                 raise ValueError('The NAT Gateway was deleted!')
             oprtRes = {
                 'operation': 'Delete NAT Gateway',
-                'natgwId': self.natgwId,
+                'natgwId': self.id,
                 'tagName': self.tagName,
             }
             # del self
