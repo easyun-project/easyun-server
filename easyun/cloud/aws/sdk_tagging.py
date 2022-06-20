@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from ..utils import get_easyun_session
+from .session import get_easyun_session
 
 
 ResourcesDict = {

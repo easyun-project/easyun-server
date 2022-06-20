@@ -7,7 +7,7 @@
 
 import boto3
 from easyun.common.models import Datacenter
-from easyun.cloud.aws.session import get_easyun_session
+from ..session import get_easyun_session
 
 
 _EC2_RESOURCE = None

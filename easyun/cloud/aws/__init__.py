@@ -7,9 +7,9 @@
 
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
+from .session import get_easyun_session
 from ..aws_region import query_country_code, query_region_name
-from ..utils import get_easyun_session
-from .sdk_datacenter import DataCenter, Subnet, RouteTable, InternetGateway, NatGateway, SecurityGroup, StaticIP
+from .datacenter import DataCenter, Subnet, RouteTable, InternetGateway, NatGateway, SecurityGroup, StaticIP
 
 
 _DATACENTER = None
@@ -125,7 +125,7 @@ class AWSCloud(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def get_region_list(self, service_name):
-        '''get a datacenter brief list in the account'''
+        '''get region list in AWS Cloud'''
         try:
             if self.regionType == 'GCR':
                 regionList = self.session.get_available_regions(service_name, 'aws-cn')
@@ -144,15 +144,7 @@ class AWSCloud(object):
 
     def create_datacenter(self, dc_parms, user):
         try:
-            # 后续传 public_ip 转换 allocation_id
-            newNat = self._client.create_nat_gateway(
-                ConnectivityType=connect_type,
-                AllocationId=allocation_id,
-                SubnetId=subnet_id,
-                TagSpecifications=[
-                    {'ResourceType': 'natgateway', "Tags": [self.flagTag, nameTag]}
-                ],
-            )
-            return NatGateway(self.dcName, newNat['NatGateway']['NatGatewayId'])
+            pass
+            return DataCenter(self.dcName)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

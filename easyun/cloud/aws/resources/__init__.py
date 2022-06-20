@@ -10,7 +10,8 @@ from .sdk_server import EC2Server
 from .sdk_volume import StorageVolume
 from .sdk_bucket import StorageBucket
 from .sdk_loadbalancer import LoadBalancer
-from easyun.cloud.utils import get_easyun_session, get_server_name, get_subnet_type, get_eni_type, get_tag_name
+from ..session import get_easyun_session
+from easyun.cloud.utils import get_server_name, get_subnet_type, get_eni_type, get_tag_name
 
 
 _LOAD_BALANCER = None
@@ -26,8 +27,8 @@ def get_load_balancer(elb_id, dc_name):
 
 class Resources(object):
     def __init__(self, dc_name):
-        self.dcName = dc_name
         self.session = get_easyun_session(dc_name)
+        self.dcName = dc_name        
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
 

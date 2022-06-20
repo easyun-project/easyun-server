@@ -8,14 +8,15 @@
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
 from easyun.libs.utils import len_iter, filter_list_by_value
-from .sdk_tagging import ResGroupTagging
+from ..utils import get_easyun_session
 from .sdk_subnet import Subnet
 from .sdk_routetable import RouteTable
 from .sdk_secgroup import SecurityGroup
 from .sdk_staticip import StaticIP
 from .sdk_gateway import InternetGateway, NatGateway
-from .resources import Resources
-from ..utils import get_easyun_session, get_subnet_type, get_eni_type, get_tag_name
+from ..resources import Resources
+from ..sdk_tagging import ResGroupTagging
+from ..utils import get_subnet_type, get_eni_type, get_tag_name
 
 
 class DataCenter(object):
@@ -311,9 +312,19 @@ class DataCenter(object):
             newSubnet = self.vpc.create_subnet(
                 CidrBlock= cidr_block,
                 AvailabilityZone= az_name,
-                TagSpecifications=[{'ResourceType': 'security-group', "Tags": [self.flagTag, nameTag]}],
+                TagSpecifications=[{'ResourceType': 'subnet', "Tags": [self.flagTag, nameTag]}],
             )
             return Subnet(newSubnet.id, self.dcName)
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def create_routetable(self, tag_name=None):
+        nameTag = {"Key": "Name", "Value": tag_name}
+        try:
+            newRtb = self.vpc.create_route_table(
+                TagSpecifications=[{'ResourceType': 'route-table', "Tags": [self.flagTag, nameTag]}],
+            )
+            return RouteTable(newRtb.id, self.dcName)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
@@ -333,7 +344,7 @@ class DataCenter(object):
         if tag_name:
             nameTag = {"Key": "Name", "Value": tag_name}
         else:
-            nameTag = {"Key": "Name", "Value": self.dcName.lower() + "-static-ip"}        
+            nameTag = {"Key": "Name", "Value": self.dcName.lower() + "-static-ip"}
         try:
             newEip = self._client.allocate_address(
                 Domain='vpc',

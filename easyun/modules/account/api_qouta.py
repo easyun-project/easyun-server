@@ -11,7 +11,7 @@ from easyun.common.models import Datacenter
 from easyun.common.schemas import RegionCodeQuery
 from easyun.common.result import Result
 from easyun.libs.utils import load_json_config
-from easyun.cloud.sdk_quotas import ServiceQuotas
+from easyun.cloud.aws.sdk_quotas import ServiceQuotas
 from . import bp
 
 

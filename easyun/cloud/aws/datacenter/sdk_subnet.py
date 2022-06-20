@@ -7,7 +7,7 @@
 
 from botocore.exceptions import ClientError
 from easyun.libs.utils import len_iter
-from ..utils import get_easyun_session
+from ..session import get_easyun_session
 
 
 class Subnet(object):
