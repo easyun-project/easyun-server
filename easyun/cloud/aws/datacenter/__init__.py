@@ -7,13 +7,14 @@
 
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
-from easyun.libs.utils import len_iter, filter_list_by_value
+from easyun.libs.utils import len_iter
 from ..utils import get_easyun_session
 from .sdk_subnet import Subnet
 from .sdk_routetable import RouteTable
 from .sdk_secgroup import SecurityGroup
 from .sdk_staticip import StaticIP
 from .sdk_gateway import InternetGateway, NatGateway
+from ..workload import Workload
 from ..resources import Resources
 from ..sdk_tagging import ResGroupTagging
 from ..utils import get_subnet_type, get_eni_type, get_tag_name
@@ -30,15 +31,14 @@ class DataCenter(object):
         self.vpc = self._resource.Vpc(self.vpcId)
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
+        self.workload = Workload(dc_name)
         self.tagging = ResGroupTagging(dc_name)
         self.resources = Resources(dc_name)
 
     def get_azone_list(self):
         try:
             azs = self._client.describe_availability_zones(
-                Filters=[
-                    {'Name': 'state', 'Values': ['available']}
-                ]
+                Filters=[{'Name': 'state', 'Values': ['available']}]
             )['AvailabilityZones']
             azoneList = [az['ZoneName'] for az in azs]
             return azoneList
@@ -63,16 +63,22 @@ class DataCenter(object):
             elif resource == 'rtb':
                 resIterator = self.vpc.route_tables.all()
             elif resource == 'igw':
-                resIterator = self.vpc.internet_gateways.filter(Filters=[self.tagFilter])
+                resIterator = self.vpc.internet_gateways.filter(
+                    Filters=[self.tagFilter]
+                )
             elif resource == 'natgw':
-                natgws = self._client.describe_nat_gateways(Filters=[self.tagFilter]).get('NatGateways')
+                natgws = self._client.describe_nat_gateways(
+                    Filters=[self.tagFilter]
+                ).get('NatGateways')
                 return len(natgws)
             elif resource == 'secgroup':
                 resIterator = self.vpc.security_groups.filter(Filters=[self.tagFilter])
             elif resource == 'nacl':
                 resIterator = self.vpc.network_acls.filter(Filters=[self.tagFilter])
             elif resource == 'staticip':
-                resIterator = self._resource.vpc_addresses.filter(Filters=[self.tagFilter])
+                resIterator = self._resource.vpc_addresses.filter(
+                    Filters=[self.tagFilter]
+                )
             else:
                 raise ValueError('bad collection name')
             # resSum = 0
@@ -146,7 +152,9 @@ class DataCenter(object):
                 if eip.get('AssociationId'):
                     assoTarget = {
                         'svrId': eip.get('InstanceId'),
-                        'tagName': get_tag_name('server', eip.get('InstanceId')) if eniType == 'interface' else get_tag_name('natgw', ''),
+                        'tagName': get_tag_name('server', eip.get('InstanceId'))
+                        if eniType == 'interface'
+                        else get_tag_name('natgw', ''),
                         'eniId': eip.get('NetworkInterfaceId'),
                         'eniType': get_eni_type(eip.get('NetworkInterfaceId')),
                     }
@@ -175,7 +183,8 @@ class DataCenter(object):
             eipList = []
             for eip in eips:
                 nameTag = next(
-                    (tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name'), None,
+                    (tag['Value'] for tag in eip.get('Tags') if tag['Key'] == 'Name'),
+                    None,
                 )
                 eipItem = {
                     'publicIp': eip['PublicIp'],
@@ -183,7 +192,7 @@ class DataCenter(object):
                     'tagName': nameTag,
                     # 可基于AssociationId判断eip是否可用
                     'associationId': eip.get('AssociationId'),
-                    'isAvailable': False if eip.get('AssociationId') else True
+                    'isAvailable': False if eip.get('AssociationId') else True,
                 }
                 eipList.append(eipItem)
             return eipList
@@ -200,7 +209,8 @@ class DataCenter(object):
             for sg in secGroups:
                 # 获取Tag:Name
                 nameTag = next(
-                    (tag['Value'] for tag in sg.get('Tags') if tag["Key"] == 'Name'), None,
+                    (tag['Value'] for tag in sg.get('Tags') if tag["Key"] == 'Name'),
+                    None,
                 )
                 sgItem = {
                     'sgId': sg['GroupId'],
@@ -227,14 +237,15 @@ class DataCenter(object):
 
     def list_all_intgateway(self):
         try:
-            igws = self._client.describe_internet_gateways(Filters=[self.tagFilter]).get(
-                'InternetGateways'
-            )
+            igws = self._client.describe_internet_gateways(
+                Filters=[self.tagFilter]
+            ).get('InternetGateways')
 
             igwList = []
             for igw in igws:
                 nameTag = next(
-                    (tag['Value'] for tag in igw.get('Tags') if tag['Key'] == 'Name'), None,
+                    (tag['Value'] for tag in igw.get('Tags') if tag['Key'] == 'Name'),
+                    None,
                 )
                 # 暂时只考虑1个igw对应1个vpc情况
                 igwAttach = igw.get('Attachments')[0]
@@ -257,7 +268,8 @@ class DataCenter(object):
             natList = []
             for nat in natgws:
                 nameTag = next(
-                    (tag['Value'] for tag in nat.get('Tags') if tag['Key'] == 'Name'), None,
+                    (tag['Value'] for tag in nat.get('Tags') if tag['Key'] == 'Name'),
+                    None,
                 )
                 # 暂时只考虑1个natgw对应1个ip情况
                 natAddr = nat['NatGatewayAddresses'][0]
@@ -273,8 +285,8 @@ class DataCenter(object):
                         'publicIp': natAddr['PublicIp'],
                         'allocationId': natAddr['AllocationId'],
                         'privateIp': natAddr['PrivateIp'],
-                        'eniId': natAddr['NetworkInterfaceId']
-                    }
+                        'eniId': natAddr['NetworkInterfaceId'],
+                    },
                 }
             natList.append(natItem)
             return natList
@@ -283,9 +295,9 @@ class DataCenter(object):
 
     def list_all_routetable(self):
         try:
-            rtbs = self._client.describe_route_tables(
-                Filters=[self.tagFilter]
-            ).get('RouteTables')
+            rtbs = self._client.describe_route_tables(Filters=[self.tagFilter]).get(
+                'RouteTables'
+            )
             rtbList = []
             for rtb in rtbs:
                 nameTag = next(
@@ -310,9 +322,11 @@ class DataCenter(object):
         nameTag = {"Key": "Name", "Value": tag_name}
         try:
             newSubnet = self.vpc.create_subnet(
-                CidrBlock= cidr_block,
-                AvailabilityZone= az_name,
-                TagSpecifications=[{'ResourceType': 'subnet', "Tags": [self.flagTag, nameTag]}],
+                CidrBlock=cidr_block,
+                AvailabilityZone=az_name,
+                TagSpecifications=[
+                    {'ResourceType': 'subnet', "Tags": [self.flagTag, nameTag]}
+                ],
             )
             return Subnet(newSubnet.id, self.dcName)
         except ClientError as ex:
@@ -322,7 +336,9 @@ class DataCenter(object):
         nameTag = {"Key": "Name", "Value": tag_name}
         try:
             newRtb = self.vpc.create_route_table(
-                TagSpecifications=[{'ResourceType': 'route-table', "Tags": [self.flagTag, nameTag]}],
+                TagSpecifications=[
+                    {'ResourceType': 'route-table', "Tags": [self.flagTag, nameTag]}
+                ],
             )
             return RouteTable(newRtb.id, self.dcName)
         except ClientError as ex:
@@ -334,7 +350,9 @@ class DataCenter(object):
             newSg = self.vpc.create_security_group(
                 GroupName=sg_name,
                 Description=sg_desc,
-                TagSpecifications=[{'ResourceType': 'security-group', "Tags": [self.flagTag, nameTag]}],
+                TagSpecifications=[
+                    {'ResourceType': 'security-group', "Tags": [self.flagTag, nameTag]}
+                ],
             )
             return SecurityGroup(newSg.id, self.dcName)
         except ClientError as ex:
@@ -348,7 +366,9 @@ class DataCenter(object):
         try:
             newEip = self._client.allocate_address(
                 Domain='vpc',
-                TagSpecifications=[{'ResourceType': 'elastic-ip', "Tags": [self.flagTag, nameTag]}],
+                TagSpecifications=[
+                    {'ResourceType': 'elastic-ip', "Tags": [self.flagTag, nameTag]}
+                ],
             )
             return StaticIP(newEip['AllocationId'], self.dcName)
         except ClientError as ex:
@@ -359,7 +379,10 @@ class DataCenter(object):
         try:
             newIgw = self._resource.create_internet_gateway(
                 TagSpecifications=[
-                    {'ResourceType': 'internet-gateway', "Tags": [self.flagTag, nameTag]}
+                    {
+                        'ResourceType': 'internet-gateway',
+                        "Tags": [self.flagTag, nameTag],
+                    }
                 ],
             )
             return InternetGateway(self.dcName, newIgw.id)

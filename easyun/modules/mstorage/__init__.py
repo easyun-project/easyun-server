@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
 from apiflask import APIBlueprint
-from easyun.cloud.aws.resources import StorageVolume, StorageBucket
+from easyun.cloud.aws.workload import StorageBucket
+from easyun.cloud.aws.resources import StorageVolume
 
 
 # define api version
@@ -32,7 +33,7 @@ def get_st_bucket(dcName):
 from . import (
     api_mock,
     api_bucket_mgt,
-    api_volume_mgt,
+    api_volume_mgt
 )
 
 

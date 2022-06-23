@@ -2,7 +2,6 @@
 """The Load Banalancer Management Module."""
 from apiflask import APIBlueprint
 from easyun import log
-from easyun.common.models import Account, Datacenter
 
 # define api version
 ver = '/api/v1'

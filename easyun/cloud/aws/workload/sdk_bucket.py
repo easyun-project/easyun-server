@@ -4,8 +4,11 @@
   @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper. 
   @auth:
 """
+
+import os
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
+from easyun.libs.utils import len_iter
 from easyun.common.models import Account
 from ...utils import get_easyun_session
 
@@ -20,12 +23,12 @@ def query_bucket_flag(bucket):
         return None
 
 
-def check_bucket_public(config):
+def check_bucket_public(block_config):
     '''检查PublicAccessBlock配置对应公开状态'''
-    if config:
-        if config.get('IgnorePublicAcls'):
+    if block_config:
+        if block_config.get('IgnorePublicAcls'):
             accessStatus = 'private'
-        elif not config.get('IgnorePublicAcls'):
+        elif not block_config.get('IgnorePublicAcls'):
             accessStatus = 'public'
         else:
             accessStatus = 'other'
@@ -34,108 +37,106 @@ def check_bucket_public(config):
     return accessStatus
 
 
+def vaildate_bucket_exist(bucket_id, dc_name=None):
+    '''检查bucket是否存在'''
+    session = get_easyun_session(dc_name)
+    bucket = session.resource('s3').Bucket(bucket_id)
+    isExist = True if bucket.creation_date else False
+    return isExist
+
+
+def get_file_type(object_key):
+    '''根据文件名(object key)后缀获取文件类型'''
+    if object_key[-1] == '/':
+        return 'Folder'
+    else:
+        suffix = os.path.splitext(object_key)[-1][1:].lower()
+        if suffix == '':
+            return 'File'
+        elif suffix in ['txt']:
+            return 'Text File'
+        elif suffix in ['jpg', 'jpeg', 'png', 'img', 'bmp']:
+            return 'Image File'
+        elif suffix in ['mp4', 'mpeg', 'mkv', 'flv']:
+            return 'Video File'
+        elif suffix in ['mp3', 'wav']:
+            return 'Audio File'
+        elif suffix in ['zip', 'rar', '7z', 'tar', 'gz']:
+            return 'Archive File'
+        else:
+            return f'{suffix.upper()} File'
+
+
 class StorageBucket(object):
-    def __init__(self, dcName):
-        self.dcName = dcName
-        self._session = get_easyun_session(dcName)
+    def __init__(self, bucket_id, dc_name=None):
+        self.id = bucket_id
+        self._session = get_easyun_session(dc_name)
         self._resource = self._session.resource('s3')
         self._client = self._session.client('s3')
-        self.tagFilter = {'Name': 'tag:Flag', 'Values': [dcName]}
-
-    def list_all_bucket(self):
         try:
-            bucketList = []
-            allBuckets = self._resource.buckets.all()
-            for bkt in allBuckets:
-                if query_bucket_flag(bkt) == self.dcName:
-                    bktDomain = self.get_bucket_domain(bkt.name)
-                    bktItem = {
-                        'bucketId': bkt.name,
-                        'createTime': bkt.creation_date,
-                        'bucketRegion': bktDomain.get('bucketRegion'),
-                        'bucketUrl': bktDomain.get('bucketUrl'),
-                        # 'bucketSize': self.query_bucket_size(bkt.name),
-                        'bucketAccess': {
-                            'status': 'private',
-                            'description': 'All objects are private',
-                        },
-                        'bucketSize': {'value': 123, 'unit': 'MiB'},
-                    }
-                    # bktItem.update(self.query_bucket_public(bkt.name))
-                    bucketList.append(bktItem)
-            return bucketList
+            if vaildate_bucket_exist(bucket_id):
+                self.bucketObj = self._resource.Bucket(self.id)
+            else:
+                raise ValueError(f'Bucket {bucket_id} does not exist.')
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def get_bucket_list(self):
+    def get_detail(self):
+        bucket = self.bucketObj
         try:
-            bucketList = []
-            allBuckets = self._resource.buckets.all()
-            for bkt in allBuckets:
-                if query_bucket_flag(bkt) == self.dcName:
-                    bucketList.append(
-                        {
-                            'bucketId': bkt.name,
-                            'createTime': bkt.creation_date,
-                            'bucketRegion': self.get_bucket_domain(bkt.name)[
-                                'bucketRegion'
-                            ],
-                        }
-                    )
-            return bucketList
-        except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def get_bucket_detail(self, bucket_id):
-        try:
-            bucket = self._resource.Bucket(bucket_id)
-            bktDomain = self.get_bucket_domain(bucket_id)
+            bktEndpoint = self.get_bucket_endpoint()
             bktBasic = {
-                'bucketId': bucket_id,
+                'bucketId': self.id,
                 'createTime': bucket.creation_date,
-                'bucketRegion': bktDomain.get('bucketRegion'),
-                'bucketUrl': bktDomain.get('bucketUrl'),
+                'bucketRegion': bktEndpoint.get('bucketRegion'),
+                'bucketUrl': bktEndpoint.get('bucketUrl')
+            }
+            pubBlockConfig = {
+                'BlockPublicAcls': True,
+                'IgnorePublicAcls': True,
+                'BlockPublicPolicy': True,
+                'RestrictPublicBuckets': True,
             }
             bktPermission = {
-                'status': 'private',
-                'description': 'All objects are private',
                 'bucketACL': 'private',
-                'pubBlockConfig': {
-                    'BlockPublicAcls': True,
-                    'IgnorePublicAcls': True,
-                    'BlockPublicPolicy': True,
-                    'RestrictPublicBuckets': True,
-                },
+                'pubBlockConfig': pubBlockConfig
             }
+            pubStatus = self.get_public_status()
             bktProperty = {
                 'isEncryption': False,
                 'isVersioning': False,
             }
+            userTags = [
+                {},
+            ]
 
             bucketDetail = {
                 'bucketBasic': bktBasic,
-                'bucketPermission': bktPermission,
+                'bucketPermission': bktPermission.update(pubStatus),
                 'bucketProperty': bktProperty,
-                'userTags': {},
+                'bucketSize': self.get_bucket_size(),
+                'userTags': userTags
             }
-
             return bucketDetail
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def get_bucket_domain(self, bucket_id):
+    def get_bucket_endpoint(self):
         '''查询存储桶(bucket)所处Region'''
-        resp = self._client.get_bucket_location(Bucket=bucket_id)
+        resp = self._client.get_bucket_location(Bucket=self.id)
         bktRegion = resp.get('LocationConstraint')
         # Buckets in Region us-east-1 have a LocationConstraint of null.
         if bktRegion is None:
-            bktUrl = f'{bucket_id}.s3.amazonaws.com'
+            bktUrl = f'{self.id}.s3.amazonaws.com'
             bktRegion = 'east-us-1'
         else:
-            bktUrl = f'{bucket_id}.s3.{bktRegion}.amazonaws.com'
-        return {'bucketRegion': bktRegion, 'bucketUrl': bktUrl}
+            bktUrl = f'{self.id}.s3.{bktRegion}.amazonaws.com'
+        return {
+            'bucketRegion': bktRegion,
+            'bucketUrl': bktUrl
+        }
 
-    def query_bucket_size(self, bucket_id):
+    def get_bucket_size(self):
         '''查询存储桶(bucket)总容量'''
         try:
             client_cw = self._session.client('cloudwatch')
@@ -145,15 +146,15 @@ class StorageBucket(object):
                 Namespace='AWS/S3',
                 MetricName='BucketSizeBytes',
                 Dimensions=[
-                    {'Name': 'bucketId', 'Value': bucket_id},
+                    {'Name': 'bucketId', 'Value': self.id},
                     {'Name': 'StorageType', 'Value': 'StandardStorage'},
                 ],
-                #   Statistics=['SampleCount'|'Average'|'Sum'|'Minimum'|'Maximum',]
+                # Statistics=['SampleCount'|'Average'|'Sum'|'Minimum'|'Maximum',]
                 Statistics=['Average'],
                 EndTime=nowDtime,
                 StartTime=nowDtime + timedelta(hours=-36),
                 Period=86400,  # one day(24h)
-                #     Unit='Bytes'|'Kilobytes'|'Megabytes'|'Gigabytes'|'Terabytes'|'None'
+                # Unit='Bytes'|'Kilobytes'|'Megabytes'|'Gigabytes'|'Terabytes'|'None'
             ).get('Datapoints')
             metricItem = bktMetric.pop()
             if metricItem:
@@ -164,7 +165,7 @@ class StorageBucket(object):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def query_bucket_public(self, bucket_id):
+    def get_public_status(self):
         '''查询存储桶(bucket)公开状态'''
         privateMsg = 'All objects are private'
         publicMsg = 'Public'
@@ -183,23 +184,23 @@ class StorageBucket(object):
             elif acnpubStatus == 'public':
                 # step2: 判断Bucket Public Access Status
                 bucketPubConfig = self._client.get_public_access_block(
-                    Bucket=bucket_id
+                    Bucket=self.id
                 ).get('PublicAccessBlockConfiguration')
                 bucketPubStatus = check_bucket_public(bucketPubConfig)
                 if bucketPubStatus == 'public':
                     pubStatus = {
-                        'publicStatus': bucketPubStatus,
-                        'publicMessage': publicMsg,
+                        'status': bucketPubStatus,
+                        'description': publicMsg,
                     }
                 elif bucketPubStatus == 'private':
                     pubStatus = {
-                        'publicStatus': bucketPubStatus,
-                        'publicMessage': privateMsg,
+                        'status': bucketPubStatus,
+                        'description': privateMsg,
                     }
                 else:
                     pubStatus = {
-                        'publicStatus': bucketPubStatus,
-                        'publicMessage': otherMsg,
+                        'status': bucketPubStatus,
+                        'description': otherMsg,
                     }
             return pubStatus
         except ClientError as ex:
@@ -213,71 +214,16 @@ class StorageBucket(object):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def vaildate_bucket_name(self, bucket_id):
+    def delete(self):
+        bucket = self.bucketObj
         try:
-            bucket = self._resource.Bucket(bucket_id)
-            isAvailable = False if bucket.creation_date else True
-            return isAvailable
-        except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def create_bucket(self, bucket_id, options):
-        try:
-            # step1: 新建Bucket
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.ServiceResource.create_bucket
-            region = options.get('regionCode')
-            location = {'LocationConstraint': region}
-            newBucket = self._resource.create_bucket(
-                Bucket=bucket_id,
-                CreateBucketConfiguration=location,
-                # ACL='private'|'public-read'|'public-read-write'|'authenticated-read',
-                # GrantFullControl='string',
-                # GrantRead='string',
-                # GrantReadACP='string',
-                # GrantWrite='string',
-                # GrantWriteACP='string',
-                # ObjectLockEnabledForBucket=True|False,
-                # ObjectOwnership='BucketOwnerPreferred'|'ObjectWriter'|'BucketOwnerEnforced'
-            )
-            newBucket.wait_until_exists(
-                # ExpectedBucketOwner='string'
-            )
-
-            # step2: 设置Bucket default encryption，默认不启用
-            if options.get('isEncryption'):
-                self.set_default_encryption(bucket_id, 'enable')
-
-            # step3: 设置Bucket Versioning，默认不启用
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#bucketversioning
-            if options.get('isVersioning'):
-                bucketVersion = self._resource.BucketVersioning(bucket_id)
-                bucketVersion.enable()
-
-            # step4: 设置Bucket Tag:Flag 标签
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#buckettagging
-            bucketTagging = self._resource.BucketTagging(bucket_id)
-            bucketTagging.put(
-                Tagging={
-                    'TagSet': [
-                        {'Key': 'Flag', 'Value': self.dcName},
-                    ]
-                }
-            )
-
-            # step5:  设置Bucket public access默认private
-            block_config = options.get('pubBlockConfig')
-            self.set_public_access(bucket_id, block_config)
-
-            return newBucket
-        except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def delete_bucket(self, bucket_id):
-        try:
-            thisBucket = self._resource.Bucket(bucket_id)
-            thisBucket.delete()
-            thisBucket.wait_until_not_exists()
-            return True
+            bucket.delete()
+            bucket.wait_until_not_exists()
+            oprtRes = {
+                'operation': 'Delete Bucket',
+                'bucketId': self.id
+            }
+            return oprtRes
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
@@ -324,5 +270,26 @@ class StorageBucket(object):
                 PublicAccessBlockConfiguration=block_config,
             )
             return True
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def list_objects(self):
+        paginator = self._client.get_paginator('list_objects_v2')
+        try:
+            resIterator = paginator.paginate(Bucket=self.id)
+            objectList = []
+            for page in resIterator:
+                if 'Contents' in page:
+                    for obj in page.get('Contents'):
+                        objDict = {
+                            'key': obj['Key'],
+                            'size': obj['Size'],
+                            'type': get_file_type(obj['Key']),
+                            'storageClass': obj['StorageClass'],
+                            'modifiedTime': obj['LastModified'],
+                            'eTag': obj['ETag']
+                        }
+                        objectList.append(objDict)
+            return objectList
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

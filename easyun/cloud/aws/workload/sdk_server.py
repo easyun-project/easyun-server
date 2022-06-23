@@ -8,7 +8,8 @@ import boto3
 
 
 class EC2Server(object):
-    def __init__(self):
+    def __init__(self, svr_id):
+        self.id = svr_id
         self._client = boto3.resource('ec2')
         self._resource = boto3.resource('ec2')
 

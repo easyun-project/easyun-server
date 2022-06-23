@@ -74,7 +74,14 @@ class StorageVolume(object):
                 'isEncrypted': thisVol.encrypted,
             }
             # userTags = [{k:v for k,v in tag.items() if k not in ["Flag","Name"]} for tag in thisVol.tags]
-            userTags = [t for t in thisVol.tags if t['Key'] not in ['Flag', 'Name']]
+            userTags = [
+                t
+                for t in thisVol.tags
+                if t['Key']
+                not in [
+                    'Flag',
+                ]
+            ]
 
             volumeDetail = {
                 'volumeBasic': volumeBasic,

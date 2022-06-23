@@ -5,6 +5,7 @@
   @auth:    
 """
 
+from tokenize import Number
 from apiflask import Schema
 from apiflask.fields import String, Integer, List, Dict, Boolean, DateTime, Nested
 from apiflask.validators import Length, OneOf
@@ -13,13 +14,7 @@ from easyun.common.schemas import TagItem
 
 class BucketIdQuery(Schema):
     dc = String(required=True, example='Easyun')
-    bkt = String(required=True, validate=Length(0, 30))
-
-
-class ObjectKeyQuery(Schema):
-    dc = String(required=True, example='Easyun')
-    bkt = String(required=True, validate=Length(0, 30), example='my-bucket')
-    key = String(required=True)
+    bkt = String(required=True, validate=Length(0, 30), example='bktexample17')
 
 
 class BucketIdParm(Schema):
@@ -40,7 +35,9 @@ class BucketCreateParm(Schema):
         }
     )
     bucketACL = String(
-        validate=OneOf(['private', 'public-read', 'public-read-write', 'authenticated-read']),
+        validate=OneOf(
+            ['private', 'public-read', 'public-read-write', 'authenticated-read']
+        ),
         example='private',
     )
 
@@ -79,11 +76,11 @@ class BucketModel(Schema):
     # bucketLifecycle = List(Dict())
     bucketAccess = Nested(
         BucketAccess,
-        example={'status': 'private', 'description': 'All objects are private'}
+        example={'status': 'private', 'description': 'All objects are private'},
     )
-    bucketSize = Dict(
-        example={'value': 123, 'unit': 'MiB'}
-    )
+    # bucketSize = Dict(
+    #     example={'value': 123, 'unit': 'MiB'}
+    # )
 
 
 class BucketPermission(Schema):
@@ -98,7 +95,7 @@ class BucketPermission(Schema):
             'RestrictPublicBuckets': True,
         }
     )
-    
+
 
 class BucketProperty(Schema):
     isEncryption = Boolean(required=True, example=False)
@@ -109,7 +106,23 @@ class BucketDetail(Schema):
     bucketBasic = Nested(BucketBasic)
     bucketPermission = Nested(BucketPermission)
     bucketProperty = Nested(BucketProperty)
+    bucketSize = Dict(example={'value': 123, 'unit': 'MiB'})
     userTags = Nested(TagItem(many=True))
+
+
+class ObjectKeyQuery(Schema):
+    dc = String(required=True, example='Easyun')
+    key = String(required=True)
+
+
+class ObjectContents(Schema):
+    key = String(example='demofile.txt')
+    size = Integer(example=10240)
+    key = String(example='demofile.txt')
+    type = String(example='Text File')
+    storageClass = String(example='STANDARD')
+    modifiedTime = DateTime(required=True, example="2022-02-20T09:59:21.61+00:00")
+    # eTag = String(example='99fcf0a51590c45d9dc0687a732ff500')
 
 
 class VolAttachment(Schema):

@@ -6,53 +6,53 @@
 """
 
 from botocore.exceptions import ClientError
+from .sdk_server import EC2Server
 from .sdk_volume import StorageVolume
-# from ..workload.sdk_server import EC2Server
-# from ..workload.sdk_bucket import StorageBucket
-# from ..workload.sdk_loadbalancer import LoadBalancer
+from .sdk_bucket import StorageBucket, query_bucket_flag
+from .sdk_loadbalancer import LoadBalancer
 from ..session import get_easyun_session
 from easyun.cloud.utils import get_server_name
 
 
-# _EC2_SERVER = None
+_EC2_SERVER = None
 _STORAGE_VOLUME = None
-# _STORAGE_BUCKET = None
-# _LOAD_BALANCER = None
+_STORAGE_BUCKET = None
+_LOAD_BALANCER = None
 
 
-# def get_ec2_server(svr_id, dc_name):
-#     global _EC2_SERVER
-#     if _EC2_SERVER is not None and _EC2_SERVER.id == svr_id:
-#         return _EC2_SERVER
-#     else:
-#         return EC2Server(svr_id, dc_name)
+def get_ec2_server(svr_id, dc_name):
+    global _EC2_SERVER
+    if _EC2_SERVER is not None and _EC2_SERVER.id == svr_id:
+        return _EC2_SERVER
+    else:
+        return EC2Server(svr_id, dc_name)
 
 
-def get_st_volume(dcName):
+def get_st_volume(volume_id, dc_name):
     global _STORAGE_VOLUME
-    if _STORAGE_VOLUME is not None and _STORAGE_VOLUME.dcName == dcName:
+    if _STORAGE_VOLUME is not None and _STORAGE_VOLUME.id == volume_id:
         return _STORAGE_VOLUME
     else:
-        return StorageVolume(dcName)
+        return StorageVolume(volume_id, dc_name)
 
 
-# def get_st_bucket(dcName):
-#     global _STORAGE_BUCKET
-#     if _STORAGE_BUCKET is not None and _STORAGE_BUCKET.dcName == dcName:
-#         return _STORAGE_BUCKET
-#     else:
-#         return StorageBucket(dcName)
+def get_st_bucket(bucket_id, dc_name):
+    global _STORAGE_BUCKET
+    if _STORAGE_BUCKET is not None and _STORAGE_BUCKET.id == bucket_id:
+        return _STORAGE_BUCKET
+    else:
+        return StorageBucket(bucket_id, dc_name)
 
 
-# def get_load_balancer(elb_id, dc_name):
-#     global _LOAD_BALANCER
-#     if _LOAD_BALANCER is not None and _LOAD_BALANCER.id == elb_id:
-#         return _LOAD_BALANCER
-#     else:
-#         return LoadBalancer(elb_id, dc_name)
+def get_load_balancer(elb_id, dc_name):
+    global _LOAD_BALANCER
+    if _LOAD_BALANCER is not None and _LOAD_BALANCER.id == elb_id:
+        return _LOAD_BALANCER
+    else:
+        return LoadBalancer(elb_id, dc_name)
 
 
-class Resources(object):
+class Workload(object):
     def __init__(self, dc_name):
         self.session = get_easyun_session(dc_name)
         self.dcName = dc_name
@@ -98,7 +98,7 @@ class Resources(object):
                     'volumeAz': vol.availability_zone,
                     'createTime': vol.create_time,
                     'volumeType': vol.volume_type,
-                    'volumeSize': vol.size,             
+                    'volumeSize': vol.size,
                     'volumeIops': vol.iops,
                     'volumeThruput': vol.throughput,
                     'isEncrypted': vol.encrypted,
@@ -138,6 +138,51 @@ class Resources(object):
                 volumeList.append(volItem)
             return volumeList
         except Exception as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def list_all_bucket(self):
+        s3 = self.session.resource('s3')
+        try:
+            bucketList = []
+            buckets = s3.buckets.all()
+            for bucket in buckets:
+                if query_bucket_flag(bucket) == self.dcName:
+                    bkt = StorageBucket(bucket.name)
+                    # bktDomain = self.get_bucket_endpoint(bkt.name)
+                    bktItem = {
+                        'bucketId': bucket.name,
+                        'createTime': bucket.creation_date,
+                        'bucketRegion': bkt.get_bucket_endpoint()['bucketRegion'],
+                        'bucketUrl': bkt.get_bucket_endpoint()['bucketUrl'],
+                        # 'bucketAccess': bkt.get_public_status(),
+                        'bucketAccess': {
+                            'status': 'private',
+                            'description': 'All objects are private',
+                        }
+                    }
+                    # bktItem.update(self.query_bucket_public(bkt.name))
+                    bucketList.append(bktItem)
+            return bucketList
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_bucket_list(self):
+        s3 = self.session.resource('s3')
+        try:
+            bucketList = []
+            buckets = s3.buckets.all()
+            for bucket in buckets:
+                if query_bucket_flag(bucket) == self.dcName:
+                    bkt = StorageBucket(bucket.name)
+                    bucketList.append(
+                        {
+                            'bucketId': bucket.name,
+                            'createTime': bucket.creation_date,
+                            'bucketRegion': bkt.get_bucket_endpoint()['bucketRegion'],
+                        }
+                    )
+            return bucketList
+        except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def list_all_loadbalancer(self):
@@ -198,5 +243,53 @@ class Resources(object):
                 }
                 elbList.append(elbItem)
             return elbList
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def create_bucket(self, bucket_id, options):
+        try:
+            # step1: 新建Bucket
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.ServiceResource.create_bucket
+            region = options.get('regionCode')
+            location = {'LocationConstraint': region}
+            newBucket = self._resource.create_bucket(
+                Bucket=bucket_id,
+                CreateBucketConfiguration=location,
+                # ACL='private'|'public-read'|'public-read-write'|'authenticated-read',
+                # GrantFullControl='string',
+                # GrantRead='string',
+                # GrantReadACP='string',
+                # GrantWrite='string',
+                # GrantWriteACP='string',
+                # ObjectLockEnabledForBucket=True|False,
+                # ObjectOwnership='BucketOwnerPreferred'|'ObjectWriter'|'BucketOwnerEnforced'
+            )
+            newBucket.wait_until_exists(
+                # ExpectedBucketOwner='string'
+            )
+            # step2: 设置 Bucket default encryption，默认不启用
+            if options.get('isEncryption'):
+                self.set_default_encryption(bucket_id, 'enable')
+
+            # step3: 设置Bucket Versioning，默认不启用
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#bucketversioning
+            if options.get('isVersioning'):
+                bucketVersion = self._resource.BucketVersioning(bucket_id)
+                bucketVersion.enable()
+            # step4: 设置Bucket Tag:Flag 标签
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#buckettagging
+            bucketTagging = self._resource.BucketTagging(bucket_id)
+            bucketTagging.put(
+                Tagging={
+                    'TagSet': [
+                        {'Key': 'Flag', 'Value': self.dcName},
+                    ]
+                }
+            )
+            # step5:  设置Bucket public access默认private
+            block_config = options.get('pubBlockConfig')
+            self.set_public_access(bucket_id, block_config)
+
+            return newBucket
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

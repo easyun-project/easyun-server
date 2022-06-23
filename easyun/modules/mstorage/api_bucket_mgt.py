@@ -10,10 +10,14 @@ from apiflask import APIBlueprint, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
+from easyun.cloud.aws import get_datacenter
+from easyun.cloud.aws.workload import get_st_bucket
+from easyun.cloud.aws.workload.sdk_bucket import vaildate_bucket_exist
 from .schemas import BucketBasic, BucketModel, AddBucketParm, BucketIdQuery, BucketIdParm, BucketPubBlockParm, BucketDetail
-from . import get_st_bucket
+
 
 bp = APIBlueprint('Bucket', __name__, url_prefix='/bucket')
+from . import api_object_mgt
 
 
 @bp.get('')
@@ -22,11 +26,10 @@ bp = APIBlueprint('Bucket', __name__, url_prefix='/bucket')
 @bp.output(BucketModel(many=True))
 def list_bkt_detail(parm):
     '''获取全部存储桶(Bucket)信息'''
-    dcName = parm.get('dc')
+    dcName = parm['dc']
     try:
-        bkt = get_st_bucket(dcName)
-        bucketList = bkt.list_all_bucket()
-
+        dc = get_datacenter(dcName)
+        bucketList = dc.workload.list_all_bucket()
         response = Result(detail=bucketList, status_code=200)
         return response.make_resp()
     except Exception as ex:
@@ -43,11 +46,10 @@ def list_bkt_detail(parm):
 @bp.output(BucketBasic(many=True))
 def get_bkt_list(parm):
     '''获取全部存储桶(Bucket)列表'''
-    dcName = parm.get('dc')
+    dcName = parm['dc']
     try:
-        bkt = get_st_bucket(dcName)
-        bucketList = bkt.get_bucket_list()
-
+        dc = get_datacenter(dcName)
+        bucketList = dc.workload.get_bucket_list()
         response = Result(detail=bucketList, status_code=200)
         return response.make_resp()
     except Exception as ex:
@@ -63,12 +65,11 @@ def get_bkt_list(parm):
 @bp.input(DcNameQuery, location='query')
 @bp.output(BucketDetail)
 def get_bkt_detail(bucket_id, parm):
-    '''获取指定存储桶(Bucket)的详细信息【mock】'''
-    dcName = parm.get('dc')
+    '''获取指定存储桶(Bucket)的详细信息'''
+    dcName = parm['dc']
     try:
-        bkt = get_st_bucket(dcName)
-        bucketDetail = bkt.get_bucket_detail(bucket_id)
-
+        bkt = get_st_bucket(bucket_id, dcName)
+        bucketDetail = bkt.get_detail()
         response = Result(
             detail=bucketDetail,
             status_code=200,
@@ -82,40 +83,18 @@ def get_bkt_detail(bucket_id, parm):
         return response.err_resp()
 
 
-@bp.get('/pubblock')
-@auth_required(auth_token)
-@bp.input(BucketIdQuery, location='query')
-def get_bkt_public_block(parm):
-    '''获取Bucket Public Block Policy信息'''
-    dcName = parm.get('dc')
-    bucketId = parm.get('bkt')
-    S3Client = boto3.client('s3')
-    try:
-        result = S3Client.get_public_access_block(Bucket=bucketId)[
-            'PublicAccessBlockConfiguration'
-        ]
-        response = Result(detail=[{'message': result}], status_code=4013)
-        return response.make_resp()
-    except Exception:
-        response = Result(
-            message='Get Bucket public block policy fail',
-            status_code=4013,
-            http_status_code=400,
-        )
-        return response.err_resp()
-
-
 @bp.get('/vaildate')
 @auth_required(auth_token)
 @bp.input(BucketIdQuery, location='query')
-def vaildate_bkt(parm):
+def vaildate_bkt(parms):
     '''查询存储桶(bucket)名称是否可用'''
-    dcName = parm['dc']
-    bucketId = parm['bkt']
+    dcName = parms['dc']
+    bucketId = parms['bkt']
     try:
-        bkt = get_st_bucket(dcName)
-        isAvailable = bkt.vaildate_bucket_name(bucketId)
-
+        if vaildate_bucket_exist(bucketId, dcName):
+            isAvailable = False
+        else:
+            isAvailable = True
         resp = Result(detail={'isAvailable': isAvailable}, status_code=200)
         return resp.make_resp()
     except Exception as ex:
@@ -155,64 +134,6 @@ def add_bucket_s3(parm):
             status_code=4001,
         )
         resp.err_resp()
-
-
-@bp.delete('')
-@auth_required(auth_token)
-@bp.input(BucketIdParm)
-def delete_bucket(parm):
-    '''删除存储桶(S3 Bucket)'''
-    dcName = parm['dcName']
-    bucketId = parm['bucketId']
-    try:
-        bkt = get_st_bucket(dcName)
-        bkt.delete_bucket(bucketId)
-        response = Result(
-            detail={'bucketId': bucketId}, message='bucket delete successfully'
-        )
-        return response.make_resp()
-    except Exception as ex:
-        response = Result(message=str(ex), status_code=4003, http_status_code=400)
-        return response.err_resp()
-
-
-@bp.put('/pubblock')
-@auth_required(auth_token)
-@bp.input(BucketPubBlockParm)
-def modify_bucket_policy(parm):
-    '''修改存储桶的Public Block Policy'''
-    S3Client = boto3.client('s3')
-
-    bucketId = parm['bucketId']
-
-    newAcl = parm['newAcl']
-    allAcl = parm['allAcl']
-    newPolicy = parm['newPolicy']
-    allPolicy = parm['allPolicy']
-
-    try:
-        result = S3Client.put_public_access_block(
-            Bucket=bucketId,
-            PublicAccessBlockConfiguration={
-                'BlockPublicAcls': newAcl,
-                'IgnorePublicAcls': allAcl,
-                'BlockPublicPolicy': newPolicy,
-                'RestrictPublicBuckets': allPolicy,
-            },
-        )['ResponseMetadata']['HTTPStatusCode']
-        if result == 200:
-            message = 'Modify public block policy success'
-        else:
-            message = 'Modify public block policy fail'
-        response = Result(detail=[{'message': message}], status_code=4003)
-        return response.make_resp()
-    except Exception:
-        response = Result(
-            message='Modify public block policy fail',
-            status_code=4003,
-            http_status_code=400,
-        )
-        return response.err_resp()
 
 
 @bp.post('/add')
@@ -273,3 +194,87 @@ def add_bucket_cc(parm):
             status_code=4001,
         )
         return response.err_resp()
+
+
+
+@bp.delete('')
+@auth_required(auth_token)
+@bp.input(BucketIdParm)
+def delete_bucket(parm):
+    '''删除存储桶(S3 Bucket)'''
+    dcName = parm['dcName']
+    bucketId = parm['bucketId']
+    try:
+        bkt = get_st_bucket(dcName)
+        bkt.delete()
+        response = Result(
+            detail={'bucketId': bucketId}, message='bucket delete successfully'
+        )
+        return response.make_resp()
+    except Exception as ex:
+        response = Result(message=str(ex), status_code=4003, http_status_code=400)
+        return response.err_resp()
+
+
+@bp.put('/pubblock')
+@auth_required(auth_token)
+@bp.input(BucketPubBlockParm)
+def modify_bucket_policy(parm):
+    '''修改存储桶的Public Block Policy'''
+    S3Client = boto3.client('s3')
+
+    bucketId = parm['bucketId']
+
+    newAcl = parm['newAcl']
+    allAcl = parm['allAcl']
+    newPolicy = parm['newPolicy']
+    allPolicy = parm['allPolicy']
+
+    try:
+        result = S3Client.put_public_access_block(
+            Bucket=bucketId,
+            PublicAccessBlockConfiguration={
+                'BlockPublicAcls': newAcl,
+                'IgnorePublicAcls': allAcl,
+                'BlockPublicPolicy': newPolicy,
+                'RestrictPublicBuckets': allPolicy,
+            },
+        )['ResponseMetadata']['HTTPStatusCode']
+        if result == 200:
+            message = 'Modify public block policy success'
+        else:
+            message = 'Modify public block policy fail'
+        response = Result(detail=[{'message': message}], status_code=4003)
+        return response.make_resp()
+    except Exception:
+        response = Result(
+            message='Modify public block policy fail',
+            status_code=4003,
+            http_status_code=400,
+        )
+        return response.err_resp()
+
+
+# @bp.get('/pubblock')
+# @auth_required(auth_token)
+# @bp.input(BucketIdQuery, location='query')
+# def get_bkt_public_block(parms):
+#     '''获取Bucket Public Block Policy信息'''
+#     dcName = parms['dc']
+#     bucketId = parms['bkt']
+#     try:
+#         bkt = get_st_bucket(bucketId, dcName)
+#         bucketDetail = bkt.get_detail()
+
+#         result = S3Client.get_public_access_block(Bucket=bucketId)[
+#             'PublicAccessBlockConfiguration'
+#         ]
+#         resp = Result(detail=[{'message': result}], status_code=4013)
+#         return resp.make_resp()
+#     except Exception:
+#         resp = Result(
+#             message='Get Bucket public block policy fail',
+#             status_code=4013,
+#             http_status_code=400,
+#         )
+#         resp.err_resp()

@@ -79,7 +79,7 @@ class Subnet(object):
             if svrNum == 0 and self.get_eni_numb == 0:
                 subnet.delete()
             else:
-                raise ValueError(f'Subnet NOT Empty, contains {svrNum} Server(s) resources.')                
+                raise ValueError(f'Subnet NOT Empty, contains {svrNum} Server(s) resources.')
             oprtRes = {
                 'operation': 'Delete Subnet',
                 'subnetId': self.id,
