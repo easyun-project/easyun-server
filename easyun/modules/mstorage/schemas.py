@@ -28,10 +28,10 @@ class BucketCreateParm(Schema):
     isVersioning = Boolean(required=True, example=False)
     pubBlockConfig = Dict(
         example={
-            'BlockPublicAcls': True,
-            'IgnorePublicAcls': True,
-            'BlockPublicPolicy': True,
-            'RestrictPublicBuckets': True,
+            'isBlockNewAcls': True,
+            'isBlockAllAcls': True,
+            'isBlockNewPolicy': True,
+            'isBlockAllPolicy': True,
         }
     )
     bucketACL = String(
@@ -42,17 +42,24 @@ class BucketCreateParm(Schema):
     )
 
 
-class BucketPubBlockParm(Schema):
-    bucketId = String(required=True, validate=Length(0, 60), example='new-bucket')
-    newAcl = Boolean(required=True, example=True)
-    allAcl = Boolean(required=True, example=True)
-    newPolicy = Boolean(required=True, example=True)
-    allPolicy = Boolean(required=True, example=True)
+class BucketPropertyParm(Schema):
+    # dcName = String(example='Easyun')
+    # bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
+    isEncryption = Boolean(example=True)
+    isVersioning = Boolean(example=True)
+
+
+class BucketPublicParm(Schema):
+    # bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
+    isBlockNewAcls = Boolean(required=True, example=True)
+    isBlockAllAcls = Boolean(required=True, example=True)
+    isBlockNewPolicy = Boolean(required=True, example=True)
+    isBlockAllPolicy = Boolean(required=True, example=True)
 
 
 class AddBucketParm(Schema):
     dcName = String(required=True, example='Easyun')
-    bucketId = String(required=True, validate=Length(0, 60), example='new-bucket')
+    bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
     bucketCreateParm = Nested(BucketCreateParm)
 
 
@@ -89,13 +96,12 @@ class BucketPermission(Schema):
     bucketACL = String(example='private')
     pubBlockConfig = Dict(
         example={
-            'BlockPublicAcls': True,
-            'IgnorePublicAcls': True,
-            'BlockPublicPolicy': True,
-            'RestrictPublicBuckets': True,
+            'isBlockNewAcls': True,
+            'isBlockAllAcls': True,
+            'isBlockNewPolicy': True,
+            'isBlockAllPolicy': True,
         }
     )
-
 
 class BucketProperty(Schema):
     isEncryption = Boolean(required=True, example=False)
@@ -106,7 +112,7 @@ class BucketDetail(Schema):
     bucketBasic = Nested(BucketBasic)
     bucketPermission = Nested(BucketPermission)
     bucketProperty = Nested(BucketProperty)
-    bucketSize = Dict(example={'value': 123, 'unit': 'MiB'})
+    bucketSize = Dict(example={'value': 123, 'unit': 'KiB'})
     userTags = Nested(TagItem(many=True))
 
 

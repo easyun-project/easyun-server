@@ -24,11 +24,11 @@ def query_bucket_flag(bucket):
 
 
 def check_bucket_public(block_config):
-    '''检查PublicAccessBlock配置对应公开状态'''
+    '''检查存储桶公开访问状态(基于PublicAccessBlock)'''
     if block_config:
-        if block_config.get('IgnorePublicAcls'):
+        if block_config.get('IgnorePublicAcls') or block_config.get('isBlockAllAcls'):
             accessStatus = 'private'
-        elif not block_config.get('IgnorePublicAcls'):
+        elif not (block_config.get('IgnorePublicAcls') or block_config.get('isBlockAllAcls')):
             accessStatus = 'public'
         else:
             accessStatus = 'other'
@@ -38,11 +38,16 @@ def check_bucket_public(block_config):
 
 
 def vaildate_bucket_exist(bucket_id, dc_name=None):
-    '''检查bucket是否存在'''
+    '''检查bucket是否存在且有权访问'''
     session = get_easyun_session(dc_name)
-    bucket = session.resource('s3').Bucket(bucket_id)
-    isExist = True if bucket.creation_date else False
-    return isExist
+    try:
+        # bucket = session.resource('s3').Bucket(bucket_id)
+        # isExist = True if bucket.creation_date else False
+        s3_client = session.client('s3')
+        resp = s3_client.head_bucket(Bucket=bucket_id)
+        return True if resp else False
+    except ClientError:
+        return False
 
 
 def get_file_type(object_key):
@@ -84,44 +89,37 @@ class StorageBucket(object):
     def get_detail(self):
         bucket = self.bucketObj
         try:
-            bktEndpoint = self.get_bucket_endpoint()
             bktBasic = {
                 'bucketId': self.id,
                 'createTime': bucket.creation_date,
-                'bucketRegion': bktEndpoint.get('bucketRegion'),
-                'bucketUrl': bktEndpoint.get('bucketUrl')
             }
-            pubBlockConfig = {
-                'BlockPublicAcls': True,
-                'IgnorePublicAcls': True,
-                'BlockPublicPolicy': True,
-                'RestrictPublicBuckets': True,
-            }
+            bktBasic.update(self.get_bkt_endpoint())
+
             bktPermission = {
                 'bucketACL': 'private',
-                'pubBlockConfig': pubBlockConfig
+                'pubBlockConfig': self.get_public_config()
             }
-            pubStatus = self.get_public_status()
+            bktPermission.update(self.get_public_status())
+
             bktProperty = {
-                'isEncryption': False,
-                'isVersioning': False,
+                'isEncryption': self.get_bkt_encryption(),
+                'isVersioning': self.get_bkt_versioning(),
             }
-            userTags = [
-                {},
-            ]
+            bktTags = self._client.get_bucket_tagging(Bucket=self.id).get('TagSet')
+            userTags = [t for t in bktTags if t['Key'] not in ['Flag', 'Name']]
 
             bucketDetail = {
                 'bucketBasic': bktBasic,
-                'bucketPermission': bktPermission.update(pubStatus),
+                'bucketPermission': bktPermission,
                 'bucketProperty': bktProperty,
-                'bucketSize': self.get_bucket_size(),
+                'bucketSize': self.get_bkt_size(),
                 'userTags': userTags
             }
             return bucketDetail
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def get_bucket_endpoint(self):
+    def get_bkt_endpoint(self):
         '''查询存储桶(bucket)所处Region'''
         resp = self._client.get_bucket_location(Bucket=self.id)
         bktRegion = resp.get('LocationConstraint')
@@ -136,13 +134,48 @@ class StorageBucket(object):
             'bucketUrl': bktUrl
         }
 
-    def get_bucket_size(self):
-        '''查询存储桶(bucket)总容量'''
+    def get_bkt_versioning(self):
+        '''获取存储桶(bucket)Versioning设置信息'''
         try:
-            client_cw = self._session.client('cloudwatch')
-            nowDtime = datetime.now()
+            resp = self._client.get_bucket_versioning(Bucket=self.id)
+            verStatus = resp.get('Status')
+            return True if verStatus == 'Enabled' else False
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
 
-            bktMetric = client_cw.get_metric_statistics(
+    def get_bkt_encryption(self):
+        '''获取存储桶(bucket)Encryption设置信息'''
+        try:
+            resp = self._client.get_bucket_encryption(Bucket=self.id)
+            encStatus = resp.get('ServerSideEncryptionConfiguration')
+            return True if encStatus else False
+        except ClientError:
+            return False
+
+    def get_bkt_size(self):
+        '''获取存储桶(bucket)总容量'''
+        paginator = self._client.get_paginator('list_objects_v2')
+        try:
+            resIterator = paginator.paginate(Bucket=self.id)
+            summSize = 0
+            for page in resIterator:
+                if 'Contents' in page:
+                    for obj in page['Contents']:
+                        summSize += obj.get('Size')
+            return {
+                'value': summSize/1024,
+                'unit': 'KiB'
+            }
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_bkt_size_cw(self):
+        '''从Cloudwatch查询存储桶(bucket)总容量 【fix-me】'''
+        try:
+            cw_client = self._session.client('cloudwatch')
+            currTime = datetime.now()
+
+            bktMetric = cw_client.get_metric_statistics(
                 Namespace='AWS/S3',
                 MetricName='BucketSizeBytes',
                 Dimensions=[
@@ -151,8 +184,8 @@ class StorageBucket(object):
                 ],
                 # Statistics=['SampleCount'|'Average'|'Sum'|'Minimum'|'Maximum',]
                 Statistics=['Average'],
-                EndTime=nowDtime,
-                StartTime=nowDtime + timedelta(hours=-36),
+                EndTime=currTime,
+                StartTime=currTime - timedelta(days=1),
                 Period=86400,  # one day(24h)
                 # Unit='Bytes'|'Kilobytes'|'Megabytes'|'Gigabytes'|'Terabytes'|'None'
             ).get('Datapoints')
@@ -165,48 +198,7 @@ class StorageBucket(object):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def get_public_status(self):
-        '''查询存储桶(bucket)公开状态'''
-        privateMsg = 'All objects are private'
-        publicMsg = 'Public'
-        otherMsg = 'Objects can be public'
-        try:
-            # 获取当前Account ID
-            thisAccount = Account.query.first()
-            # step1: 判断Account Public Access Status
-            client_s3ctr = self._session.client('s3control')
-            accountPubConfig = client_s3ctr.get_public_access_block(
-                AccountId=thisAccount.account_id
-            ).get('PublicAccessBlockConfiguration')
-            acnpubStatus = check_bucket_public(accountPubConfig)
-            if acnpubStatus == 'private':
-                return {'pubStatus': acnpubStatus, 'statusMsg': privateMsg}
-            elif acnpubStatus == 'public':
-                # step2: 判断Bucket Public Access Status
-                bucketPubConfig = self._client.get_public_access_block(
-                    Bucket=self.id
-                ).get('PublicAccessBlockConfiguration')
-                bucketPubStatus = check_bucket_public(bucketPubConfig)
-                if bucketPubStatus == 'public':
-                    pubStatus = {
-                        'status': bucketPubStatus,
-                        'description': publicMsg,
-                    }
-                elif bucketPubStatus == 'private':
-                    pubStatus = {
-                        'status': bucketPubStatus,
-                        'description': privateMsg,
-                    }
-                else:
-                    pubStatus = {
-                        'status': bucketPubStatus,
-                        'description': otherMsg,
-                    }
-            return pubStatus
-        except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def query_bucket_lifecycle(self, bucket):
+    def get_lifecycle_rules(self, bucket):
         try:
             bktRules = bucket.Lifecycle().rules
             bucketLifecycle = bktRules[0]
@@ -227,13 +219,27 @@ class StorageBucket(object):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_bucket_versioning
+    def set_bkt_versioning(self, is_versioning=True):
+        verStatus = 'Enabled' if is_versioning else 'Suspended'
+        try:
+            self._client.put_bucket_versioning(
+                Bucket=self.id,
+                VersioningConfiguration={
+                    'Status': verStatus,
+                    # 'MFADelete': 'Disabled'
+                }
+            )
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_bucket_encryption
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.delete_bucket_encryption
-    def set_default_encryption(self, bucket_id, encry_config='disable'):
+    def set_default_encryption(self, is_encryption=True):
         try:
-            if encry_config == 'enable':
+            if is_encryption:
                 self._client.put_bucket_encryption(
-                    Bucket=bucket_id,
+                    Bucket=self.id,
                     ServerSideEncryptionConfiguration={
                         'Rules': [
                             {
@@ -250,26 +256,86 @@ class StorageBucket(object):
                     # ContentMD5='string',
                     # ExpectedBucketOwner='string'
                 )
-            elif encry_config == 'disable':
-                self._client.delete_bucket_encryption(Bucket=bucket_id)
+            else:
+                self._client.delete_bucket_encryption(Bucket=self.id)
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_public_config(self):
+        '''查询存储桶(bucket)公开状态'''
+        try:
+            pubConfig = self._client.get_public_access_block(
+                Bucket=self.id
+            ).get('PublicAccessBlockConfiguration')
+            return {
+                'isBlockNewAcls': pubConfig['BlockPublicAcls'],
+                'isBlockAllAcls': pubConfig['IgnorePublicAcls'],
+                'isBlockNewPolicy': pubConfig['BlockPublicPolicy'],
+                'isBlockAllPolicy': pubConfig['RestrictPublicBuckets'],
+            }
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_public_status(self):
+        '''查询存储桶(bucket)公开状态'''
+        try:
+            # 获取当前Account ID
+            thisAccount = Account.query.first()
+            # step1: 判断Account Public Access Status
+            client_s3ctr = self._session.client('s3control')
+            accountPubConfig = client_s3ctr.get_public_access_block(
+                AccountId=thisAccount.account_id
+            ).get('PublicAccessBlockConfiguration')
+            acnpubStatus = check_bucket_public(accountPubConfig)
+            if acnpubStatus == 'private':
+                return {
+                    'status': acnpubStatus,
+                    'description': 'All objects are private'
+                }
+            elif acnpubStatus == 'public':
+                # step2: 判断Bucket Public Access Status
+                bucketPubConfig = self.get_public_config()
+                bucketPubStatus = check_bucket_public(bucketPubConfig)
+                if bucketPubStatus == 'public':
+                    pubStatus = {
+                        'status': bucketPubStatus,
+                        'description': 'Public',
+                    }
+                elif bucketPubStatus == 'private':
+                    pubStatus = {
+                        'status': bucketPubStatus,
+                        'description': 'All objects are private',
+                    }
+                else:
+                    pubStatus = {
+                        'status': bucketPubStatus,
+                        'description': 'Objects can be public',
+                    }
+            return pubStatus
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_bucket_encryption
-    def set_public_access(self, bucket_id, block_config=None):
+    def set_public_access(self, pub_config=None):
         try:
-            if block_config is None:
-                block_config = {
+            if pub_config is None:
+                publicAccessBlock = {
                     'BlockPublicAcls': True,
                     'IgnorePublicAcls': True,
                     'BlockPublicPolicy': True,
                     'RestrictPublicBuckets': True,
+                }          
+            else:
+                publicAccessBlock = {
+                    'BlockPublicAcls': pub_config['isBlockNewAcls'],
+                    'IgnorePublicAcls': pub_config['isBlockAllAcls'],
+                    'BlockPublicPolicy': pub_config['isBlockNewPolicy'],
+                    'RestrictPublicBuckets': pub_config['isBlockAllPolicy'],
                 }
             self._client.put_public_access_block(
-                Bucket=bucket_id,
-                PublicAccessBlockConfiguration=block_config,
+                Bucket=self.id,
+                PublicAccessBlockConfiguration=publicAccessBlock,
             )
-            return True
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
@@ -291,5 +357,49 @@ class StorageBucket(object):
                         }
                         objectList.append(objDict)
             return objectList
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+
+class StorageObject(object):
+    def __init__(self, object_key, bucket_id):
+        self.key = object_key
+        try:
+            self.bucket = StorageBucket(bucket_id)
+            self.objectObj = self.bucket.bucketObj.Object(self.d)
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#object
+    def get_attributes(self):
+        '''Get object's available attributes'''
+        object = self.objectObj
+        try:
+            return object
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.head_object
+    def get_metadata(self):
+        '''Retrieves metadata from an object without returning the object itself.'''
+        client = self.bucket._client
+        try:
+            objectMeta = client.head_object(
+                Bucket=self.bucket.id,
+                Key=self.key,
+                IfMatch='string',
+                IfModifiedSince=datetime(2015, 1, 1),
+                IfNoneMatch='string',
+                IfUnmodifiedSince=datetime(2015, 1, 1),
+                Range='string',
+                VersionId='string',
+                SSECustomerAlgorithm='string',
+                SSECustomerKey='string',
+                RequestPayer='requester',
+                PartNumber=123,
+                ExpectedBucketOwner='string',
+                ChecksumMode='ENABLED'
+            )
+            return objectMeta
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

@@ -13,7 +13,7 @@ from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_st_bucket
 from easyun.cloud.aws.workload.sdk_bucket import vaildate_bucket_exist
-from .schemas import BucketBasic, BucketModel, AddBucketParm, BucketIdQuery, BucketIdParm, BucketPubBlockParm, BucketDetail
+from .schemas import BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail
 
 
 bp = APIBlueprint('Bucket', __name__, url_prefix='/bucket')
@@ -124,7 +124,7 @@ def add_bucket_s3(parm):
                 'bucketRegion': bucketOptions['regionCode'],
                 'createTime': newBucket.creation_date,
             },
-            status_code=200,
+            status_code=201,
         )
         return resp.make_resp()
 
@@ -159,7 +159,6 @@ def add_bucket_cc(parm):
         },
         'Tags': [flagTag],
     }
-
     if parm['isEncryption']:
         desiredState.update(
             {
@@ -173,14 +172,12 @@ def add_bucket_cc(parm):
                 }
             }
         )
-
     try:
         # 调cloudtontro接口创建bucket
         client_cc = boto3.client('cloudcontrol', region_name=bktRegion)
         bucket = client_cc.create_resource(
             TypeName='AWS::S3::Bucket', DesiredState=str(desiredState)
         )
-
         response = Result(
             detail=bucket['ProgressEvent'],
             # detail = {'bucketId' : bucket['ProgressEvent']['Identifier']},
@@ -196,7 +193,6 @@ def add_bucket_cc(parm):
         return response.err_resp()
 
 
-
 @bp.delete('')
 @auth_required(auth_token)
 @bp.input(BucketIdParm)
@@ -205,54 +201,58 @@ def delete_bucket(parm):
     dcName = parm['dcName']
     bucketId = parm['bucketId']
     try:
-        bkt = get_st_bucket(dcName)
-        bkt.delete()
-        response = Result(
-            detail={'bucketId': bucketId}, message='bucket delete successfully'
-        )
+        bkt = get_st_bucket(bucketId, dcName)
+        oprtRes = bkt.delete()
+        resp = Result(detail=oprtRes, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=4003)
+        resp.err_resp()
+
+
+@bp.put('/<bucket_id>/property')
+@auth_required(auth_token)
+@bp.input(BucketPropertyParm)
+def modify_bucket_property(bucket_id, parms):
+    '''修改存储桶(S3 Bucket)属性'''
+    isEncryption = parms.get('isEncryption')
+    isVersioning = parms.get('isVersioning')
+    oprtRes = {'bucketId': bucket_id}
+    try:
+        bkt = get_st_bucket(bucket_id)        
+        if isEncryption is not None and isEncryption is not bkt.get_bkt_encryption():
+            bkt.set_default_encryption(isEncryption)
+            oprtRes.update({'isEncryption': isEncryption})
+        if isVersioning is not None and isVersioning is not bkt.get_bkt_versioning():
+            bkt.set_bkt_versioning(isVersioning)
+            oprtRes.update({'isVersioning': isVersioning})
+        resp = Result(detail=oprtRes, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=4003)
+        resp.err_resp()
+
+
+@bp.put('/<bucket_id>/permission')
+@auth_required(auth_token)
+@bp.input(BucketPublicParm)
+def modify_bucket_policy(bucket_id, parms):
+    '''修改存储桶的Public Block Policy'''
+    pubConfig = parms
+    oprtRes = {'bucketId': bucket_id}
+    try:
+        bkt = get_st_bucket(bucket_id)
+        bkt.set_public_access(pubConfig)
+        oprtRes.update({'bucketPermission': bkt.get_public_status()})
+        response = Result(detail=oprtRes, status_code=200)
         return response.make_resp()
     except Exception as ex:
-        response = Result(message=str(ex), status_code=4003, http_status_code=400)
-        return response.err_resp()
-
-
-@bp.put('/pubblock')
-@auth_required(auth_token)
-@bp.input(BucketPubBlockParm)
-def modify_bucket_policy(parm):
-    '''修改存储桶的Public Block Policy'''
-    S3Client = boto3.client('s3')
-
-    bucketId = parm['bucketId']
-
-    newAcl = parm['newAcl']
-    allAcl = parm['allAcl']
-    newPolicy = parm['newPolicy']
-    allPolicy = parm['allPolicy']
-
-    try:
-        result = S3Client.put_public_access_block(
-            Bucket=bucketId,
-            PublicAccessBlockConfiguration={
-                'BlockPublicAcls': newAcl,
-                'IgnorePublicAcls': allAcl,
-                'BlockPublicPolicy': newPolicy,
-                'RestrictPublicBuckets': allPolicy,
-            },
-        )['ResponseMetadata']['HTTPStatusCode']
-        if result == 200:
-            message = 'Modify public block policy success'
-        else:
-            message = 'Modify public block policy fail'
-        response = Result(detail=[{'message': message}], status_code=4003)
-        return response.make_resp()
-    except Exception:
-        response = Result(
-            message='Modify public block policy fail',
-            status_code=4003,
-            http_status_code=400,
-        )
-        return response.err_resp()
+        resp = Result(message=str(ex), status_code=4003)
+        # response = Result(
+        #     message='Modify public block policy fail',
+        #     status_code=4004,
+        # )
+        resp.err_resp()
 
 
 # @bp.get('/pubblock')

@@ -8,7 +8,7 @@
 from botocore.exceptions import ClientError
 from .sdk_server import EC2Server
 from .sdk_volume import StorageVolume
-from .sdk_bucket import StorageBucket, query_bucket_flag
+from .sdk_bucket import StorageBucket, StorageObject, query_bucket_flag
 from .sdk_loadbalancer import LoadBalancer
 from ..session import get_easyun_session
 from easyun.cloud.utils import get_server_name
@@ -17,6 +17,7 @@ from easyun.cloud.utils import get_server_name
 _EC2_SERVER = None
 _STORAGE_VOLUME = None
 _STORAGE_BUCKET = None
+_STORAGE_OBJECT = None
 _LOAD_BALANCER = None
 
 
@@ -36,12 +37,20 @@ def get_st_volume(volume_id, dc_name):
         return StorageVolume(volume_id, dc_name)
 
 
-def get_st_bucket(bucket_id, dc_name):
+def get_st_bucket(bucket_id, dc_name=None):
     global _STORAGE_BUCKET
     if _STORAGE_BUCKET is not None and _STORAGE_BUCKET.id == bucket_id:
         return _STORAGE_BUCKET
     else:
         return StorageBucket(bucket_id, dc_name)
+
+
+def get_st_object(object_key, bucket_id):
+    global _STORAGE_OBJECT
+    if _STORAGE_OBJECT is not None and _STORAGE_OBJECT.key == object_key:
+        return _STORAGE_OBJECT
+    else:
+        return StorageObject(object_key, bucket_id)
 
 
 def get_load_balancer(elb_id, dc_name):
@@ -148,12 +157,12 @@ class Workload(object):
             for bucket in buckets:
                 if query_bucket_flag(bucket) == self.dcName:
                     bkt = StorageBucket(bucket.name)
-                    # bktDomain = self.get_bucket_endpoint(bkt.name)
+                    bktEndpoint = bkt.get_bkt_endpoint()
                     bktItem = {
                         'bucketId': bucket.name,
                         'createTime': bucket.creation_date,
-                        'bucketRegion': bkt.get_bucket_endpoint()['bucketRegion'],
-                        'bucketUrl': bkt.get_bucket_endpoint()['bucketUrl'],
+                        'bucketRegion': bktEndpoint['bucketRegion'],
+                        'bucketUrl': bktEndpoint['bucketUrl'],
                         # 'bucketAccess': bkt.get_public_status(),
                         'bucketAccess': {
                             'status': 'private',
@@ -178,7 +187,7 @@ class Workload(object):
                         {
                             'bucketId': bucket.name,
                             'createTime': bucket.creation_date,
-                            'bucketRegion': bkt.get_bucket_endpoint()['bucketRegion'],
+                            'bucketRegion': bkt.get_bkt_endpoint()['bucketRegion'],
                         }
                     )
             return bucketList

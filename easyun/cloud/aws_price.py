@@ -153,10 +153,10 @@ def ec2_monthly_cost(region, instype, os):
         pricelist = ec2_pricelist(region, instype, os)
         unit = pricelist.get('unit')
         currency = list(pricelist['pricePerUnit'].keys())[0]
-        unitePrice = pricelist['pricePerUnit'].get(currency)
+        unitPrice = pricelist['pricePerUnit'].get(currency)
         if unit == 'Hrs':
             # 参考AWS做法按每月730h计算
-            monthPrice = float(unitePrice)*730
+            monthPrice = float(unitPrice)*730
         return {
             'value': monthPrice,
             'currency' : currency
