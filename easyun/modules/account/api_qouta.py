@@ -60,7 +60,7 @@ def get_region_quota(parm):
 @bp.get('/quota/all')
 @auth_required(auth_token)
 def get_account_quota():
-    '''获取云账号下资源配额 [mock]'''
+    '''获取云账号下资源配额【to-be-done】'''
     pass
 
     resp = Result(detail='功能开发中...', status_code=200)

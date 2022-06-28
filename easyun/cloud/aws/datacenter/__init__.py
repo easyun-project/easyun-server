@@ -22,12 +22,12 @@ from ..utils import get_subnet_type, get_eni_type, get_tag_name
 
 class DataCenter(object):
     def __init__(self, dc_name):
-        session = get_easyun_session(dc_name)
         thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
+        self._session = get_easyun_session(dc_name)
+        self._resource = self._session.resource('ec2')
+        self._client = self._resource.meta.client
         self.dcName = dc_name
         self.vpcId = thisDC.vpc_id
-        self._resource = session.resource('ec2')
-        self._client = self._resource.meta.client
         self.vpc = self._resource.Vpc(self.vpcId)
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}

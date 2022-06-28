@@ -8,10 +8,16 @@
 from tokenize import Number
 from apiflask import Schema
 from apiflask.fields import String, Integer, List, Dict, Boolean, DateTime, Nested
-from apiflask.validators import Length, OneOf
+from apiflask.validators import Length, OneOf, Regexp
 from easyun.common.schemas import TagItem
 
 
+class RegionModel(Schema):
+    regionCode = String(example='us-east-1')
+    regionName = String(example='US East (N. Virginia)')
+    countryCode = String(example='USA')
+
+    
 class BucketIdQuery(Schema):
     dc = String(required=True, example='Easyun')
     bkt = String(required=True, validate=Length(0, 30), example='bktexample17')
@@ -22,7 +28,7 @@ class BucketIdParm(Schema):
     bucketId = String(required=True, validate=Length(0, 30), example='my-bucket')
 
 
-class BucketCreateParm(Schema):
+class BucketOptions(Schema):
     regionCode = String(required=True, example='us-east-1')
     isEncryption = Boolean(required=True, example=False)
     isVersioning = Boolean(required=True, example=False)
@@ -42,9 +48,24 @@ class BucketCreateParm(Schema):
     )
 
 
+S3_REPORT_NAME_PATTERN = "[0-9A-Za-z!\\-_.*\'()]+"
+S3_PREFIX_PATTERN = "[0-9A-Za-z!\\-_.*\\'()/]*"
+BUCKET_NANE_PATTERN = "(?!^(\d{1,3}\.){3}\d{1,3}$)(^[a-z0-9]([a-z0-9-]*(\.[a-z0-9])?)*$)"
+
+
+class AddBucketParm(Schema):
+    dcName = String(required=True, example='Easyun')
+    bucketId = String(
+        required=True,
+        validate=[Regexp(BUCKET_NANE_PATTERN, error='only lowercase letters, numbers, dots(.) and hyphens(-)'), Length(3, 63)],
+        example='my-bucket'
+    )
+    bucketOptions = Nested(BucketOptions)
+
+
 class BucketPropertyParm(Schema):
     # dcName = String(example='Easyun')
-    # bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
+    # bucketId = String(required=True, validate=Length(3, 63), example='my-bucket')
     isEncryption = Boolean(example=True)
     isVersioning = Boolean(example=True)
 
@@ -55,12 +76,6 @@ class BucketPublicParm(Schema):
     isBlockAllAcls = Boolean(required=True, example=True)
     isBlockNewPolicy = Boolean(required=True, example=True)
     isBlockAllPolicy = Boolean(required=True, example=True)
-
-
-class AddBucketParm(Schema):
-    dcName = String(required=True, example='Easyun')
-    bucketId = String(required=True, validate=Length(0, 60), example='my-bucket')
-    bucketCreateParm = Nested(BucketCreateParm)
 
 
 class BucketBasic(Schema):

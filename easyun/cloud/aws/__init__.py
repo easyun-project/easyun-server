@@ -79,9 +79,9 @@ def get_staticip(eip_id, dc_name):
 
 class AWSCloud(object):
     def __init__(self, account_id, region_type='Global'):
+        self._session = get_easyun_session()
         self.accountId = account_id
-        self.regionType = region_type
-        self.session = get_easyun_session()
+        self.regionType = region_type        
         self.datacenters = Datacenter.query.filter_by(account_id=self.accountId)
 
     def list_all_datacenter(self):
@@ -89,7 +89,7 @@ class AWSCloud(object):
         try:
             datacenterList = []
             for dc in self.datacenters:
-                resource_ec2 = self.session.resource('ec2', region_name=dc.region)
+                resource_ec2 = self._session.resource('ec2', region_name=dc.region)
                 # error handing for InvalidVpcID.NotFound
                 try:
                     vpc = resource_ec2.Vpc(dc.vpc_id)
@@ -128,10 +128,10 @@ class AWSCloud(object):
         '''get region list in AWS Cloud'''
         try:
             if self.regionType == 'GCR':
-                regionList = self.session.get_available_regions(service_name, 'aws-cn')
+                regionList = self._session.get_available_regions(service_name, 'aws-cn')
             else:
                 # aws_type == Global
-                regionList = self.session.get_available_regions(service_name)
+                regionList = self._session.get_available_regions(service_name)
             return [
                 {
                     'regionCode': r,

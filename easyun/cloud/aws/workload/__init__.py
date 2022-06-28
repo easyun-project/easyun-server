@@ -63,13 +63,13 @@ def get_load_balancer(elb_id, dc_name):
 
 class Workload(object):
     def __init__(self, dc_name):
-        self.session = get_easyun_session(dc_name)
+        self._session = get_easyun_session(dc_name)
         self.dcName = dc_name
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
 
     def list_all_volume(self):
-        resource = self.session.resource('ec2')
+        resource = self._session.resource('ec2')
         try:
             volIterator = resource.volumes.filter(Filters=[self.tagFilter])
             volumeList = []
@@ -121,7 +121,7 @@ class Workload(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def get_volume_list(self):
-        resource = self.session.resource('ec2')
+        resource = self._session.resource('ec2')
         try:
             volIterator = resource.volumes.filter(Filters=[self.tagFilter])
             volumeList = []
@@ -150,7 +150,7 @@ class Workload(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def list_all_bucket(self):
-        s3 = self.session.resource('s3')
+        s3 = self._session.resource('s3')
         try:
             bucketList = []
             buckets = s3.buckets.all()
@@ -176,7 +176,7 @@ class Workload(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def get_bucket_list(self):
-        s3 = self.session.resource('s3')
+        s3 = self._session.resource('s3')
         try:
             bucketList = []
             buckets = s3.buckets.all()
@@ -195,7 +195,7 @@ class Workload(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def list_all_loadbalancer(self):
-        client = self.session.client('elbv2')
+        client = self._session.client('elbv2')
         try:
             elbs = client.describe_load_balancers(
                 # Filters=[self.tagFilter]
@@ -233,7 +233,7 @@ class Workload(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def get_loadbalancer_list(self):
-        client = self.session.client('elbv2')
+        client = self._session.client('elbv2')
         try:
             elbs = client.describe_load_balancers(
                 # Filters=[self.tagFilter]
@@ -256,14 +256,14 @@ class Workload(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def create_bucket(self, bucket_id, options):
+        s3 = self._session.resource('s3')
         try:
             # step1: 新建Bucket
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.ServiceResource.create_bucket
             region = options.get('regionCode')
-            location = {'LocationConstraint': region}
-            newBucket = self._resource.create_bucket(
+            s3Bucket = s3.create_bucket(
                 Bucket=bucket_id,
-                CreateBucketConfiguration=location,
+                CreateBucketConfiguration={'LocationConstraint': region},
                 # ACL='private'|'public-read'|'public-read-write'|'authenticated-read',
                 # GrantFullControl='string',
                 # GrantRead='string',
@@ -273,21 +273,24 @@ class Workload(object):
                 # ObjectLockEnabledForBucket=True|False,
                 # ObjectOwnership='BucketOwnerPreferred'|'ObjectWriter'|'BucketOwnerEnforced'
             )
-            newBucket.wait_until_exists(
-                # ExpectedBucketOwner='string'
-            )
+            s3Bucket.wait_until_exists()
+            newBucket = StorageBucket(s3Bucket.name)
+
             # step2: 设置 Bucket default encryption，默认不启用
-            if options.get('isEncryption'):
-                self.set_default_encryption(bucket_id, 'enable')
+            if 'isEncryption' in options:
+                newBucket.set_default_encryption(options['isEncryption'])
 
             # step3: 设置Bucket Versioning，默认不启用
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#bucketversioning
-            if options.get('isVersioning'):
-                bucketVersion = self._resource.BucketVersioning(bucket_id)
-                bucketVersion.enable()
-            # step4: 设置Bucket Tag:Flag 标签
+            if 'isVersioning' in options:
+                newBucket.set_bkt_versioning(options['isVersioning'])
+
+            # step4:  设置Bucket public access默认private
+            pubConfig = options.get('pubBlockConfig')
+            newBucket.set_public_access(pubConfig)
+
+            # step5: 设置Bucket Tag:Flag 标签
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#buckettagging
-            bucketTagging = self._resource.BucketTagging(bucket_id)
+            bucketTagging = s3.BucketTagging(bucket_id)
             bucketTagging.put(
                 Tagging={
                     'TagSet': [
@@ -295,10 +298,6 @@ class Workload(object):
                     ]
                 }
             )
-            # step5:  设置Bucket public access默认private
-            block_config = options.get('pubBlockConfig')
-            self.set_public_access(bucket_id, block_config)
-
             return newBucket
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

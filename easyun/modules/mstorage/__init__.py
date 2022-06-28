@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
-from apiflask import APIBlueprint
+
+from apiflask import APIBlueprint, auth_required
+from easyun.common.auth import auth_token
+from easyun.common.models import Account
+from easyun.common.result import Result
+from easyun.cloud import get_aws_cloud
 from easyun.cloud.aws.workload import StorageBucket
 from easyun.cloud.aws.resources import StorageVolume
+from .schemas import RegionModel
 
 
 # define api version
@@ -30,11 +36,26 @@ def get_st_bucket(dcName):
         return StorageBucket(dcName)
 
 
-from . import (
-    api_mock,
-    api_bucket_mgt,
-    api_volume_mgt
-)
+@bp.get('/s3-region')
+@auth_required(auth_token)
+@bp.output(RegionModel(many=True), description='Get Region List')
+def list_s3_region():
+    '''获取S3可用的Region列表'''
+    try:
+        thisAccount: Account = Account.query.first()
+        cloud = get_aws_cloud(thisAccount.account_id, thisAccount.aws_type)
+
+        regionList = cloud.get_region_list('s3')
+
+        resp = Result(detail=regionList, status_code=200)
+        return resp.make_resp()
+
+    except Exception as ex:
+        response = Result(message=str(ex), status_code=2005)
+        response.err_resp()
+
+
+from . import api_bucket_mgt, api_volume_mgt
 
 
 bp.register_blueprint(api_bucket_mgt.bp)

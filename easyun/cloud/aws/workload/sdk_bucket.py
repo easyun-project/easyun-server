@@ -324,7 +324,7 @@ class StorageBucket(object):
                     'IgnorePublicAcls': True,
                     'BlockPublicPolicy': True,
                     'RestrictPublicBuckets': True,
-                }          
+                }
             else:
                 publicAccessBlock = {
                     'BlockPublicAcls': pub_config['isBlockNewAcls'],
