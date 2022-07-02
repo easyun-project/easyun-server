@@ -5,19 +5,12 @@
   @auth:    
 """
 
-from tokenize import Number
 from apiflask import Schema
 from apiflask.fields import String, Integer, List, Dict, Boolean, DateTime, Nested
 from apiflask.validators import Length, OneOf, Regexp
 from easyun.common.schemas import TagItem
 
 
-class RegionModel(Schema):
-    regionCode = String(example='us-east-1')
-    regionName = String(example='US East (N. Virginia)')
-    countryCode = String(example='USA')
-
-    
 class BucketIdQuery(Schema):
     dc = String(required=True, example='Easyun')
     bkt = String(required=True, validate=Length(0, 30), example='bktexample17')

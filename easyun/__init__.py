@@ -15,11 +15,11 @@ from flask_sqlalchemy import SQLAlchemy
 from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
-
 # from .common.result import BaseResponseSchema
 from config import Config
 from easyun.libs.celery import FlaskCelery
 from easyun.libs.log import EasyunLogging
+
 
 # define api version
 ver = '/api/v1'
@@ -51,7 +51,7 @@ def create_app(run_env=None):
 
     app = APIFlask(__name__, docs_path='/api/docs', redoc_path='/api/redoc')
     app.config.from_object(env_config[run_env])
-
+    # schema for generic response
     app.config['BASE_RESPONSE_SCHEMA'] = BaseResponseSchema
     # the data key should match the data field name in the base response schema
     # defaults to "data"
@@ -69,9 +69,17 @@ def create_app(run_env=None):
     # 初始化AWS云环境账号基础信息
     register_cloud_account(app)
 
+    # @app.error_processor
+    # def validation_error_proc(error):
+    #     err_resp = {
+    #         'detail': error.detail.get('json'),
+    #         'message': error.message,
+    #     }
+    #     return err_resp, error.status_code, error.headers
+
     @app.route('/', methods=['GET'])
-    def get_server_status():
-        resp: BaseResponseSchema = {
+    def default_page():
+        resp = {
             'detail': {'status': 'running'},
             'message': 'success'
         }

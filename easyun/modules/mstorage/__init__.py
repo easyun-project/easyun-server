@@ -5,10 +5,10 @@ from apiflask import APIBlueprint, auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
+from easyun.common.schemas import RegionModel
 from easyun.cloud import get_aws_cloud
 from easyun.cloud.aws.workload import StorageBucket
 from easyun.cloud.aws.resources import StorageVolume
-from .schemas import RegionModel
 
 
 # define api version

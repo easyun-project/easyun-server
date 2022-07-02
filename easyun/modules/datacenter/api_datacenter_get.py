@@ -9,14 +9,10 @@ from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, RegionModel
 from easyun.cloud import get_aws_cloud
 from easyun.cloud.aws import get_datacenter
-from .schemas import (
-    DataCenterBasic,
-    DataCenterModel,
-    RegionModel
-)
+from .schemas import DataCenterBasic, DataCenterModel
 from . import bp
 
 

@@ -8,7 +8,7 @@
 
 from apiflask import Schema
 from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Number, Field
-from apiflask.validators import Length, OneOf
+from apiflask.validators import Length, OneOf, Regexp
 from easyun.common.schemas import TagItem
 from easyun.cloud.aws_region import get_region_codes
 
@@ -58,9 +58,14 @@ class SubnetParm(Schema):
 
 
 # 定义新建Datacenter 传参格式
-class CreateDcParms(Schema):
+DATACENTER_NANE_PATTERN = "(?!^(\d{1,3}\.){3}\d{1,3}$)(^[a-zA-Z0-9]([a-zA-Z0-9-]*(\.[a-zA-Z0-9])?)*$)"
+
+
+class AddDataCenterParm(Schema):
     dcName = String(
-        required=True, validate=Length(0, 60), example="Easyun"  # Datacenter name
+        required=True,
+        validate=[Regexp(DATACENTER_NANE_PATTERN), Length(3, 60)],
+        example="Easyun"  # Datacenter name
     )
     dcRegion = String(required=True, validate=Length(0, 20), example="us-east-1")
 
@@ -157,11 +162,11 @@ class DropDownList(Schema):
 
 
 class DefaultParmsOut(Schema):
-    dcParms = Nested(CreateDcParms)
+    dcParms = Nested(AddDataCenterParm)
     dropDown = Nested(DropDownList)
 
 
-class DeleteDcParms(Schema):
+class DelDataCenterParm(Schema):
     dcName = String(
         required=True, validate=Length(0, 60), example="Easyun"  # Datacenter name
     )
@@ -279,12 +284,6 @@ class DataCenterModel(Schema):
     createDate = DateTime()
     createUser = String(example='admin')
     accountId = String(example='567812345678')
-
-
-class RegionModel(Schema):
-    regionCode = String(example='us-east-1')
-    regionName = String(example='US East (N. Virginia)')
-    countryCode = String(example='USA')
 
 
 '''

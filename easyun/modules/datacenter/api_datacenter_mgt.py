@@ -21,8 +21,8 @@ from easyun.cloud.aws.sdk_tagging import ResGroupTagging
 from .schemas import (
     DefaultParmQuery,
     DefaultParmsOut,
-    CreateDcParms,
-    DeleteDcParms,
+    AddDataCenterParm,
+    DelDataCenterParm,
     DataCenterModel,
 )
 from .task_create import create_dc_task
@@ -169,7 +169,7 @@ def get_default_parms(parm):
 
 @bp.post('')
 @auth_required(auth_token)
-@bp.input(CreateDcParms)
+@bp.input(AddDataCenterParm)
 @log.api_error(logger)
 def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
@@ -221,7 +221,7 @@ def create_dc_async(parm):
 
 @bp.delete('')
 @auth_required(auth_token)
-@bp.input(DeleteDcParms)
+@bp.input(DelDataCenterParm)
 @log.api_error(logger)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''

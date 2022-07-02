@@ -12,16 +12,16 @@ from easyun.cloud.aws_region import get_region_codes
 
 
 class LoginParm(Schema):
-    username = String(required=True, validate=Length(0, 20), example='demo')
-    password = String(required=True, validate=Length(0, 30), example='Passw0rd')
+    username = String(required=True, validate=Length(3, 20), example='demo')
+    password = String(required=True, validate=Length(5, 30), example='Passw0rd')
 
 
 class UsernameParm(Schema):
-    username = String(required=True, validate=Length(0, 20), example='demo')
+    username = String(required=True, validate=Length(3, 20), example='demo')
 
 
 class PasswordParm(Schema):
-    passWord = String(required=True, validate=Length(0, 20), example="Passw0rd")
+    password = String(required=True, validate=Length(5, 20), example="Passw0rd")
 
 
 class UserModel(Schema):
@@ -45,7 +45,7 @@ class UserBasic(Schema):
 
 class AddUserParm(Schema):
     username = String(required=True, validate=Length(0, 20), example="user")
-    password = String(required=True, validate=Length(0, 30), example="passWord")
+    password = String(required=True, validate=Length(0, 30), example="PassW0rd")
     email = String(required=True, validate=Email(), example="user@mail.com")
 
 
@@ -55,7 +55,7 @@ class TagItem(Schema):
 
 
 class DcNameQuery(Schema):
-    '''datacenter name for query parm'''
+    '''DataCenter name for query parm'''
 
     dc = String(
         required=True,
@@ -66,15 +66,21 @@ class DcNameQuery(Schema):
 
 
 class RegionCodeQuery(Schema):
-    '''datacenter name for query parm'''
+    '''Region code for query parm'''
 
     region = String(
         required=True, validate=OneOf(get_region_codes()), example='us-east-1'
     )
 
 
+class RegionModel(Schema):
+    regionCode = String(example='us-east-1')
+    regionName = String(example='US East (N. Virginia)')
+    countryCode = String(example='USA')
+
+
 class DcNameParm(Schema):
-    '''datacenter name for body parm'''
+    '''DataCenter name for body parm'''
 
     dcName = String(
         required=True,
