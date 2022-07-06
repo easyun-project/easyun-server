@@ -24,7 +24,7 @@ def list_elb_detail(parm):
     dcName = parm.get('dc')
     try:
         dc = get_datacenter(dcName)
-        elbList = dc.resources.list_all_loadbalancer()
+        elbList = dc.workload.list_all_loadbalancer()
 
         resp = Result(detail=elbList, status_code=200)
         return resp.make_resp()
@@ -43,7 +43,7 @@ def list_elb_brief(parm):
     dcName = parm.get('dc')
     try:
         dc = get_datacenter(dcName)
-        elbList = dc.resources.get_loadbalancer_list()
+        elbList = dc.workload.get_loadbalancer_list()
 
         resp = Result(detail=elbList, status_code=200)
         return resp.make_resp()

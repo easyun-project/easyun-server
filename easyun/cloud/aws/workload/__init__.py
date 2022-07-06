@@ -8,7 +8,8 @@
 from botocore.exceptions import ClientError
 from .sdk_server import EC2Server
 from .sdk_volume import StorageVolume
-from .sdk_bucket import StorageBucket, StorageObject, query_bucket_flag
+from .sdk_bucket import StorageBucket, query_bucket_flag
+from .sdk_database import DBInstance
 from .sdk_loadbalancer import LoadBalancer
 from ..session import get_easyun_session
 from easyun.cloud.utils import get_server_name
@@ -17,7 +18,7 @@ from easyun.cloud.utils import get_server_name
 _EC2_SERVER = None
 _STORAGE_VOLUME = None
 _STORAGE_BUCKET = None
-_STORAGE_OBJECT = None
+_DB_INSTANCE = None
 _LOAD_BALANCER = None
 
 
@@ -45,12 +46,12 @@ def get_st_bucket(bucket_id, dc_name=None):
         return StorageBucket(bucket_id, dc_name)
 
 
-def get_st_object(object_key, bucket_id):
-    global _STORAGE_OBJECT
-    if _STORAGE_OBJECT is not None and _STORAGE_OBJECT.key == object_key:
-        return _STORAGE_OBJECT
+def get_db_instance(dbi_id, dc_name):
+    global _DB_INSTANCE
+    if _DB_INSTANCE is not None and _DB_INSTANCE.id == dbi_id:
+        return _DB_INSTANCE
     else:
-        return StorageObject(object_key, bucket_id)
+        return DBInstance(dbi_id, dc_name)
 
 
 def get_load_balancer(elb_id, dc_name):
@@ -84,7 +85,9 @@ class Workload(object):
                     SYSTEMDISK_PATH = ['/dev/xvda', '/dev/sda1']
                     for a in attachs:
                         # 基于卷挂载路径判断disk类型是 system 还是 user
-                        diskType = 'system' if a['Device'] in SYSTEMDISK_PATH else 'user'
+                        diskType = (
+                            'system' if a['Device'] in SYSTEMDISK_PATH else 'user'
+                        )
                         attachList.append(
                             {
                                 'attachPath': a['Device'],
@@ -142,7 +145,7 @@ class Workload(object):
                     'volumeAz': vol.availability_zone,
                     'volumeType': vol.volume_type,
                     'volumeSize': vol.size,
-                    'createTime': vol.create_time
+                    'createTime': vol.create_time,
                 }
                 volumeList.append(volItem)
             return volumeList
@@ -167,7 +170,7 @@ class Workload(object):
                         'bucketAccess': {
                             'status': 'private',
                             'description': 'All objects are private',
-                        }
+                        },
                     }
                     # bktItem.update(self.query_bucket_public(bkt.name))
                     bucketList.append(bktItem)
@@ -194,6 +197,59 @@ class Workload(object):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
+    def list_all_dbinstance(self):
+        client = self._session.client('rds')
+        try:      
+            dbis = client.describe_db_instances(
+                # Filters=[self.tagFilter]
+            )['DBInstances']
+            dbiList = []
+            for dbi in dbis:
+                # filter不支持tag过滤条件，手动判断Flag标记
+                flagTag = next((tag['Value'] for tag in dbi['TagList'] if tag["Key"] == 'Flag'), None)
+                if flagTag == self.dcName:
+                    dbiItem = {
+                        'dbiId': dbi['DBInstanceIdentifier'],
+                        'dbiEngine': dbi['Engine'],
+                        'engineVer': dbi['EngineVersion'],
+                        'dbiStatus': 'available',
+                        'dbiSize': dbi['DBInstanceClass'],
+                        'vcpuNum': 1,
+                        'ramSize': 2,
+                        'volumeSize': 20,
+                        'dbiAz': dbi['AvailabilityZone'],
+                        'multiAz': dbi['MultiAZ'],
+                        'dbiEndpoint': dbi['Endpoint'].get('Address'),
+                        # 'createTime': dbi['InstanceCreateTime'].isoformat()
+                    }
+                    dbiList.append(dbiItem)
+            return dbiList
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_dbinstance_list(self):
+        client = self._session.client('rds')
+        try:      
+            dbis = client.describe_db_instances(
+                # Filters=[self.tagFilter]
+            )['DBInstances']
+            dbiList = []
+            for dbi in dbis:
+                # filter不支持tag过滤条件，手动判断Flag标记
+                flagTag = next((tag['Value'] for tag in dbi['TagList'] if tag["Key"] == 'Flag'), None)
+                if flagTag == self.dcName:
+                    dbiItem = {
+                        'dbiId': dbi['DBInstanceIdentifier'],
+                        'dbiEngine': dbi['Engine'],
+                        'dbiStatus': 'available',
+                        'dbiSize': dbi['DBInstanceClass'],
+                        'dbiAz': dbi['AvailabilityZone'],
+                    }
+                    dbiList.append(dbiItem)
+            return dbiList
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
     def list_all_loadbalancer(self):
         client = self._session.client('elbv2')
         try:
@@ -209,10 +265,9 @@ class Workload(object):
                         {
                             'azName': i['ZoneName'],
                             'subnetId': i['SubnetId'],
-                            'elbAddresses': i['LoadBalancerAddresses']
+                            'elbAddresses': i['LoadBalancerAddresses'],
                         }
                     )
-
                 elbItem = {
                     'elbId': elb['LoadBalancerName'],
                     # 'tagName': nameTag,
@@ -225,7 +280,7 @@ class Workload(object):
                     'elbScheme': elb['Scheme'],
                     # 'vpcId': elb['VpcId'],
                     'secGroups': elb['SecurityGroups'],
-                    'createTime': elb['CreatedTime']
+                    'createTime': elb['CreatedTime'],
                 }
                 elbList.append(elbItem)
             return elbList
@@ -300,4 +355,55 @@ class Workload(object):
             )
             return newBucket
         except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def create_volume(
+        self, vol_type, vol_size, vol_zone,
+        iops=None,
+        throughput=None,
+        is_multiattach=None,
+        is_encrypted=None,
+        tag_name=None,
+    ):
+        client = self._session.client('ec2')
+        nameTag = {"Key": "Name", "Value": tag_name}
+        tagSpecifications = [
+            {"ResourceType": "volume", "Tags": [self.flagTag, nameTag]}
+        ]
+        try:
+            # 基于voluem type执行不同的创建参数
+            if vol_type in ['gp3']:
+                ebsVolume = client.create_volume(
+                    VolumeType=vol_type,
+                    Size=vol_size,
+                    AvailabilityZone=vol_zone,
+                    Encrypted=is_encrypted,
+                    TagSpecifications=tagSpecifications,
+                    Iops=iops,
+                    Throughput=throughput,
+                )
+            elif vol_type in ['io1', 'io2']:
+                ebsVolume = client.create_volume(
+                    VolumeType=vol_type,
+                    Size=vol_size,
+                    AvailabilityZone=vol_zone,
+                    Encrypted=is_encrypted,
+                    TagSpecifications=tagSpecifications,
+                    Iops=iops,
+                    MultiAttachEnabled=is_multiattach,
+                )
+            else:  # ['gp2','sc1','st1','standard']
+                ebsVolume = client.create_volume(
+                    VolumeType=vol_type,
+                    Size=vol_size,
+                    AvailabilityZone=vol_zone,
+                    Encrypted=is_encrypted,
+                    TagSpecifications=tagSpecifications,
+                )
+            # wait until the volume is available
+            waiter = client.get_waiter('volume_available')
+            waiter.wait(VolumeIds=[ebsVolume['VolumeId']])
+            newVolume = StorageVolume(ebsVolume['VolumeId'])
+            return newVolume
+        except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

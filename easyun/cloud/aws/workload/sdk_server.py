@@ -4,34 +4,29 @@
   @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper.
   @auth:
 """
-import boto3
+
+from botocore.exceptions import ClientError
+from ..session import get_easyun_session
 
 
+# SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#instance
 class EC2Server(object):
-    def __init__(self, svr_id):
+    def __init__(self, svr_id, dc_name=None):
         self.id = svr_id
-        self._client = boto3.resource('ec2')
-        self._resource = boto3.resource('ec2')
-
-    # SDK: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.describe_services
-    def get_service_codes(self):
-        '''Retrieve all AWS service codes'''
+        session = get_easyun_session(dc_name)
+        self._client = session.resource('ec2')
+        self._resource = session.resource('ec2')
         try:
-            svcodeList = []
-            describe_args = {}
-            while True:
-                describe_result = self._boto3_client.describe_services(
-                    **describe_args,
-                    # FormatVersion='string',
-                    # NextToken='string',
-                    # MaxResults=100
-                )
-                svcodeList.extend(
-                    [s['ServiceCode'] for s in describe_result['Services']]
-                )
-                if 'NextToken' not in describe_result:
-                    break
-                describe_args['NextToken'] = describe_result['NextToken']
-            return {'count': len(svcodeList), 'data': svcodeList}
+            self.svrObj = self._resource.Instance(self.id)
+            self.tagName = next(
+                (tag['Value'] for tag in self.svrObj.tags if tag["Key"] == 'Name'), None
+            )
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_detail(self):
+        '''get server's detail info'''
+        try:
+            pass
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, ex)

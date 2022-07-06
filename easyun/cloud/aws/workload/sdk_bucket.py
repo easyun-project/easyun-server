@@ -8,9 +8,20 @@
 import os
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
-from easyun.libs.utils import len_iter
+# from easyun.libs.utils import len_iter
 from easyun.common.models import Account
 from ...utils import get_easyun_session
+
+
+_STORAGE_OBJECT = None
+
+
+def get_st_object(object_key, bucket_id):
+    global _STORAGE_OBJECT
+    if _STORAGE_OBJECT is not None and _STORAGE_OBJECT.key == object_key:
+        return _STORAGE_OBJECT
+    else:
+        return StorageObject(object_key, bucket_id)
 
 
 def query_bucket_flag(bucket):

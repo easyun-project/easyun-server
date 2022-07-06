@@ -5,14 +5,12 @@
   @auth:
 """
 
-
-import boto3
-from apiflask import APIBlueprint, auth_required
+from apiflask import auth_required
 from easyun.common.auth import auth_token
-from easyun.cloud.utils import query_dc_region
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws.workload import get_st_bucket, get_st_object
+from easyun.cloud.aws.workload import get_st_bucket
+from easyun.cloud.aws.workload.sdk_bucket import get_st_object
 from .schemas import ObjectKeyQuery, BucketIdQuery, ObjectContents
 from .api_bucket_mgt import bp
 

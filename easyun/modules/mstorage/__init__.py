@@ -6,7 +6,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
 from easyun.common.schemas import RegionModel
-from easyun.cloud import get_aws_cloud
+from easyun.cloud import get_cloud
 from easyun.cloud.aws.workload import StorageBucket
 from easyun.cloud.aws.resources import StorageVolume
 
@@ -43,7 +43,7 @@ def list_s3_region():
     '''获取S3可用的Region列表'''
     try:
         thisAccount: Account = Account.query.first()
-        cloud = get_aws_cloud(thisAccount.account_id, thisAccount.aws_type)
+        cloud = get_cloud(thisAccount.account_id, thisAccount.aws_type)
 
         regionList = cloud.get_region_list('s3')
 

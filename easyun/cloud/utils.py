@@ -10,6 +10,9 @@ from easyun.common.models import Datacenter
 from easyun.cloud.aws.session import get_easyun_session
 
 
+# 定义系统盘路径
+SYSTEM_DISK = ['/dev/xvda', '/dev/sda1']
+
 _EC2_RESOURCE = None
 
 
@@ -124,6 +127,11 @@ def get_server_name(svr_id):
         return tagName
     except Exception:
         return None
+
+
+def get_disk_type(attach_path):
+    diskType = 'system' if attach_path in SYSTEM_DISK else 'user'
+    return diskType
 
 
 def get_eni_type(eni_id):

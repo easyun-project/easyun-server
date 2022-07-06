@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
   @module:  Volume (ebs) SDK Module
-  @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper. 
+  @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper.
   @auth:
 """
 
-import boto3
+from botocore.exceptions import ClientError
 from easyun.libs.utils import load_json_config
-from ...utils import set_boto3_region, get_server_name
+from ..session import get_easyun_session
+from ...utils import get_server_name
 
 
 # 定义系统盘路径
@@ -17,14 +18,24 @@ VolumeTypes = load_json_config('aws_ebs_types')
 
 
 class StorageVolume(object):
-    def __init__(self, dcName):
-        set_boto3_region(dcName)
-        self._resource = boto3.resource('ec2')
-        self._client = self._resource.meta.client
-        self.dcName = dcName
-        self.tagFilter = {'Name': 'tag:Flag', 'Values': [dcName]}
+    id: str
+    tagName: str
+    createTime: str
 
-    def get_volume_detail(self, volume_id):
+    def __init__(self, volume_id, dc_name=None):
+        self.id = volume_id
+        session = get_easyun_session(dc_name)
+        self._client = session.resource('ec2')
+        self._resource = session.resource('ec2')
+        try:
+            self.volObj = self._resource.Volume(self.id)
+            self.tagName = next(
+                (tag['Value'] for tag in self.volObj.tags if tag["Key"] == 'Name'), None
+            )
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_detail(self, volume_id):
         try:
             thisVol = self._resource.Volume(volume_id)
             # 判断flagTag 确保volume在所指的datacenter内
@@ -93,14 +104,7 @@ class StorageVolume(object):
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def create_volume(self):
-        try:
-
-            return
-        except Exception as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    def delete_volume(self):
+    def delete(self):
         try:
 
             return

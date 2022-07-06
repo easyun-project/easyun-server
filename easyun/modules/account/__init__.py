@@ -8,4 +8,4 @@ ver = '/api/v1'
 
 bp = APIBlueprint('账号管理', __name__, url_prefix=ver + '/account')
 
-from . import api_qouta, api_keypair
+from . import api_qouta, api_keypair, api_reminder

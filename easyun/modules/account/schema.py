@@ -58,10 +58,18 @@ class SSHKeysOutputSchema(Schema):
     name = String(data_key='key_name')
 
 
-class FreeTierInputSchema(Schema):
-    # remind = Boolean(example=False)
-    active_date = Date()
+class FreeTierQuery(Schema):
+    account_id = String(example='567820211120')
 
 
-class FreeTierOutputSchema(Schema):
-    remainder = Integer()
+class FreeTierParm(Schema):
+    isReminderOn = Boolean(required=True, example=True)
+    activeDate = Date(required=True)
+    accountId = String(example='567820211120')
+
+
+class FreeTierInfo(Schema):
+    isReminderOn = Boolean(example=True)
+    activeDate = Date(example='2022-02-27')
+    remainDays = Integer(example=180)
+    iconColor = String(example="green")

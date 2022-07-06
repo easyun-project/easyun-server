@@ -81,7 +81,7 @@ class AWSCloud(object):
     def __init__(self, account_id, region_type='Global'):
         self._session = get_easyun_session()
         self.accountId = account_id
-        self.regionType = region_type        
+        self.regionType = region_type
         self.datacenters = Datacenter.query.filter_by(account_id=self.accountId)
 
     def list_all_datacenter(self):

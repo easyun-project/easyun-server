@@ -2,7 +2,7 @@
 """
   @module:  Block Storage Module
   @desc:    块存储(EBS) Volume 卷管理相关
-  @auth:    
+  @auth:    aleck
 """
 
 import boto3
@@ -11,14 +11,10 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
-from easyun.cloud.utils import (
-    gen_dc_tag,
-    query_dc_region,
-    get_server_name,
-    set_boto3_region,
-)
+from easyun.cloud.aws.workload import get_st_volume, get_ec2_server
+from easyun.cloud.utils import get_disk_type
 from .schemas import (
-    VolumeModel, 
+    VolumeModel,
     VolumeBasic,
     VolumeDetail,
     AddVolumeParm,
@@ -26,7 +22,6 @@ from .schemas import (
     AttachVolParm,
     DetachVolParm,
 )
-from . import get_st_bucket, get_st_volume
 
 
 bp = APIBlueprint('Volume', __name__, url_prefix='/volume')
@@ -36,7 +31,7 @@ bp = APIBlueprint('Volume', __name__, url_prefix='/volume')
 SystemDisk = ['/dev/xvda', '/dev/sda1']
 
 
-@bp.get('/volume')
+@bp.get('')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 @bp.output(VolumeModel(many=True), description='All volume list (detail)')
@@ -59,7 +54,7 @@ def list_volume_detail(parm):
         return resp.err_resp()
 
 
-@bp.get('/volume/list')
+@bp.get('/list')
 @auth_required(auth_token)
 @bp.input(DcNameQuery, location='query')
 @bp.output(VolumeBasic(many=True), description='All volume list (brief)')
@@ -94,7 +89,7 @@ def get_volume_detail(volume_id, parm):
     # dcRegion = set_boto3_region(dcName)
     try:
         vol = get_st_volume(dcName)
-        volumeDetail = vol.get_volume_detail(volume_id)
+        volumeDetail = vol.get_detail(volume_id)
 
         response = Result(detail=volumeDetail, status_code=200)
         return response.make_resp()
@@ -107,83 +102,45 @@ def get_volume_detail(volume_id, parm):
 @bp.post('')
 @auth_required(auth_token)
 @bp.input(AddVolumeParm)
-@bp.output(VolumeDetail)
+@bp.output(VolumeModel)
 def add_volume(parms):
     '''新增磁盘(EBS Volume)'''
-    dcName = parms['dcName']
-    flagTag = gen_dc_tag(dcName)
+    dcName = parms.pop('dcName')
+    svrId = parms.pop('svrId')
+    attachPath = parms.pop('attachPath')
     try:
-        dcRegion = set_boto3_region(dcName)
-        client_ec2 = boto3.client('ec2')
-        resource_ec2 = boto3.resource('ec2')
-        # volume attributes
-        volumeType = parms['volumeType']
-        volumeIops = parms.get('volumeIops')
-        volumeThruput = parms.get('volumeThruput')
-        isMultiAttach = parms.get('isMultiAttach')
-        # attachment related attributes
-        svrId = parms.get("svrId")
-        attachPath = parms.get("attachPath")
-        diskType = 'system' if attachPath in SystemDisk else 'user'
-
         # 如果传入了svrID，则从该server上获取相关属性
         if svrId:
-            thisSvr = resource_ec2.Instance(svrId)
+            thisSvr = get_ec2_server(svrId)
             # 获取 server az属性
-            volumeAz = resource_ec2.Subnet(thisSvr.subnet_id).availability_zone
+            volumeZone = thisSvr.svrObj.placement.get('AvailabilityZone')
             # 以 server tagName 作为卷名前缀
-            tagName = '%s-%s' % (get_server_name(svrId), diskType)
-            nameTag = {"Key": "Name", "Value": tagName}
-        # 否则从传入的body参数上获取
+            diskType = get_disk_type(attachPath) if attachPath else 'disk'
+            tagName = '%s-%s' % (thisSvr.tagName, diskType)
         else:
-            volumeAz = parms.get('azName')
-            nameTag = {"Key": "Name", "Value": parms.get('tagName')}
-        tagSpecifications = [{"ResourceType": "volume", "Tags": [flagTag, nameTag]}]
-
-        # 基于voluem type执行不同的创建参数
-        if volumeType in ['gp3']:
-            newVolume = client_ec2.create_volume(
-                AvailabilityZone=volumeAz,
-                Encrypted=parms['isEncrypted'],
-                Size=parms['volumeSize'],
-                VolumeType=parms['volumeType'],
-                TagSpecifications=tagSpecifications,
-                Iops=volumeIops,
-                Throughput=volumeThruput,
-            )
-        elif volumeType in ['io1', 'io2']:
-            newVolume = client_ec2.create_volume(
-                AvailabilityZone=volumeAz,
-                Encrypted=parms['isEncrypted'],
-                Size=parms['volumeSize'],
-                VolumeType=parms['volumeType'],
-                TagSpecifications=tagSpecifications,
-                Iops=volumeIops,
-                MultiAttachEnabled=isMultiAttach,
-            )
-        else:  # ['gp2','sc1','st1','standard']
-            newVolume = client_ec2.create_volume(
-                AvailabilityZone=volumeAz,
-                Encrypted=parms['isEncrypted'],
-                Size=parms['volumeSize'],
-                VolumeType=parms['volumeType'],
-                TagSpecifications=tagSpecifications,
-            )
+            volumeZone = parms.get('azName')
+            tagName = parms.get('tagName')
+        dc = get_datacenter(dcName)
+        newVolume = dc.workload.create_volume(
+            vol_type=parms['volumeType'],
+            vol_size=parms['volumeSize'],
+            vol_zone=volumeZone,
+            iops=parms['volumeIops'],
+            throughput=parms['volumeThruput'],
+            is_multiattach=parms['isMultiAttach'],
+            is_encrypted=parms['isEncrypted'],
+            tag_name=tagName,
+        )
         volItem = {
-            'volumeId': newVolume['VolumeId'],
-            'volumeState': newVolume['State'],
-            'createTime': newVolume['CreateTime'],
-            'volumeAz': newVolume['AvailabilityZone'],
+            'volumeId': newVolume.id,
+            'volumeState': newVolume.volObj.state,
+            'createTime': newVolume.volObj.create_time,
+            'volumeAz': newVolume.volObj.availability_zone,
         }
-
         # 如果传入了svrID和 attachPath参数，则将volume挂载到server上
         if svrId and attachPath:
-            # wait until the volume is available
-            waiter = client_ec2.get_waiter('volume_available')
-            waiter.wait(VolumeIds=[newVolume['VolumeId']])
-
-            attachResp = thisSvr.attach_volume(
-                Device=parms["attachPath"], VolumeId=newVolume['VolumeId']
+            attachResp = thisSvr.svrObj.attach_volume(
+                Device=[attachPath], VolumeId=newVolume.id
             )
             # 返回增加 volume attachment相关信息
             volAttach = {
@@ -192,16 +149,19 @@ def add_volume(parms):
                 'volumeAttach': [
                     {
                         'attachSvrId': svrId,
-                        'attachSvr': get_server_name(svrId),
+                        'attachSvr': thisSvr.tagName,
                         'attachPath': attachPath,
                         'diskType': diskType,
                     }
                 ],
             }
             volItem.update(volAttach)
+        resp = Result(
+            detail=volItem,
+            status_code=201,
+        )
+        return resp.make_resp()
 
-        response = Result(detail=volItem, status_code=200)
-        return response.make_resp()
     except Exception as e:
         response = Result(message=str(e), status_code=5001, http_status_code=400)
         response.err_resp()

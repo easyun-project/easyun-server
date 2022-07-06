@@ -10,7 +10,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, RegionModel
-from easyun.cloud import get_aws_cloud
+from easyun.cloud import get_cloud
 from easyun.cloud.aws import get_datacenter
 from .schemas import DataCenterBasic, DataCenterModel
 from . import bp
@@ -23,7 +23,7 @@ def list_datacenter_detail():
     '''获取Easyun管理的所有数据中心信息'''
     try:
         thisAccount: Account = Account.query.first()
-        cloud = get_aws_cloud(thisAccount.account_id, thisAccount.aws_type)
+        cloud = get_cloud(thisAccount.account_id, thisAccount.aws_type)
 
         allDcList = cloud.list_all_datacenter()
         resp = Result(detail=allDcList, status_code=200)
@@ -41,7 +41,7 @@ def list_datacenter_brief():
     '''获取Easyun管理的数据中心列表[仅基础字段]'''
     try:
         thisAccount: Account = Account.query.first()
-        cloud = get_aws_cloud(thisAccount.account_id, thisAccount.aws_type)
+        cloud = get_cloud(thisAccount.account_id, thisAccount.aws_type)
 
         dcList = cloud.get_datacenter_list()
         resp = Result(detail=dcList, status_code=200)
@@ -59,7 +59,7 @@ def list_aws_region():
     '''获取可用的Region列表'''
     try:
         thisAccount: Account = Account.query.first()
-        cloud = get_aws_cloud(thisAccount.account_id, thisAccount.aws_type)
+        cloud = get_cloud(thisAccount.account_id, thisAccount.aws_type)
 
         regionList = cloud.get_region_list('ec2')
 

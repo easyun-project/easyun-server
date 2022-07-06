@@ -9,21 +9,20 @@ import os
 import base64
 import hashlib
 import sqlalchemy as sa
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from typing import Dict, List
 from werkzeug.security import check_password_hash, generate_password_hash
 from easyun import db
 from easyun.common.exception.model_errs import KeyPairsRepeat
 
 
-def universal_update_dict(obj, d: Dict):
+def universal_update_dict(obj, dict: Dict):
     """批量更新数据库
-
     Args:
         obj (Model): 模型对象
         dict (dict): 内容字典
     """
-    for key, value in d.items():
+    for key, value in dict.items():
         if key in obj.__dict__:
             setattr(obj, key, value)
 
@@ -114,7 +113,7 @@ class Account(db.Model):
     cloud = db.Column(db.String(10), nullable=False)  # AWS
     account_id = db.Column(
         db.String(20), nullable=False, unique=True
-    )  # e.g. 567820214060
+    )  # e.g. 567820211120
     # e.g easyun-service-control-role
     role = db.Column(db.String(100), nullable=False)
     # Easyun deploy region
@@ -123,11 +122,17 @@ class Account(db.Model):
     active_date = db.Column(db.Date)  # Account Activation date
     remind = db.Column(db.Boolean)
 
-    def update_aws(self, account_id, role, deploy_region, aws_type):
+    def update_dict(self, items: Dict):
+        universal_update_dict(self, items)
+
+    def update_account(self, account_id, role, deploy_region, aws_type):
         self.account_id = account_id
         self.role = role
         self.deploy_region = deploy_region
         self.aws_type = aws_type
+    
+    def disable_remind(self):
+        self.remind = False
 
     def get_role(self):
         return self.role
@@ -136,13 +141,9 @@ class Account(db.Model):
         return self.deploy_region
 
     def get_days(self):
-        now = datetime.now()
-        nowday = datetime.date(now)
-        days = nowday - self.atvdate
-        return days
-
-    def update_dict(self, items: Dict):
-        universal_update_dict(self, items)
+        nowDate = date.today()
+        dateDelta = nowDate - self.active_date
+        return dateDelta.days
 
 
 class Datacenter(db.Model):

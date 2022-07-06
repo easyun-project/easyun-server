@@ -128,14 +128,14 @@ def register_cloud_account(app: APIFlask):
         if existAccount:
             existAccount.update_dict(cloudEvn)
         else:
-            thisAccount = Account(
+            newAccount = Account(
                 cloud='aws',
                 account_id=cloudEvn.get('accountId'),
                 role=cloudEvn.get('role'),
                 deploy_region=cloudEvn.get('deployRegion'),
                 aws_type=cloudEvn.get('regionType'),
             )
-            db.session.add(thisAccount)
+            db.session.add(newAccount)
         db.session.commit()
 
 

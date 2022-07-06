@@ -6,7 +6,7 @@
 """
 
 from apiflask import Schema
-from apiflask.fields import Integer, String, DateTime, Number, Nested, Field
+from apiflask.fields import Integer, String, DateTime, Number
 from apiflask.validators import Length, OneOf, Email
 from easyun.cloud.aws_region import get_region_codes
 
@@ -22,6 +22,13 @@ class UsernameParm(Schema):
 
 class PasswordParm(Schema):
     password = String(required=True, validate=Length(5, 20), example="Passw0rd")
+
+
+class AccountBasic(Schema):
+    accountId = String()
+    accountType = String()
+    role = String()
+    deployRegion = String()
 
 
 class UserModel(Schema):
