@@ -6,7 +6,6 @@
 """
 
 from datetime import date, timedelta
-from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.schemas import DcNameQuery
@@ -20,8 +19,8 @@ from . import bp, logger
 
 
 @bp.get('/summary/basic')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
 def get_vpc_summary(parm):
     '''获取指定的数据中心VPC基础服务统计信息'''
@@ -79,8 +78,8 @@ def get_vpc_summary(parm):
 
 
 @bp.get('/summary/resource')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
 def get_res_summary(parm):
     '''获取指定的数据中心Resource统计信息'''
@@ -111,8 +110,8 @@ def get_res_summary(parm):
 
 
 @bp.get('/summary/cost')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 def get_cost_summary(parm):
     '''获取指定的数据中心成本及用量统计信息'''
     dcName = parm['dc']

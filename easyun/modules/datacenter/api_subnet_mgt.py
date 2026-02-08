@@ -4,7 +4,7 @@
   @LastEditors: aleck
 """
 
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
@@ -16,8 +16,8 @@ bp = APIBlueprint('Subnet', __name__, url_prefix='/subnet')
 
 
 @bp.get('')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SubnetModel(many=True), description='List DataCenter Subnets Resources')
 def list_subnet_detail(parm):
     '''获取 全部subnet子网信息'''
@@ -33,8 +33,8 @@ def list_subnet_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SubnetBasic(many=True), description='List DataCenter Subnets Resources')
 def list_subnet_brief(parm):
     '''获取 全部subnet子网列表[仅基础字段]'''
@@ -50,8 +50,8 @@ def list_subnet_brief(parm):
 
 
 @bp.get('/<subnet_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SubnetDetail, description='List DataCenter Subnets Resources')
 def get_subnet_detail(subnet_id, parm):
     '''获取 指定subnet子网详细信息'''
@@ -67,8 +67,8 @@ def get_subnet_detail(subnet_id, parm):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(DelSubnetParm)
+@bp.auth_required(auth_token)
+@bp.input(DelSubnetParm, arg_name='parms')
 def delete_subnet(parms):
     '''删除 指定子网subnet'''
     dcName = parms['dcName']
@@ -84,8 +84,8 @@ def delete_subnet(parms):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddSubnetParm)
+@bp.auth_required(auth_token)
+@bp.input(AddSubnetParm, arg_name='parms')
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def add_subnet(parms):
     '''新增 子网Subnet'''
@@ -104,7 +104,7 @@ def add_subnet(parms):
 
 
 @bp.put('')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 # @input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
 def mod_subnet(param):

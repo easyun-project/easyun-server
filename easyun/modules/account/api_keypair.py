@@ -3,7 +3,7 @@
 
 import boto3
 from botocore.exceptions import ClientError
-from apiflask import auth_required, Schema, output, input
+from apiflask import Schema
 from flask import send_file
 from io import BytesIO
 from easyun import db
@@ -17,8 +17,8 @@ from . import bp
 
 
 @bp.get('/keypair')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(KeypairOut(many=True))
 # @log.api_error(logger)
 def list_keypair(parm):
@@ -62,8 +62,8 @@ def list_keypair(parm):
 
 
 @bp.get('/keypair/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(KeypairOut(many=True))
 # @log.api_error(logger)
 def list_keypair_brief(parm):
@@ -101,8 +101,8 @@ def list_keypair_brief(parm):
 
 
 @bp.get('/keypair/<key_name>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(KeypairOut)
 # @log.api_error(logger)
 def get_keypair(key_name, parm):
@@ -140,8 +140,8 @@ def get_keypair(key_name, parm):
 
 
 @bp.post('/keypair')
-@auth_required(auth_token)
-@bp.input(KeypairParms)
+@bp.auth_required(auth_token)
+@bp.input(KeypairParms, arg_name='parm')
 @bp.output(KeypairOut)
 # @log.api_error(logger)
 def add_keypair(parm):
@@ -205,8 +205,8 @@ def add_keypair(parm):
 
 
 @bp.delete('/keypair')
-@auth_required(auth_token)
-@bp.input(KeyPairDelIn)
+@bp.auth_required(auth_token)
+@bp.input(KeyPairDelIn, arg_name='parm')
 # @bp.output(SSHKeysOutputSchema(many=True))
 # @log.api_error(logger)
 def del_keypair(parm):
@@ -252,8 +252,8 @@ def del_keypair(parm):
 
 
 @bp.get('/keypair/store/<key_name>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 def get_keystore(key_name, parm):
     '''获取指定的 keypair 文件下载'''
     dcName = parm['dc']

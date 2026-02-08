@@ -4,20 +4,17 @@
 @LastEditors:
 '''
 
+__version__ = '0.5.0'
+
 import os
 import logging
 from apiflask import APIFlask, Schema
 from apiflask.fields import String, Integer, Field
-# from logging.handlers import RotatingFileHandler
 import click
 from flask_sqlalchemy import SQLAlchemy
-# from flask_redis import FlaskRedis
 from config import env_config
 from flask_cors import CORS
 from flask_migrate import Migrate
-# from .common.result import BaseResponseSchema
-from config import Config
-from easyun.libs.celery import FlaskCelery
 from easyun.libs.log import EasyunLogging
 
 
@@ -31,11 +28,7 @@ FLAG = "Easyun"
 db = SQLAlchemy()
 cors = CORS()
 migrate = Migrate()
-celery = FlaskCelery(
-    __name__, broker=Config.CELERY_broker_url, backend=Config.result_backend
-)
 log = EasyunLogging()
-# redis_client = FlaskRedis()
 
 
 class BaseResponseSchema(Schema):
@@ -47,9 +40,9 @@ class BaseResponseSchema(Schema):
 
 def create_app(run_env=None):
     if run_env is None:
-        run_env = os.getenv("FLASK_CONFIG", 'development')
+        run_env = os.getenv("FLASK_CONFIG", 'dev')
 
-    app = APIFlask(__name__, docs_path='/api/docs', redoc_path='/api/redoc')
+    app = APIFlask(__name__, docs_path='/api/docs')
     app.config.from_object(env_config[run_env])
     # schema for generic response
     app.config['BASE_RESPONSE_SCHEMA'] = BaseResponseSchema
@@ -64,18 +57,10 @@ def create_app(run_env=None):
     # 全局日志
     app.logger.setLevel(logging.INFO)
     if run_env != 'test':
-        app.logger.info(f'Easyun API Start [{run_env}]')
+        app.logger.info(f'Easyun API v{__version__} Start [{run_env}]')
 
     # 初始化AWS云环境账号基础信息
     register_cloud_account(app)
-
-    # @app.error_processor
-    # def validation_error_proc(error):
-    #     err_resp = {
-    #         'detail': error.detail.get('json'),
-    #         'message': error.message,
-    #     }
-    #     return err_resp, error.status_code, error.headers
 
     @app.route('/', methods=['GET'])
     def default_page():
@@ -99,9 +84,7 @@ def register_extensions(app: APIFlask):
     """
     db.init_app(app)
     cors.init_app(app)
-    celery.init_app(app)
     log.init_app(app)
-    # redis_client.init_app(app)
 
     with app.app_context():
         # 初始化数据库
@@ -109,7 +92,6 @@ def register_extensions(app: APIFlask):
 
         db.create_all()
         if db.engine.url.drivername == 'sqlite':
-            # dev test
             migrate.init_app(app, db, render_as_batch=True, compare_type=True)
         else:
             migrate.init_app(app, db, compare_type=True)
@@ -130,10 +112,10 @@ def register_cloud_account(app: APIFlask):
         else:
             newAccount = Account(
                 cloud='aws',
-                account_id=cloudEvn.get('accountId'),
+                account_id=cloudEvn.get('account_id'),
                 role=cloudEvn.get('role'),
-                deploy_region=cloudEvn.get('deployRegion'),
-                aws_type=cloudEvn.get('regionType'),
+                deploy_region=cloudEvn.get('deploy_region'),
+                aws_type=cloudEvn.get('region_type'),
             )
             db.session.add(newAccount)
         db.session.commit()
@@ -149,7 +131,7 @@ def register_blueprints(app: APIFlask):
     app.register_blueprint(datacenter.bp)
     app.register_blueprint(mserver.bp)
     app.register_blueprint(mstorage.bp)
-    app.register_blueprint(mdatabase.bp)    
+    app.register_blueprint(mdatabase.bp)
     app.register_blueprint(mloadbalancer.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(account.bp)

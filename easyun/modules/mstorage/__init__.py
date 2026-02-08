@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """The Storage management module."""
 
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
@@ -37,7 +37,7 @@ def get_st_bucket(dcName):
 
 
 @bp.get('/s3-region')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.output(RegionModel(many=True), description='Get Region List')
 def list_s3_region():
     '''获取S3可用的Region列表'''

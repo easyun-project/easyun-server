@@ -1,2 +1,0 @@
-FLASK_APP=easyun
-FLASK_ENV=development

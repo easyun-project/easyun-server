@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.result import Result

@@ -6,15 +6,13 @@
 """
 import boto3
 from easyun.libs.utils import load_json_config
-# from botocore.exceptions import ClientError
 from datetime import datetime
-from easyun import db, celery
+from easyun import db
 from easyun.common.models import Datacenter, Account
 from easyun.cloud.utils import gen_dc_tag
 from . import logger
 
 
-@celery.task(bind=True)
 def create_dc_task(self, parm, user):
     """
     创建 DataCenter 异步任务
@@ -24,6 +22,7 @@ def create_dc_task(self, parm, user):
     # Datacenter basic attribute define
     dcName = parm['dcName']
     dcRgeion = parm['dcRegion']
+    DryRun = False
     # Mandatory tag:Flag for all resource
     flagTag = gen_dc_tag(dcName)
 
@@ -33,7 +32,7 @@ def create_dc_task(self, parm, user):
     # Step 0:  Check the prerequisites for creating new datacenter
     # 移到任务执行前检测
     # when prerequisites check Ok
-    logger.info(self.request.id)
+    logger.info(self.id)
     self.update_state(state='STARTED', meta={'current': 1, 'total': 100})
 
     # Step 1: create easyun vpc, including:
@@ -188,80 +187,83 @@ def create_dc_task(self, parm, user):
         self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2060}
 
-    # step 7: create NAT Gateway with EIP
-    # 7-1: Allocate EIP for NAT Gateway
-    try:
-        nameTag = {"Key": "Name", "Value": dcName.lower() + "-natgw-eip"}
-        eip = resource_ec2.meta.client.allocate_address(
-            Domain='vpc',
-            TagSpecifications=[
-                {'ResourceType': 'elastic-ip', "Tags": [flagTag, nameTag]}
-            ],
-        )
-        stage = f"[StaticIP] {eip['PublicIp']} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 55, 'total': 100, 'stage': stage})
+    # step 7 & 8: create NAT Gateway (optional)
+    if parm.get('createNatGW'):
+        # 7-1: Allocate EIP for NAT Gateway
+        try:
+            nameTag = {"Key": "Name", "Value": dcName.lower() + "-natgw-eip"}
+            eip = resource_ec2.meta.client.allocate_address(
+                Domain='vpc',
+                TagSpecifications=[
+                    {'ResourceType': 'elastic-ip', "Tags": [flagTag, nameTag]}
+                ],
+            )
+            stage = f"[StaticIP] {eip['PublicIp']} created"
+            logger.info(stage)
+            self.update_state(state='PROGRESS', meta={'current': 55, 'total': 100, 'stage': stage})
 
-    except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
-        return {'message': str(ex), 'status_code': 2071}
+        except Exception as ex:
+            self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+            return {'message': str(ex), 'status_code': 2071}
 
-    # 7-2: create nat gateway
-    try:
-        nameTag = {"Key": "Name", "Value": parm['priSubnet1']['gwName']}
-        natgw = resource_ec2.meta.client.create_nat_gateway(
-            DryRun=DryRun,
-            ConnectivityType='public',
-            AllocationId=eip['AllocationId'],
-            SubnetId=pubsbn1.id,
-            TagSpecifications=[
-                {'ResourceType': 'natgateway', "Tags": [flagTag, nameTag]}
-            ],
-        )
-        natgwID = natgw['NatGateway']['NatGatewayId']
-        stage = f"[NatGateway] {natgwID} creating"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 65, 'total': 100, 'stage': stage})
+        # 7-2: create nat gateway
+        try:
+            nameTag = {"Key": "Name", "Value": parm['priSubnet1']['gwName']}
+            natgw = resource_ec2.meta.client.create_nat_gateway(
+                DryRun=DryRun,
+                ConnectivityType='public',
+                AllocationId=eip['AllocationId'],
+                SubnetId=pubsbn1.id,
+                TagSpecifications=[
+                    {'ResourceType': 'natgateway', "Tags": [flagTag, nameTag]}
+                ],
+            )
+            natgwID = natgw['NatGateway']['NatGatewayId']
+            stage = f"[NatGateway] {natgwID} creating"
+            logger.info(stage)
+            self.update_state(state='PROGRESS', meta={'current': 65, 'total': 100, 'stage': stage})
 
-        # waite natgw created
-        waiter = resource_ec2.meta.client.get_waiter('nat_gateway_available')
-        waiter.wait(NatGatewayIds=[natgwID])
+            # waite natgw created
+            waiter = resource_ec2.meta.client.get_waiter('nat_gateway_available')
+            waiter.wait(NatGatewayIds=[natgwID])
 
-        stage = f"[NatGateway] {natgwID} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'stage': stage})
+            stage = f"[NatGateway] {natgwID} created"
+            logger.info(stage)
+            self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'stage': stage})
 
-    except Exception as ex:
-        return {'message': str(ex), 'status_code': 2070}
+        except Exception as ex:
+            return {'message': str(ex), 'status_code': 2070}
 
-    # step 8: create NAT route table and route to natgw
-    # 8-1 create route table for natgw
-    try:
-        nameTag = {"Key": "Name", "Value": parm['priSubnet1']['routeTable']}
-        nrtb = vpc.create_route_table(
-            TagSpecifications=[
-                {'ResourceType': 'route-table', "Tags": [flagTag, nameTag]}
-            ]
-        )
-        # add a route to natgw
-        nrt = nrtb.create_route(
-            DestinationCidrBlock='0.0.0.0/0',
-            # GatewayId= igw.id,
-            NatGatewayId=natgwID
-            #             NetworkInterfaceId='string',
-        )
-        stage = f"[Route] {nrt.destination_cidr_block} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 75, 'total': 100, 'stage': stage})
-        # associate the route table with the pri subnets 1
-        nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn1.id)
-        # associate the route table with the pri subnets 2
-        nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn2.id)
-        self.update_state(state='PROGRESS', meta={'current': 80, 'total': 100})
+        # step 8: create NAT route table and route to natgw
+        # 8-1 create route table for natgw
+        try:
+            nameTag = {"Key": "Name", "Value": parm['priSubnet1']['routeTable']}
+            nrtb = vpc.create_route_table(
+                TagSpecifications=[
+                    {'ResourceType': 'route-table', "Tags": [flagTag, nameTag]}
+                ]
+            )
+            # add a route to natgw
+            nrt = nrtb.create_route(
+                DestinationCidrBlock='0.0.0.0/0',
+                # GatewayId= igw.id,
+                NatGatewayId=natgwID
+                #             NetworkInterfaceId='string',
+            )
+            stage = f"[Route] {nrt.destination_cidr_block} created"
+            logger.info(stage)
+            self.update_state(state='PROGRESS', meta={'current': 75, 'total': 100, 'stage': stage})
+            # associate the route table with the pri subnets 1
+            nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn1.id)
+            # associate the route table with the pri subnets 2
+            nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn2.id)
+            self.update_state(state='PROGRESS', meta={'current': 80, 'total': 100})
 
-    except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
-        return {'message': str(ex), 'status_code': 2080}
+        except Exception as ex:
+            self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+            return {'message': str(ex), 'status_code': 2080}
+    else:
+        self.update_state(state='PROGRESS', meta={'current': 80, 'total': 100, 'stage': 'Skip NatGateway'})
 
     # step 9: update and create Security Groups
     secgroupParms = load_json_config('aws_default_parms').get('secgroup')

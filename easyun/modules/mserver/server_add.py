@@ -4,8 +4,8 @@
 @LastEditors: 
 '''
 import boto3
-from apiflask import Schema, input, output, auth_required
-from apiflask.schemas import EmptySchema 
+from apiflask import Schema
+# EmptySchema removed in APIFlask 3.x, use {} instead 
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun import FLAG
@@ -17,22 +17,20 @@ from . import bp, REGION
 
 class SvrParmIn(Schema):
     # datacenter basic parm
-    dcName = String(required=True, example="Easyun")
+    dcName = String(required=True, metadata={"example": "Easyun"})
     # parameters for server
     tagName = String(                          #云服务器名称
         required=True, 
-        validate=Length(0, 40),
-        example="dev_server_1"
+        validate=Length(0, 40), metadata={"example": "dev_server_1"}
     )
-    svrNumber = Integer(required=True, example=1)            #新建云服务器数量
-    ImageId = String(required=True, example="ami-083654bd07b5da81d")          #ImageId
-    InstanceType = String(required=True,example="t3.nano")            #INSTANCE_TYPE
-    SubnetId = String(required=True,example="subnet-06bfe659f6ecc2eed") 
-    SecurityGroupIds = List(String(required=True ,example= "sg-05df5c8e8396d06e9"))
-    KeyName = String(required=True,example="key_easyun_dev")
+    svrNumber = Integer(required=True, metadata={"example": 1})            #新建云服务器数量
+    ImageId = String(required=True, metadata={"example": "ami-083654bd07b5da81d"})          #ImageId
+    InstanceType = String(required=True, metadata={"example": "t3.nano"})            #INSTANCE_TYPE
+    SubnetId = String(required=True, metadata={"example": "subnet-06bfe659f6ecc2eed"}) 
+    SecurityGroupIds = List(String(required=True , metadata={"example": "sg-05df5c8e8396d06e9"}))
+    KeyName = String(required=True, metadata={"example": "key_easyun_dev"})
     BlockDeviceMappings = List(
-        Dict(
-            example={
+        Dict(metadata={"example": {
                 "DeviceName": "/dev/sda1",
                 "Ebs": {
                     "DeleteOnTermination": True,
@@ -40,15 +38,15 @@ class SvrParmIn(Schema):
                     "VolumeSize": 16,
                     "Encrypted": False
                 }
-            }
+            }}
         ),
         required=True
     )
 
 
 @bp.post('')
-@auth_required(auth_token)
-@input(SvrParmIn)
+@bp.auth_required(auth_token)
+@bp.input(SvrParmIn, arg_name='parm')
 # @output(NewSvrSchema)
 def add_server(parm):
     '''新建云服务器(EC2)'''

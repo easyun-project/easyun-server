@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """The Backup module."""
-from apiflask import APIBlueprint, Schema, input, output, abort
+from apiflask import APIBlueprint, Schema, abort
 from apiflask.fields import Integer, String
 from apiflask.validators import Length, OneOf
 

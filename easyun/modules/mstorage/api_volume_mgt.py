@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -32,8 +32,8 @@ SystemDisk = ['/dev/xvda', '/dev/sda1']
 
 
 @bp.get('')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(VolumeModel(many=True), description='All volume list (detail)')
 def list_volume_detail(parm):
     '''获取数据中心全部块存储信息'''
@@ -55,8 +55,8 @@ def list_volume_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(VolumeBasic(many=True), description='All volume list (brief)')
 def list_volume_brief(parm):
     '''获取数据中心全部块存储列表[仅基础字段]'''
@@ -79,8 +79,8 @@ def list_volume_brief(parm):
 
 
 @bp.get('/<volume_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(VolumeDetail, description='A Volume Detail Info')
 def get_volume_detail(volume_id, parm):
     '''获取指定块存储(Volume)详细信息'''
@@ -100,8 +100,8 @@ def get_volume_detail(volume_id, parm):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddVolumeParm)
+@bp.auth_required(auth_token)
+@bp.input(AddVolumeParm, arg_name='parms')
 @bp.output(VolumeModel)
 def add_volume(parms):
     '''新增磁盘(EBS Volume)'''
@@ -168,8 +168,8 @@ def add_volume(parms):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(DelVolumeParm)
+@bp.auth_required(auth_token)
+@bp.input(DelVolumeParm, arg_name='parm')
 def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
@@ -194,8 +194,8 @@ def del_volume(parm):
 
 
 @bp.put('/attach')
-@bp.input(AttachVolParm)
-@auth_required(auth_token)
+@bp.input(AttachVolParm, arg_name='parm')
+@bp.auth_required(auth_token)
 def attach_server(parm):
     '''块存储关联云服务器(ec2)【ToBeFix】'''
     resource_ec2 = boto3.resource('ec2')
@@ -225,8 +225,8 @@ def attach_server(parm):
 
 
 @bp.put('/detach')
-@bp.input(DetachVolParm)
-@auth_required(auth_token)
+@bp.input(DetachVolParm, arg_name='parm')
+@bp.auth_required(auth_token)
 def detach_server(parm):
     '''块存储分离云服务器(ec2)【ToBeFix】'''
     resource_ec2 = boto3.resource('ec2')

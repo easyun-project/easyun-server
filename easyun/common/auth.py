@@ -9,8 +9,6 @@ from apiflask import (
     HTTPTokenAuth,
     HTTPBasicAuth,
     abort,
-    auth_required,
-    doc,
 )
 from .result import Result
 from .models import User, Account
@@ -54,7 +52,7 @@ def token_auth_error(status):
 
 
 @bp.post('/auth')
-@bp.input(LoginParm)
+@bp.input(LoginParm, arg_name='user')
 @bp.output(UserModel)
 def login_user(user):
     '''用户登录 (auth token)'''
@@ -90,7 +88,7 @@ def login_user(user):
 
 
 @bp.delete('/logout')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 def logout_user():
     '''注销当前用户 (revoke token)'''
     # Headers
@@ -102,8 +100,8 @@ def logout_user():
 
 
 @bp.put('/password')
-@auth_required(auth_token)
-@bp.input(PasswordParm)
+@bp.auth_required(auth_token)
+@bp.input(PasswordParm, arg_name='parm')
 def change_passowrd(parm):
     '''修改当前用户密码'''
     auth_token.current_user.set_password(parm['password'])
@@ -113,10 +111,10 @@ def change_passowrd(parm):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddUserParm)
+@bp.auth_required(auth_token)
+@bp.input(AddUserParm, arg_name='parm')
 @bp.output(UserModel)
-@doc(tag='【仅限测试用】', operation_id='Add New User')
+@bp.doc(tags=['【仅限测试用】'], operation_id='Add New User')
 def add_user(parm):
     '''添加新用户'''
     try:
@@ -149,9 +147,9 @@ def add_user(parm):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(UsernameParm)
-@doc(tag='【仅限测试用】', operation_id='Delete a User')
+@bp.auth_required(auth_token)
+@bp.input(UsernameParm, arg_name='parm')
+@bp.doc(tags=['【仅限测试用】'], operation_id='Delete a User')
 def delete_user(parm):
     '''删除指定用户'''
     try:
@@ -173,9 +171,9 @@ def delete_user(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.output(UserModel(many=True))
-@doc(tag='【仅限测试用】', operation_id='List all Users')
+@bp.doc(tags=['【仅限测试用】'], operation_id='List all Users')
 def list_user():
     '''查询当前用户列表'''
     try:

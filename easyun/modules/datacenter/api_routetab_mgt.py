@@ -4,7 +4,7 @@
   @LastEditors: aleck
 """
 
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
@@ -16,8 +16,8 @@ bp = APIBlueprint('Route', __name__, url_prefix='/routetable')
 
 
 @bp.get('')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(RouteTableModel(many=True), description='List DataCenter RouteTables Resources')
 def list_routetable_detail(parm):
     '''获取 全部RouteTable路由表信息'''
@@ -33,8 +33,8 @@ def list_routetable_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(RouteTableBasic(many=True), description='List DataCenter RouteTables Resources')
 def list_routetable_brief(parm):
     '''获取 全部RouteTable路由表[仅基础字段]'''
@@ -50,8 +50,8 @@ def list_routetable_brief(parm):
 
 
 @bp.get('/<rtb_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(RouteTableDetail, description='List DataCenter RouteTables Resources')
 def get_routetable_detail(rtb_id, parm):
     '''获取 指定RouteTable路由表详细信息【to-be-done】'''
@@ -67,8 +67,8 @@ def get_routetable_detail(rtb_id, parm):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(DelRouteTableParm)
+@bp.auth_required(auth_token)
+@bp.input(DelRouteTableParm, arg_name='parms')
 def delete_routetable(parms):
     '''删除 指定RouteTable路由表【to-be-done】'''
     dcName = parms['dcName']
@@ -84,8 +84,8 @@ def delete_routetable(parms):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddRouteTableParm)
+@bp.auth_required(auth_token)
+@bp.input(AddRouteTableParm, arg_name='parms')
 # @bp.output(DcResultOut, 201, description='add A new Datacenter')
 def add_routetable(parms):
     '''新增 RouteTable路由表【to-be-done】'''

@@ -13,28 +13,28 @@ from apiflask.validators import Length, OneOf
 
 class KeypairParms(Schema):
     dcName = String(
-        required=True, validate=Length(0, 60), example="Easyun"  # Datacenter name
+        required=True, validate=Length(0, 60), metadata={"example": "Easyun"}  # Datacenter name
     )
     keyName = String(
-        required=True, validate=Length(0, 255), example='easyun-dev-key'  # Keypair name
+        required=True, validate=Length(0, 255), metadata={"example": 'easyun-dev-key'}  # Keypair name
     )
     keyType = String(
-        required=False, validate=OneOf('rsa', 'ed25519'), example='rsa'  # Keypair type
+        required=False, validate=OneOf('rsa', 'ed25519'), metadata={"example": 'rsa'}  # Keypair type
     )
 
 
 class KeyPairDelIn(Schema):
     dcName = String(
-        required=True, validate=Length(0, 60), example="Easyun"  # Datacenter name
+        required=True, validate=Length(0, 60), metadata={"example": "Easyun"}  # Datacenter name
     )
     keyName = String(
-        required=True, validate=Length(0, 255), example='easyun-dev-key'  # Keypair name
+        required=True, validate=Length(0, 255), metadata={"example": 'easyun-dev-key'}  # Keypair name
     )
 
 
 class KeypairOut(Schema):
-    keyName = String(required=True, example='easyun-dev-key')  # Keypair name
-    keyType = String(required=False, example='rsa')  # Keypair type
+    keyName = String(required=True, metadata={"example": 'easyun-dev-key'})  # Keypair name
+    keyType = String(required=False, metadata={"example": 'rsa'})  # Keypair type
     keyFile = String()
     keyFingerprint = String()
     keyTags = List(Dict())
@@ -42,8 +42,8 @@ class KeypairOut(Schema):
 
 
 class CreateSSHKeySchema(Schema):
-    region = String(example="us-east-1")
-    key_name = String(example="easyun-dev-key")
+    region = String(metadata={"example": "us-east-1"})
+    key_name = String(metadata={"example": "easyun-dev-key"})
 
 
 class AWSAccountInfo(Schema):
@@ -59,17 +59,17 @@ class SSHKeysOutputSchema(Schema):
 
 
 class FreeTierQuery(Schema):
-    account_id = String(example='567820211120')
+    account_id = String(metadata={"example": '567820211120'})
 
 
 class FreeTierParm(Schema):
-    isReminderOn = Boolean(required=True, example=True)
+    isReminderOn = Boolean(required=True, metadata={"example": True})
     activeDate = Date(required=True)
-    accountId = String(example='567820211120')
+    accountId = String(metadata={"example": '567820211120'})
 
 
 class FreeTierInfo(Schema):
-    isReminderOn = Boolean(example=True)
-    activeDate = Date(example='2022-02-27')
-    remainDays = Integer(example=180)
-    iconColor = String(example="green")
+    isReminderOn = Boolean(metadata={"example": True})
+    activeDate = Date(metadata={"example": '2022-02-27'})
+    remainDays = Integer(metadata={"example": 180})
+    iconColor = String(metadata={"example": "green"})

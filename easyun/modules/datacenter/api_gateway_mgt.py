@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -17,8 +17,8 @@ bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')
 
 
 @bp.get('/internet')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='param')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_all_igw(param):
     '''获取全部Internet网关(igw)信息'''
@@ -34,8 +34,8 @@ def list_all_igw(param):
 
 
 @bp.post('/internet')
-@auth_required(auth_token)
-@bp.input(AddIntGateway)
+@bp.auth_required(auth_token)
+@bp.input(AddIntGateway, arg_name='parm')
 def create_intgateway(parm):
     '''新建 Internet Gateway'''
     dcName = parm['dcName']
@@ -51,8 +51,8 @@ def create_intgateway(parm):
 
 
 @bp.get('/nat')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='param')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_all_natgw(param):
     '''获取全部NAT网关(natgw)信息'''
@@ -68,8 +68,8 @@ def list_all_natgw(param):
 
 
 @bp.post('/nat')
-@auth_required(auth_token)
-@bp.input(AddNatGateway)
+@bp.auth_required(auth_token)
+@bp.input(AddNatGateway, arg_name='parm')
 def create_natgateway(parm):
     '''新建 NAT Gateway'''
     dcName = parm['dcName']
@@ -88,8 +88,8 @@ def create_natgateway(parm):
 
 
 @bp.get('/internet/<igw_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 def get_igw_detail(igw_id, parm):
     '''查看 Internet Gateway 详细信息'''
     dcName = parm['dc']
@@ -104,8 +104,8 @@ def get_igw_detail(igw_id, parm):
 
 
 @bp.get('/nat/<natgw_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 def get_natgw_detail(natgw_id, parm):
     '''查看 Internet Gateway 详细信息'''
     dcName = parm['dc']

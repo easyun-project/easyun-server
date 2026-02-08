@@ -5,7 +5,7 @@
   @auth:    
 """
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Nested
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
@@ -23,23 +23,22 @@ class ImageQuery(Schema):
     # query parameters for instance image 
     dc = String(
         required=True, 
-        validate=Length(0, 30),
-        example='Easyun'
+        validate=Length(0, 30), metadata={"example": 'Easyun'}
     )    
     arch = String(
         required=True, 
         validate=OneOf(['x86_64', 'arm64']),  #Image architecture ( x86_64 | arm64 )
-        example="x86_64"
+        metadata={"example": "x86_64"}
     )
     os = String(
         required=True, 
         validate=OneOf(['windows', 'linux']),  #OS platform ( Windows | Linux )
-        example="linux"
+        metadata={"example": "linux"}
     )
 
 @bp.get('/param/image')
-@auth_required(auth_token)
-@input(ImageQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(ImageQuery, location='query')
 # @output()
 def list_images( parms ):
     '''获取可用的AMI列表(包含 System Disk信息)'''
@@ -104,19 +103,18 @@ class InsFamilyQuery(Schema):
     # query parameters for instance family 
     dc = String(
         required=True, 
-        validate=Length(0, 60),      
-        example='Easyun'
+        validate=Length(0, 60), metadata={"example": 'Easyun'}
     )
     arch = String(
         required=True, 
         validate=OneOf(['x86_64', 'arm64']),  #Processor architecture ( x86_64 | arm64 )
-        example="x86_64"
+        metadata={"example": "x86_64"}
     )
 
 
 @bp.get('/param/insfamily')
-@auth_required(auth_token)
-@input(InsFamilyQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(InsFamilyQuery, location='query', arg_name='parm')
 def get_ins_family(parm):
     '''获取可用的Instance Family列表'''
     insArch = parm.get('arch')
@@ -169,24 +167,22 @@ class InsTypelsQuery(Schema):
     # query parameters for instance family 
     dc = String(
         required=True, 
-        validate=Length(0, 60),      
-        example='Easyun'
+        validate=Length(0, 60), metadata={"example": 'Easyun'}
     )
     arch = String(
         required=True, 
         validate=OneOf(['x86_64', 'arm64']),  #Processor architecture ( x86_64 | arm64 )
-        example="x86_64"
+        metadata={"example": "x86_64"}
     )
     family = String( 
         required=True, 
-        validate=OneOf(InsFamily_All),
-        example="m5"
+        validate=OneOf(InsFamily_All), metadata={"example": "m5"}
     )
 
 
 @bp.get('/param/instype/list')
-@auth_required(auth_token)
-@input(InsTypelsQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(InsTypelsQuery, location='query', arg_name='parm')
 def get_ins_type_list(parm):
     '''获取可用的Instance Types列表(不含成本)'''
     insArch = parm.get('arch')
@@ -249,28 +245,25 @@ class InsTypeQuery(Schema):
     # query parameters for instance type 
     dc = String(
         required=True, 
-        validate=Length(0, 60),      
-        example='Easyun'
+        validate=Length(0, 60), metadata={"example": 'Easyun'}
     )
     arch = String(
         required=True, 
         validate=OneOf(['x86_64', 'arm64']),  #Processor architecture ( x86_64 | arm64 )
-        example="x86_64"
+        metadata={"example": "x86_64"}
     )
     family = String( 
         required=True, 
-        validate=OneOf(InsFamily_All),
-        example="m5"
+        validate=OneOf(InsFamily_All), metadata={"example": "m5"}
     )
     os = String(
         required=False, 
-        validate=OneOf(['amzn2', 'ubuntu', 'debian', 'linux','rhel','sles','windows']),         
-        example="linux"        
+        validate=OneOf(['amzn2', 'ubuntu', 'debian', 'linux','rhel','sles','windows']), metadata={"example": "linux"}        
     )
 
 @bp.get('/param/instype')
-@auth_required(auth_token)
-@input(InsTypeQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(InsTypeQuery, location='query', arg_name='parm')
 def list_ins_types(parm):
     '''获取可用的Instance Types列表(含月度成本)'''
     insArch = parm['arch']

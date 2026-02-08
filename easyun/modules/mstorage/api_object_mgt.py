@@ -5,7 +5,6 @@
   @auth:
 """
 
-from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -16,8 +15,8 @@ from .api_bucket_mgt import bp
 
 
 @bp.get('/<bucket_id>/object')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ObjectContents(many=True))
 def get_object_list(bucket_id, parm):
     '''获取指定存储桶(Bucket)内所有对象文件列表'''
@@ -39,8 +38,8 @@ def get_object_list(bucket_id, parm):
 
 
 @bp.get('/<bucket_id>/<object_key>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='bucket_id')
 def get_object_detail(bucket_id, object_key, parm):
     '''获取指定存储桶(Bucket)内单个对象文件信息【to-be-done】'''
     dcName = parm['dc']

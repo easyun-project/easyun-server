@@ -7,12 +7,11 @@
 
 import boto3
 from botocore.exceptions import ClientError
-from easyun import db, celery
+from easyun import db
 from easyun.common.models import Datacenter
 from . import logger
 
 
-@celery.task(bind=True)
 def delete_dc_task(self, parm, region):
     """
     删除 DataCenter 异步任务
@@ -39,7 +38,7 @@ def delete_dc_task(self, parm, region):
         if vpcState == 'available':
             # Step 0:  Check the prerequisites for deleting a datacenter
             # when prerequisites check Ok
-            logger.info(self.request.id)
+            logger.info(self.id)
             self.update_state(state='STARTED', meta={'current': 1, 'total': 100})
 
             # Step 1: delete NAT Gateway in the VPC

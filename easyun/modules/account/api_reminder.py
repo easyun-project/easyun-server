@@ -5,7 +5,6 @@
   @auth:
 """
 
-from apiflask import auth_required
 from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
@@ -16,8 +15,8 @@ from . import bp
 
 
 @bp.get('/reminder/freetier')
-@auth_required(auth_token)
-@bp.input(FreeTierQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(FreeTierQuery, location='query', arg_name='parm')
 @bp.output(FreeTierInfo, description='Get FreeTier Reminder Info')
 def get_freetier_reminder(parm):
     '''获取云账号的FreeTier 提醒'''
@@ -50,8 +49,8 @@ def get_freetier_reminder(parm):
 
 
 @bp.put('/reminder/freetier')
-@auth_required(auth_token)
-@bp.input(FreeTierParm)
+@bp.auth_required(auth_token)
+@bp.input(FreeTierParm, arg_name='parms')
 # @bp.output(FreeTierInfo, description='Get FreeTier Reminder Info')
 def set_freetier_reminder(parms):
     '''修改云账号的FreeTier 提醒'''
@@ -87,8 +86,8 @@ def set_freetier_reminder(parms):
 
 
 @bp.get('/reminder/credit')
-@auth_required(auth_token)
-@bp.input(FreeTierQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(FreeTierQuery, location='query', arg_name='parm')
 def get_credit_reminder(parm):
     '''获取云账号的Credits提醒【to-be-done】'''
     accountId = parm.get('account_id')
@@ -103,8 +102,8 @@ def get_credit_reminder(parm):
 
 
 @bp.put('/reminder/credit')
-@auth_required(auth_token)
-@bp.input(FreeTierParm, location='query')
+@bp.auth_required(auth_token)
+@bp.input(FreeTierParm, location='query', arg_name='parms')
 def set_credit_reminder(parms):
     '''设置云账号的Credits提醒【to-be-done】'''
     accountId = parms.get('accountId')

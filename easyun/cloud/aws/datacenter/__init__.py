@@ -288,7 +288,7 @@ class DataCenter(object):
                         'eniId': natAddr['NetworkInterfaceId'],
                     },
                 }
-            natList.append(natItem)
+                natList.append(natItem)
             return natList
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

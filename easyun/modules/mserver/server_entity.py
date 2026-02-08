@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import Schema, auth_required
+from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
@@ -59,7 +59,7 @@ class DetailOut(Schema):
 
 
 @bp.get('/detail/<svr_id>')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 # @output(DetailOut, description='Server detail info')
 def get_server_detail(svr_id):
     '''获取指定云服务器详情信息'''
@@ -198,7 +198,7 @@ def get_server_detail(svr_id):
 
 
 @bp.get('/instype/<svr_id>')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 def get_ins_types(svr_id):
     '''获取指定云服务器实例参数 [测试]'''
     # 用于查询受支持的Instance Family列表)
@@ -221,15 +221,15 @@ def get_ins_types(svr_id):
 
 
 class DiskInfoIn(Schema):
-    action = String(required=True, example='attach')
-    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  # 云服务器ID
-    diskPath = String(required=True, example='/dev/sdf')
-    volumeId = String(required=True, example='vol-0fcb3e28f8687f74d')  # volumn ID
+    action = String(required=True, metadata={"example": 'attach'})
+    svrId = String(required=True, metadata={"example": 'i-0d05b7bda069b8c1d'})  # 云服务器ID
+    diskPath = String(required=True, metadata={"example": '/dev/sdf'})
+    volumeId = String(required=True, metadata={"example": 'vol-0fcb3e28f8687f74d'})  # volumn ID
 
 
 @bp.put('/disk')
-@auth_required(auth_token)
-@bp.input(DiskInfoIn)
+@bp.auth_required(auth_token)
+@bp.input(DiskInfoIn, arg_name='param')
 def attach_disk(param):
     '''云服务器关联与解绑磁盘(volume)'''
     try:
@@ -269,8 +269,8 @@ def attach_disk(param):
 
 
 # class DiskDetachInfoIn(Schema):
-#     svrId = String(required=True, example='i-03b15ba2fbe4f3a14')  #云服务器ID
-#     diskPath = String(required=True, example='/dev/sdg')
+#     svrId = String(required=True, metadata={"example": 'i-03b15ba2fbe4f3a14'})  #云服务器ID
+#     diskPath = String(required=True, metadata={"example": '/dev/sdg'})
 
 # @bp.put('/detach/disk')
 # @auth_required(auth_token)
@@ -324,15 +324,15 @@ def attach_disk(param):
 
 class EipAttachInfoIn(Schema):
     action = String(
-        required=True, validate=OneOf(['attach', 'detach']), example='attach'
+        required=True, validate=OneOf(['attach', 'detach']), metadata={"example": 'attach'}
     )
-    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  # 云服务器ID
-    publicIp = String(required=True, example='34.192.222.116')
+    svrId = String(required=True, metadata={"example": 'i-0d05b7bda069b8c1d'})  # 云服务器ID
+    publicIp = String(required=True, metadata={"example": '34.192.222.116'})
 
 
 @bp.put('/eip')
-@auth_required(auth_token)
-@bp.input(EipAttachInfoIn)
+@bp.auth_required(auth_token)
+@bp.input(EipAttachInfoIn, arg_name='param')
 def attach_eip(param):
     '''云服务器关联和解绑静态IP(eip)'''
     try:
@@ -363,7 +363,7 @@ def attach_eip(param):
 
 
 # class EipDetachInfoIn(Schema):
-#     publicIp = String(required=True, example='52.70.138.156')
+#     publicIp = String(required=True, metadata={"example": '52.70.138.156'})
 
 # @bp.put('/detach/eip')
 # @auth_required(auth_token)
@@ -394,15 +394,15 @@ def attach_eip(param):
 
 class SgAttachInfoIn(Schema):
     action = String(
-        required=True, validate=OneOf(['attach', 'detach']), example='attach'
+        required=True, validate=OneOf(['attach', 'detach']), metadata={"example": 'attach'}
     )
-    svrId = String(required=True, example='i-0d05b7bda069b8c1d')  # 云服务器ID
-    secgroupId = String(required=True, example='sg-0bb69bb599b303a1e')
+    svrId = String(required=True, metadata={"example": 'i-0d05b7bda069b8c1d'})  # 云服务器ID
+    secgroupId = String(required=True, metadata={"example": 'sg-0bb69bb599b303a1e'})
 
 
 @bp.put('/secgroup')
-@auth_required(auth_token)
-@bp.input(SgAttachInfoIn)
+@bp.auth_required(auth_token)
+@bp.input(SgAttachInfoIn, arg_name='param')
 def attach_secgroup(param):
     '''云服务器关联和解绑安全组(secgroup)'''
     try:
@@ -463,7 +463,7 @@ def attach_secgroup(param):
 
 
 @bp.get('/tags/<svr_id>')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.output(TagItem(many=True))
 def list_svr_tags(svr_id):
     '''获取指定云服务器的用户Tags'''
@@ -486,8 +486,8 @@ def list_svr_tags(svr_id):
 
 
 @bp.put('/tags/<svr_id>')
-@auth_required(auth_token)
-@bp.input(TagItem)
+@bp.auth_required(auth_token)
+@bp.input(TagItem, arg_name='parm')
 # @bp.input(TagItem(many=True))
 def mod_svr_tags(svr_id, parm):
     '''为指定云服务器新增/修改用户Tags'''
@@ -510,8 +510,8 @@ def mod_svr_tags(svr_id, parm):
 
 
 @bp.delete('/tags/<svr_id>')
-@auth_required(auth_token)
-@bp.input(TagItem)
+@bp.auth_required(auth_token)
+@bp.input(TagItem, arg_name='parm')
 def del_svr_tags(svr_id, parm):
     '''为指定云服务器删除用户Tags'''
     try:

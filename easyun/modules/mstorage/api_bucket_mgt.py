@@ -6,7 +6,7 @@
 """
 
 import boto3
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -21,8 +21,8 @@ from . import api_object_mgt
 
 
 @bp.get('')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(BucketModel(many=True))
 def list_bkt_detail(parm):
     '''获取全部存储桶(Bucket)信息'''
@@ -41,8 +41,8 @@ def list_bkt_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(BucketBasic(many=True))
 def get_bkt_list(parm):
     '''获取全部存储桶(Bucket)列表'''
@@ -61,8 +61,8 @@ def get_bkt_list(parm):
 
 
 @bp.get('/<bucket_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(BucketDetail)
 def get_bkt_detail(bucket_id, parm):
     '''获取指定存储桶(Bucket)的详细信息'''
@@ -84,8 +84,8 @@ def get_bkt_detail(bucket_id, parm):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddBucketParm)
+@bp.auth_required(auth_token)
+@bp.input(AddBucketParm, arg_name='parm')
 @bp.output(BucketBasic)
 def add_bucket_s3(parm):
     '''新增存储桶(S3 Bucket)'''
@@ -111,8 +111,8 @@ def add_bucket_s3(parm):
 
 
 @bp.post('/add')
-@auth_required(auth_token)
-@bp.input(AddBucketParm)
+@bp.auth_required(auth_token)
+@bp.input(AddBucketParm, arg_name='parm')
 def add_bucket_cc(parm):
     '''新增存储桶(S3 Bucket)[Cloudcontrol]'''
     bucketId = parm['bucketId']
@@ -168,8 +168,8 @@ def add_bucket_cc(parm):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(BucketIdParm)
+@bp.auth_required(auth_token)
+@bp.input(BucketIdParm, arg_name='parm')
 def delete_bucket(parm):
     '''删除存储桶(S3 Bucket)'''
     dcName = parm['dcName']
@@ -185,8 +185,8 @@ def delete_bucket(parm):
 
 
 @bp.put('/<bucket_id>/property')
-@auth_required(auth_token)
-@bp.input(BucketPropertyParm)
+@bp.auth_required(auth_token)
+@bp.input(BucketPropertyParm, arg_name='parms')
 def modify_bucket_property(bucket_id, parms):
     '''修改存储桶(S3 Bucket)属性'''
     isEncryption = parms.get('isEncryption')
@@ -208,8 +208,8 @@ def modify_bucket_property(bucket_id, parms):
 
 
 @bp.put('/<bucket_id>/permission')
-@auth_required(auth_token)
-@bp.input(BucketPublicParm)
+@bp.auth_required(auth_token)
+@bp.input(BucketPublicParm, arg_name='parms')
 def modify_bucket_policy(bucket_id, parms):
     '''修改存储桶的Public Block Policy'''
     pubConfig = parms
@@ -226,8 +226,8 @@ def modify_bucket_policy(bucket_id, parms):
 
 
 @bp.get('/vaildate')
-@auth_required(auth_token)
-@bp.input(BucketIdQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(BucketIdQuery, location='query', arg_name='parms')
 def vaildate_bkt(parms):
     '''查询存储桶名称全局范围是否可用【fix-me】'''
     dcName = parms['dc']

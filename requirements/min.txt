@@ -1,10 +1,9 @@
 # Mini needed in Development
-Flask==2.1.0
-APIFlask==0.12.0
-Flask-SQLAlchemy==2.5.1
-Flask-Migrate==3.1.0
-Flask-Cors==3.0.10
-boto3==1.21.31
-python-dotenv==0.19.2
-ec2-metadata==2.9.0
-celery==5.2.5
+Flask==3.1.2
+APIFlask==3.0.2
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.1.0
+Flask-Cors==5.0.1
+boto3>=1.36,<2.0
+python-dotenv==1.1.0
+ec2-metadata==2.17.0

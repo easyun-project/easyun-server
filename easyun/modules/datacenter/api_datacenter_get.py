@@ -5,7 +5,6 @@
   @auth:    aleck
 """
 
-from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
@@ -17,7 +16,7 @@ from . import bp
 
 
 @bp.get('')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.output(DataCenterModel(many=True), description='List all DataCenter')
 def list_datacenter_detail():
     '''获取Easyun管理的所有数据中心信息'''
@@ -35,7 +34,7 @@ def list_datacenter_detail():
 
 
 @bp.get('/list')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.output(DataCenterBasic(many=True), description='Get DataCenter List')
 def list_datacenter_brief():
     '''获取Easyun管理的数据中心列表[仅基础字段]'''
@@ -53,7 +52,7 @@ def list_datacenter_brief():
 
 
 @bp.get('/region')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.output(RegionModel(many=True), description='Get Region List')
 def list_aws_region():
     '''获取可用的Region列表'''
@@ -72,8 +71,8 @@ def list_aws_region():
 
 
 @bp.get('/region/zones')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 def get_available_zones(parm):
     '''获取可用的Region列表'''
     dcName = parm['dc']
@@ -90,8 +89,8 @@ def get_available_zones(parm):
 
 
 @bp.get('/routetable')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='param')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 def list_all_route(param):
     '''获取 全部路由表(route table)信息'''

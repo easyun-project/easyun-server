@@ -3,9 +3,8 @@ from typing import List
 import boto3
 from datetime import date, timedelta
 from flask import send_file
-from flask.views import MethodView
-from apiflask import auth_required, Schema
-from apiflask.decorators import output, input
+from flask.views import MethodView, Schema
+from apiflask import Schema
 from apiflask.validators import Length
 from marshmallow.fields import String
 from easyun.common.result import Result
@@ -75,7 +74,7 @@ class S3_Buckets(MethodView):
             return response.err_resp()
     
     # 添加存储桶
-    @input(newBucket)
+    @bp.input(newBucket, arg_name='data')
     def post(self,data):
         try:
             # 获取桶名

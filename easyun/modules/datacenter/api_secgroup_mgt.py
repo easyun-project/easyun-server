@@ -4,7 +4,7 @@
   @LastEditors: aleck
 """
 
-from apiflask import APIBlueprint, auth_required
+from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -16,8 +16,8 @@ bp = APIBlueprint('SecurityGroup', __name__, url_prefix='/secgroup')
 
 
 @bp.get('')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SecGroupModel(many=True), description='List all SecurityGroups Resources')
 def list_secgroup_detail(parm):
     '''获取数据中心全部SecurityGroup信息'''
@@ -33,8 +33,8 @@ def list_secgroup_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SecGroupBasic(many=True), description='Get SecurityGroup brief list')
 def list_secgroup_brief(parm):
     '''获取 全部SecurityGroup列表[仅基础字段]'''
@@ -50,8 +50,8 @@ def list_secgroup_brief(parm):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddSecGroupParm)
+@bp.auth_required(auth_token)
+@bp.input(AddSecGroupParm, arg_name='parm')
 def create_secgroup(parm):
     '''新建 SecurityGroup'''
     dcName = parm['dcName']
@@ -69,8 +69,8 @@ def create_secgroup(parm):
 
 
 @bp.get('/<sg_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(SecGroupDetail)
 def get_secgroup_detail(sg_id, parm):
     '''查看 SecurityGroup 详细信息'''
@@ -86,8 +86,8 @@ def get_secgroup_detail(sg_id, parm):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(DelSecGroupParm)
+@bp.auth_required(auth_token)
+@bp.input(DelSecGroupParm, arg_name='parm')
 def delete_secgroup(parm):
     '''删除 SecurityGroup'''
     dcName = parm['dcName']
@@ -103,8 +103,8 @@ def delete_secgroup(parm):
 
 
 @bp.put('')
-@auth_required(auth_token)
-@bp.input(AddSecGroupParm)
+@bp.auth_required(auth_token)
+@bp.input(AddSecGroupParm, arg_name='parm')
 def update_secgroup(parm):
     '''修改 SecurityGroup 【未完成】'''
     dcName = parm['dc']

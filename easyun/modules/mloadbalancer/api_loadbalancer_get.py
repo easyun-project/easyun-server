@@ -5,7 +5,6 @@
   @auth:    aleck
 """
 
-from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
@@ -16,8 +15,8 @@ from . import bp
 
 
 @bp.get('')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(ElbModel(many=True), description='All Elb list (detail)')
 def list_elb_detail(parm):
     '''获取数据中心全部负载均衡器信息'''
@@ -35,8 +34,8 @@ def list_elb_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(ElbBasic(many=True), description='All Elb list (brief)')
 def list_elb_brief(parm):
     '''获取数据中心全部负载均衡器列表[仅基础字段]'''
@@ -54,8 +53,8 @@ def list_elb_brief(parm):
 
 
 @bp.get('/<elb_id>')
-@auth_required(auth_token)
-@bp.input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(ElbDetail, description='A Elb Detail Info')
 def get_elb_detail(elb_id, parm):
     '''获取指定负载均衡器(Elb)详细信息【to-be-done】'''

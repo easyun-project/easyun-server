@@ -4,7 +4,7 @@
 @LastEditors: 
 '''
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from easyun.common.auth import auth_token
@@ -30,8 +30,8 @@ class SvrListOut(Schema):
 
 
 @bp.get('')
-@auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(SvrListOut, description='Get Servers list')
 def list_server_detail(parm):
     '''获取数据中心全部云服务器信息'''
@@ -114,8 +114,8 @@ def list_server_detail(parm):
 
 
 @bp.get('/list')
-@auth_required(auth_token)
-@input(DcNameQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(SvrListOut, description='Get Servers list')
 def list_server_brief(parm):
     '''获取数据中心全部云服务器列表[仅基础字段]'''

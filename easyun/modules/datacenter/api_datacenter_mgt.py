@@ -7,14 +7,14 @@
 
 import boto3
 from botocore.exceptions import ClientError
-from apiflask import auth_required
-from celery.result import AsyncResult
+from flask import current_app
 from easyun import log
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter, Account
 from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
+from easyun.libs.task_manager import run_async, get_task
 from easyun.cloud.aws_quota import get_quota_value
 from easyun.cloud.utils import set_boto3_region
 from easyun.cloud.aws.sdk_tagging import ResGroupTagging
@@ -31,8 +31,8 @@ from . import bp, logger
 
 
 @bp.get('/default')
-@auth_required(auth_token)
-@bp.input(DefaultParmQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(DefaultParmQuery, location='query', arg_name='parm')
 @bp.output(DefaultParmsOut, description='Get DataCenter Parameters')
 def get_default_parms(parm):
     '''获取创建云数据中心默认参数'''
@@ -168,8 +168,8 @@ def get_default_parms(parm):
 
 
 @bp.post('')
-@auth_required(auth_token)
-@bp.input(AddDataCenterParm)
+@bp.auth_required(auth_token)
+@bp.input(AddDataCenterParm, arg_name='parm')
 @log.api_error(logger)
 def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
@@ -204,7 +204,7 @@ def create_dc_async(parm):
     # create a datacenter creation async task
     try:
         currUser = auth_token.current_user.username
-        task = create_dc_task.apply_async(args=[parm, currUser])
+        task = run_async(create_dc_task, current_app._get_current_object(), parm, currUser)
         resp = Result(
             task={
                 'taskId': task.id,
@@ -220,8 +220,8 @@ def create_dc_async(parm):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@bp.input(DelDataCenterParm)
+@bp.auth_required(auth_token)
+@bp.input(DelDataCenterParm, arg_name='parm')
 @log.api_error(logger)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
@@ -252,23 +252,25 @@ def delete_dc_async(parm):
                 f'DataCenter NOT Empty, contains {rdsNum} Database(s) resources.'
             )
 
-        # step 4: DC resource empty checking - NAT Gateway
-        if not isForceDel:
-            natgwNum = rgt.sum_resources('ec2:natgateway')
-            if natgwNum > 0:
-                raise ValueError(
-                    f'[Option] {natgwNum} NatGateway(s) associated with the Datacenter.'
-                )
-
     except Exception as ex:
         logger.error(f'[DataCenter] {str(ex)}')
         resp = Result(message=f'[DataCenter] {str(ex)}', status_code=2011)
         resp.err_resp()
 
+    # step 4: DC resource empty checking - NAT Gateway
+    if not isForceDel:
+        natgwNum = rgt.sum_resources('ec2:natgateway')
+        if natgwNum > 0:
+            resp = Result(
+                message=f'{natgwNum} NatGateway(s) associated with the Datacenter. Set isForceDel=true to force delete.',
+                status_code=2012,
+                http_status_code=409,
+            )
+            resp.err_resp()
+
     # create a datacenter delete async task
     try:
-        # currUser = auth_token.current_user.username
-        task = delete_dc_task.apply_async(args=[parm, dcRegion])
+        task = run_async(delete_dc_task, current_app._get_current_object(), parm, dcRegion)
         resp = Result(
             task={
                 'taskId': task.id,
@@ -284,20 +286,19 @@ def delete_dc_async(parm):
 
 
 @bp.get('/task')
-@auth_required(auth_token)
-@bp.input(TaskIdQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(TaskIdQuery, location='query', arg_name='parm')
 @bp.output(DataCenterModel)
 def get_task_result(parm):
     '''获取异步任务执行结果'''
-    # workaround: replace '-' back in query parameter
     task_id = parm['id'].replace('_', '-')
     try:
-        # task = AsyncResult(task_id, app=celery)
-        task: AsyncResult = create_dc_task.AsyncResult(task_id)
-        # task.ready() Return `True` if the task has executed.
+        task = get_task(task_id)
+        if task is None:
+            resp = Result(message='Task not found', status_code=404)
+            return resp.err_resp()
+
         if task.ready():
-            # 等同 task.status == 'SUCCESS':
-            # 从 task.info 获得 task return 数据
             resp = Result(
                 detail=task.info.get('detail'),
                 message=task.info.get('message', 'success'),
@@ -305,26 +306,23 @@ def get_task_result(parm):
                 task={'taskId': task.id, 'status': task.status},
             )
         else:
-            # 通过task.info.get()获得 update_state() meta数据
             resp = Result(
-                # detail = {}, # 任务执行的最终结果
                 message=task.info.get('message', 'success'),
                 status_code=task.info.get('status_code', 200),
                 task={
                     'taskId': task.id,
                     'status': task.status,
-                    'current': task.info.get('current', 0),  # 当前循环进度
-                    'total': task.info.get('total', 100),  # 总循环进度
-                    'description': task.info.get('stage', ''),  # 阶段描述
+                    'current': task.info.get('current', 0),
+                    'total': task.info.get('total', 100),
+                    'description': task.info.get('stage', ''),
                 },
             )
         return resp.make_resp()
 
-    # 如果Celery查询操作报错
     except Exception as ex:
         resp = Result(
             message=str(ex),
-            status_code=task.info.get('status_code'),
-            task={'taskId': task.id, 'status': task.status},
+            status_code=500,
+            task={'taskId': task_id, 'status': 'ERROR'},
         )
         resp.err_resp()

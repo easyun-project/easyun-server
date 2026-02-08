@@ -4,7 +4,7 @@
 @LastEditors: 
 '''
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Boolean
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
@@ -15,9 +15,9 @@ from . import bp, REGION
 
 
 @bp.get('/name/<svr_id>')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 # @input()
-@output(SvrTagNameItem)
+@bp.output(SvrTagNameItem)
 def get_svr_name(svr_id):
     '''查询指定云服务器的名称'''
     try:
@@ -39,8 +39,8 @@ def get_svr_name(svr_id):
 
 @bp.put('/name')
 # @auth_required(auth_token)
-@input(ModSvrNameParm)
-@output(SvrTagNameItem(many=True))
+@bp.input(ModSvrNameParm, arg_name='parms')
+@bp.output(SvrTagNameItem(many=True))
 def update_svr_name(parms):
     '''修改指定云服务器名称'''
     try:
@@ -72,7 +72,7 @@ def update_svr_name(parms):
 ModSvrNameParm
 @bp.put('/protection')
 # @auth_required(auth_token)
-@input(ModSvrProtectionParm)
+@bp.input(ModSvrProtectionParm, arg_name='parms')
 # @output(SvrTagNameItem(many=True))
 def update_svr_protection(parms):
     '''修改指定云服务器protection'''
@@ -127,18 +127,16 @@ def update_svr_protection(parms):
 class ConfigIn(Schema):
     svr_ids = List(         #云服务器ID
         String(),
-        required=True,
-        example=['i-01b565d505d5e0559']
+        required=True, metadata={"example": ['i-01b565d505d5e0559']}
     )
     ins_type = String(
-        required=True,
-        example='t3.small'
+        required=True, metadata={"example": 't3.small'}
     )
 
 
 @bp.post('/config')
-@auth_required(auth_token)
-@input(ConfigIn)
+@bp.auth_required(auth_token)
+@bp.input(ConfigIn, arg_name='new')
 # @output(UpdateOut)
 def update_config(new):
     '''修改指定云服务器实例配置'''

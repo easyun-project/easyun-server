@@ -4,9 +4,9 @@
 @LastEditors: 
 '''
 import boto3
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
-from apiflask.schemas import EmptySchema
+# EmptySchema removed in APIFlask 3.x, use {} instead
 from apiflask.validators import Length, OneOf
 from easyun import FLAG
 from easyun.common.auth import auth_token
@@ -29,8 +29,8 @@ class OperateIn(Schema):
 
 
 @bp.post('/action')
-@auth_required(auth_token)
-@input(OperateIn)
+@bp.auth_required(auth_token)
+@bp.input(OperateIn, arg_name='operate')
 # @output(SvrOperateOut, description='Operation finished !')
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
@@ -81,8 +81,8 @@ def operate_svr(operate):
 
 
 @bp.delete('')
-@auth_required(auth_token)
-@input(SvrIdList)
+@bp.auth_required(auth_token)
+@bp.input(SvrIdList, arg_name='parm')
 # @output(SvrOperateOut, description='Operation finished !')
 def delete_svr(parm):
     '''删除(Terminate)云服务器'''

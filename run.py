@@ -4,12 +4,12 @@
 @LastEditors:
 '''
 import os
-from easyun import create_app, celery
+from easyun import create_app
 
 
-run_env = os.environ.get('FLASK_ENV')
+run_env = os.environ.get('FLASK_CONFIG')
 app = create_app(run_env)
 
 if __name__ == '__main__':
     app.debug = True
-    app.run(host='0.0.0.0', port=6660)
+    app.run(host=app.config['HOST'], port=app.config['PORT'])

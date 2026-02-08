@@ -13,7 +13,7 @@ from easyun.cloud.aws import SecurityGroup, Subnet, StaticIP
 ver = '/api/v1'
 
 bp = APIBlueprint('数据中心管理', __name__, url_prefix=ver + '/datacenter')
-logger = log.create_logger('dcm')
+logger = log.create_logger('mdc')
 
 # 单数据中心模式下，名称默认：Easyun
 # DC_NAME = "Easyun"

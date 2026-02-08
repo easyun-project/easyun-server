@@ -4,7 +4,7 @@
   @LastEditors: aleck
 """
 
-from apiflask import Schema, input, output, auth_required
+from apiflask import Schema
 from datetime import datetime
 from apiflask.fields import String, List,Nested, Boolean, Date
 from easyun.common.result import Result
@@ -35,8 +35,8 @@ class AccountInfoOut(Schema):
 
 
 @bp.get("/aws_info")
-@auth_required(auth_token)
-@output(awsInfo)
+@bp.auth_required(auth_token)
+@bp.output(awsInfo)
 def aws_info():
     '''获取AWS 基本信息[withdraw]'''
     try:
@@ -56,8 +56,8 @@ def aws_info():
 
 
 @bp.get("/free_tier")
-@auth_required(auth_token)
-@output(freeTier)
+@bp.auth_required(auth_token)
+@bp.output(freeTier)
 def get_freetier():
     '''获取free tier信息[mock]'''
     now = datetime.now()
@@ -73,8 +73,8 @@ def get_freetier():
 
 
 @bp.post("/free_tier")
-@auth_required(auth_token)
-@input(freeTier)
+@bp.auth_required(auth_token)
+@bp.input(freeTier, arg_name='data')
 def set_freetier(data):
     '''更新free tier设置[mock]'''
     now = datetime.now()
@@ -94,7 +94,7 @@ class KeypairIn(Schema):
 
 
 @bp.get("/list_key")
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 def list_key():
     '''获取Keypair列表[mock]'''
     keypairList = [
@@ -118,8 +118,8 @@ def list_key():
     return resp.make_resp()
 
 @bp.post("/add_key")
-@auth_required(auth_token)
-@input(KeypairIn)
+@bp.auth_required(auth_token)
+@bp.input(KeypairIn, arg_name='data')
 def add_key(data):
     '''添加Keypair[mock]'''
     resp = Result(
@@ -132,8 +132,8 @@ def add_key(data):
     
 
 @bp.delete("/del_key")
-@auth_required(auth_token)
-@input(KeypairIn)
+@bp.auth_required(auth_token)
+@bp.input(KeypairIn, arg_name='data')
 def del_key(data):
     '''删除Keypair[mock]'''
     resp = Result(

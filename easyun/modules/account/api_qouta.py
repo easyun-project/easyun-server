@@ -5,7 +5,6 @@
   @auth:    aleck
 """
 
-from apiflask import auth_required
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.schemas import RegionCodeQuery
@@ -16,8 +15,8 @@ from . import bp
 
 
 @bp.get('/quota')
-@auth_required(auth_token)
-@bp.input(RegionCodeQuery, location='query')
+@bp.auth_required(auth_token)
+@bp.input(RegionCodeQuery, location='query', arg_name='parm')
 def get_region_quota(parm):
     '''获取指定region的资源配额'''
     thisRegion = parm['region']
@@ -58,7 +57,7 @@ def get_region_quota(parm):
 
 
 @bp.get('/quota/all')
-@auth_required(auth_token)
+@bp.auth_required(auth_token)
 def get_account_quota():
     '''获取云账号下资源配额【to-be-done】'''
     pass

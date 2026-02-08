@@ -1,7 +1,7 @@
 import boto3
 import json
-from apiflask import Schema, input, output, auth_required
-from apiflask.schemas import EmptySchema 
+from apiflask import Schema
+# EmptySchema removed in APIFlask 3.x, use {} instead 
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
 from flask import jsonify
