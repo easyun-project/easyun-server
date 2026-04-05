@@ -3419,6 +3419,29 @@
             },
             "description": "Successful response"
           },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Validation error"
+          },
           "401": {
             "content": {
               "application/json": {
@@ -3446,7 +3469,16 @@
         "tags": [
           "\u6570\u636e\u4e2d\u5fc3\u7ba1\u7406.Subnet"
         ],
-        "summary": "\u4fee\u6539\u6570\u636e\u4e2d\u5fc3Subnet \u3010to-be-done\u3011",
+        "summary": "\u4fee\u6539\u6570\u636e\u4e2d\u5fc3 Subnet \u5c5e\u6027",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModSubnetParm"
+              }
+            }
+          }
+        },
         "security": [
           {
             "BearerAuth": []
@@ -10821,7 +10853,7 @@
         "tags": [
           "\u5b58\u50a8\u7ba1\u7406.Bucket"
         ],
-        "summary": "\u83b7\u53d6\u6307\u5b9a\u5b58\u50a8\u6876(Bucket)\u5185\u5355\u4e2a\u5bf9\u8c61\u6587\u4ef6\u4fe1\u606f\u3010to-be-done\u3011",
+        "summary": "\u83b7\u53d6\u6307\u5b9a\u5b58\u50a8\u6876(Bucket)\u5185\u5355\u4e2a\u5bf9\u8c61\u6587\u4ef6\u4fe1\u606f",
         "security": [
           {
             "BearerAuth": []
@@ -12440,6 +12472,28 @@
           "azName",
           "cidrBlock",
           "dcName"
+        ],
+        "additionalProperties": false
+      },
+      "ModSubnetParm": {
+        "type": "object",
+        "properties": {
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
+          },
+          "subnetId": {
+            "type": "string",
+            "example": "subnet-06bfe659f6ecc2eed"
+          },
+          "isMapPublicIp": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "dcName",
+          "subnetId"
         ],
         "additionalProperties": false
       },

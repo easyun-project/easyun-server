@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.cloud.aws import get_datacenter, get_subnet
-from .schemas import DcMsgOut, AddSubnetParm, DelSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
+from .schemas import DcMsgOut, AddSubnetParm, DelSubnetParm, ModSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
 
 
 bp = APIBlueprint('Subnet', __name__, url_prefix='/subnet')
@@ -107,11 +107,26 @@ def add_subnet(parms):
 
 @bp.put('')
 @bp.auth_required(auth_token)
-# @input(DataCenterSubnetInsert)
-# @output(DcResultOut, 201, description='add A new Datacenter')
+@bp.input(ModSubnetParm, arg_name='parm')
 @bp.output(SubnetModel)
-def mod_subnet(param):
-    '''修改数据中心Subnet 【to-be-done】'''
-
-    resp = Result(detail={"subnetId", 'subnet-123456'}, status_code=200)
-    return resp.make_resp()
+def mod_subnet(parm):
+    '''修改数据中心 Subnet 属性'''
+    dcName = parm['dcName']
+    subnetId = parm['subnetId']
+    try:
+        subnet = get_subnet(subnetId, dcName)
+        client = subnet._client
+        isMapPublicIp = parm.get('isMapPublicIp')
+        if isMapPublicIp is not None:
+            client.modify_subnet_attribute(
+                SubnetId=subnetId,
+                MapPublicIpOnLaunch={'Value': isMapPublicIp},
+            )
+        resp = Result(detail={
+            'subnetId': subnetId,
+            'isMapPublicIp': isMapPublicIp,
+        }, status_code=200)
+        return resp.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=2051)
+        resp.err_resp()

@@ -375,42 +375,25 @@ class StorageBucket(object):
 class StorageObject(object):
     def __init__(self, object_key, bucket_id):
         self.key = object_key
+        self.bucket_id = bucket_id
         try:
             self.bucket = StorageBucket(bucket_id)
-            self.objectObj = self.bucket.bucketObj.Object(self.d)
+            self.objectObj = self.bucket.bucketObj.Object(self.key)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#object
-    def get_attributes(self):
-        '''Get object's available attributes'''
-        object = self.objectObj
+    def get_detail(self):
+        '''Get object metadata'''
+        obj = self.objectObj
         try:
-            return object
-        except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
-
-    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.head_object
-    def get_metadata(self):
-        '''Retrieves metadata from an object without returning the object itself.'''
-        client = self.bucket._client
-        try:
-            objectMeta = client.head_object(
-                Bucket=self.bucket.id,
-                Key=self.key,
-                IfMatch='string',
-                IfModifiedSince=datetime(2015, 1, 1),
-                IfNoneMatch='string',
-                IfUnmodifiedSince=datetime(2015, 1, 1),
-                Range='string',
-                VersionId='string',
-                SSECustomerAlgorithm='string',
-                SSECustomerKey='string',
-                RequestPayer='requester',
-                PartNumber=123,
-                ExpectedBucketOwner='string',
-                ChecksumMode='ENABLED'
-            )
-            return objectMeta
+            obj.load()
+            return {
+                'key': self.key,
+                'size': obj.content_length,
+                'contentType': obj.content_type,
+                'modifiedTime': obj.last_modified.isoformat() if obj.last_modified else None,
+                'storageClass': obj.storage_class,
+                'eTag': obj.e_tag.strip('"') if obj.e_tag else None,
+            }
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

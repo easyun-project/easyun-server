@@ -236,6 +236,12 @@ class DelSubnetParm(Schema):
     subnetId = String(required=True, metadata={"example": 'subnet-06bfe659f6ecc2eed'})
 
 
+class ModSubnetParm(Schema):
+    dcName = String(required=True, metadata={"example": "Easyun"})
+    subnetId = String(required=True, metadata={"example": 'subnet-06bfe659f6ecc2eed'})
+    isMapPublicIp = Boolean(metadata={"example": False})
+
+
 class AddSubnetParm(Schema):
     dcName = String(required=True, metadata={"example": "Easyun"})
     cidrBlock = String(required=True, metadata={"example": '10.10.1.0/24'})
