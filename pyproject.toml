@@ -8,7 +8,7 @@ dependencies = [
     "APIFlask>=3.1,<4.0",
     "Flask-SQLAlchemy>=3.1,<4.0",
     "Flask-Migrate>=4.1,<5.0",
-    "Flask-Cors>=5.0,<6.0",
+    "Flask-Cors>=6.0,<7.0",
     "boto3>=1.36,<2.0",
     "python-dotenv>=1.1,<2.0",
 ]

@@ -11361,7 +11361,7 @@
             "type": "string",
             "minLength": 5,
             "maxLength": 30,
-            "example": "Passw0rd"
+            "example": "easyun"
           }
         },
         "required": [
@@ -11888,7 +11888,7 @@
             "type": "string",
             "minLength": 5,
             "maxLength": 20,
-            "example": "Passw0rd"
+            "example": "easyun"
           }
         },
         "required": [
