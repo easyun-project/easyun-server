@@ -1,4 +1,4 @@
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 import json
 from apiflask import Schema
 # EmptySchema removed in APIFlask 3.x, use {} instead 

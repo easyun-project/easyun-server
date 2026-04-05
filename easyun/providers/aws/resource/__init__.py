@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  Datacenter Resources SDK Module
-  @desc:    AWS SDK Boto3 Resources Client and Resource Wrapper.
+  @module:  Cloud Resource SDK Module
+  @desc:    AWS SDK Boto3 Resource Client and Resource Wrapper.
   @auth:
 """
 
 from botocore.exceptions import ClientError
-from .sdk_server import EC2Server
-from .sdk_volume import StorageVolume
-from .sdk_bucket import StorageBucket, query_bucket_flag
-from .sdk_database import DBInstance
-from .sdk_loadbalancer import LoadBalancer
+from .compute.sdk_server import EC2Server
+from .storage.sdk_volume import StorageVolume
+from .storage.sdk_bucket import StorageBucket, query_bucket_flag
+from .database.sdk_database import DBInstance
+from .network.sdk_loadbalancer import LoadBalancer
 from ..session import get_easyun_session
-from easyun.cloud.aws.utils import get_server_name
+from easyun.providers.aws.utils import get_server_name
 
 
 def get_ec2_server(svr_id, dc_name):
@@ -35,7 +35,7 @@ def get_load_balancer(elb_id, dc_name):
     return LoadBalancer(elb_id, dc_name)
 
 
-class Workload(object):
+class Resource(object):
     def __init__(self, dc_name):
         self._session = get_easyun_session(dc_name)
         self.dcName = dc_name

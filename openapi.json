@@ -308,7 +308,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SvrDetailItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SvrDetailItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -391,7 +394,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/NewSvrItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NewSvrItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -483,7 +489,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SvrStateChangeItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SvrStateChangeItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -588,7 +597,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/DbiDetailItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DbiDetailItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -739,7 +751,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/UserModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -802,7 +817,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/DataCenterModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DataCenterModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -1215,7 +1233,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SvrBriefItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SvrBriefItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -1300,7 +1321,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SvrTagNameItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SvrTagNameItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -1471,7 +1495,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/ElbDetailItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ElbDetailItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -1650,7 +1677,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SvrStateChangeItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SvrStateChangeItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -1849,7 +1879,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/DbiBriefItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DbiBriefItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -1980,7 +2013,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/QuotaItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/QuotaItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -2076,7 +2112,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/BucketModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BucketModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -2356,7 +2395,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/VolumeModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VolumeModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -2625,7 +2667,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/DataCenterBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DataCenterBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -2889,7 +2934,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/KeypairOut"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/KeypairOut"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -3158,7 +3206,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/RegionModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RegionModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -3231,7 +3282,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SubnetModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubnetModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -3658,7 +3712,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/RegionModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RegionModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -3858,7 +3915,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/ElbBriefItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ElbBriefItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -4185,7 +4245,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/ImageItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImageItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -4375,7 +4438,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SecGroupModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SecGroupModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -4747,7 +4813,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/StaticIPModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StaticIPModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5027,7 +5096,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/BucketBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BucketBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5123,7 +5195,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/VolumeBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VolumeBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5427,7 +5502,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/InsTypeItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InsTypeItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5521,7 +5599,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/TagItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TagItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5613,7 +5694,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/TagItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TagItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5737,7 +5821,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/TagItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TagItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5865,7 +5952,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/KeypairOut"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/KeypairOut"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -5961,7 +6051,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/RouteTableModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RouteTableModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -6556,7 +6649,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SubnetBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubnetBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -6652,7 +6748,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/GatewayModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GatewayModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -6854,7 +6953,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/InsFamilyItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InsFamilyItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -7738,7 +7840,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/SecGroupBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SecGroupBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -7834,7 +7939,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/StaticIPBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StaticIPBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -8122,7 +8230,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/InsTypeBriefItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InsTypeBriefItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -8405,7 +8516,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/RouteTableBasic"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RouteTableBasic"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -8755,7 +8869,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/ResourceSumItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ResourceSumItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -9074,7 +9191,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/GatewayModel"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GatewayModel"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -9516,7 +9636,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/AzSummaryItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AzSummaryItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -9874,7 +9997,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/InventoryTypeItem"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InventoryTypeItem"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -10253,7 +10379,10 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/ObjectContents"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ObjectContents"
+                      }
                     },
                     "status_code": {
                       "type": "integer"
@@ -10862,7 +10991,7 @@
       }
     }
   },
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "components": {
     "schemas": {
       "UserModel": {
@@ -11412,11 +11541,7 @@
             "example": {
               "cidrBlock": "10.15.0.0/16"
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VpcParm"
-              }
-            ]
+            "$ref": "#/components/schemas/VpcParm"
           },
           "pubSubnet1": {
             "example": {
@@ -11426,11 +11551,7 @@
               "gwName": "easyun-igw",
               "routeTable": "easyun-rtb-igw"
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SubnetParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SubnetParm"
           },
           "pubSubnet2": {
             "example": {
@@ -11440,11 +11561,7 @@
               "gwName": "easyun-igw",
               "routeTable": "easyun-rtb-igw"
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SubnetParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SubnetParm"
           },
           "priSubnet1": {
             "example": {
@@ -11454,11 +11571,7 @@
               "gwName": "easyun-natgw",
               "routeTable": "easyun-rtb-nat"
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SubnetParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SubnetParm"
           },
           "priSubnet2": {
             "example": {
@@ -11468,11 +11581,7 @@
               "gwName": "easyun-natgw",
               "routeTable": "easyun-rtb-nat"
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SubnetParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SubnetParm"
           },
           "securityGroup0": {
             "example": {
@@ -11481,11 +11590,7 @@
               "enableSSH": true,
               "enableRDP": false
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SecGroupParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SecGroupParm"
           },
           "securityGroup1": {
             "example": {
@@ -11494,11 +11599,7 @@
               "enableSSH": true,
               "enableRDP": false
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SecGroupParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SecGroupParm"
           },
           "securityGroup2": {
             "example": {
@@ -11507,11 +11608,7 @@
               "enableSSH": true,
               "enableRDP": false
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SecGroupParm"
-              }
-            ]
+            "$ref": "#/components/schemas/SecGroupParm"
           },
           "createNatGW": {
             "type": "boolean",
@@ -11902,11 +11999,7 @@
               "status": "private",
               "description": "All objects are private"
             },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/BucketAccess"
-              }
-            ]
+            "$ref": "#/components/schemas/BucketAccess"
           }
         },
         "required": [
@@ -13950,9 +14043,11 @@
             "items": {}
           },
           "msg": {
-            "type": "string",
-            "default": null,
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
           }
         },
         "additionalProperties": false

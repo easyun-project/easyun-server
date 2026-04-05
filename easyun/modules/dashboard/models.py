@@ -5,7 +5,7 @@
   @author:  xdq
 """
 
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 
 
 class Boto3_Cloudwatch:

@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from easyun.cloud.aws.session import get_easyun_resource
+from easyun.providers.aws.session import get_easyun_resource
 from apiflask.fields import String, List, Nested, Boolean, Date
 from apiflask.validators import Length, OneOf
 from easyun.common.result import Result

@@ -5,11 +5,39 @@
   @auth:    aleck
 """
 
+import boto3
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
+from .datacenter import DataCenter, Subnet, RouteTable, InternetGateway, NatGateway, SecurityGroup, StaticIP
+from .utils import get_imds_region
 from .session import get_easyun_session
 from .region import query_country_code, query_region_name
-from .datacenter import DataCenter, Subnet, RouteTable, InternetGateway, NatGateway, SecurityGroup, StaticIP
+
+
+def get_aws_deploy_env():
+    """获取 AWS 云环境基础信息"""
+    try:
+        client_sts = boto3.client('sts')
+        accountId = client_sts.get_caller_identity().get('Account')
+        role = client_sts.get_caller_identity().get('Arn').split('/')[1]
+    except Exception:
+        accountId = 'unknow'
+        role = 'undefined'
+
+    try:
+        deployRegion = get_imds_region()
+    except Exception:
+        deployRegion = boto3.session.Session().region_name
+
+    GCR_REGION_LIST = ['cn-north-1', 'cn-northwest-1']
+    regionType = 'GCR' if deployRegion in GCR_REGION_LIST else 'Global'
+
+    return {
+        'account_id': accountId,
+        'role': role,
+        'deploy_region': deployRegion,
+        'region_type': regionType,
+    }
 
 
 def get_datacenter(dc_name):

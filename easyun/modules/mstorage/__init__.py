@@ -6,7 +6,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
 from easyun.common.schemas import RegionModel
-from easyun.cloud import get_cloud
+from easyun.providers import get_cloud
 
 
 # define api version

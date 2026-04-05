@@ -9,7 +9,7 @@ from easyun import db
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.models import Account
-from easyun.cloud.account import get_cloud_account
+from easyun.common.account import get_cloud_account
 from .schema import FreeTierQuery, FreeTierInfo, FreeTierParm
 from . import bp
 

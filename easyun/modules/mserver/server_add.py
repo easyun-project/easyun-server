@@ -3,7 +3,7 @@
 @Description: Server Management - Add new server
 @LastEditors: 
 '''
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 # EmptySchema removed in APIFlask 3.x, use {} instead 
 from apiflask.fields import Integer, String, List, Dict

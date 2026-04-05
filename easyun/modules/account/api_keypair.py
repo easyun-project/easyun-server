@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """dashboard model views."""
 
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from botocore.exceptions import ClientError
 from apiflask import Schema
 from flask import send_file
@@ -11,7 +11,7 @@ from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, KeyStore
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws.utils import set_boto3_region, gen_dc_tag, query_dc_region
+from easyun.common.dc_utils import set_boto3_region, gen_dc_tag, query_dc_region
 from .schema import KeypairParms, KeypairOut, KeyPairDelIn
 from . import bp
 

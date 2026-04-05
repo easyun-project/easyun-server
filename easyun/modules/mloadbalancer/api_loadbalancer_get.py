@@ -8,8 +8,8 @@
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws import get_datacenter
-from easyun.cloud.aws.workload import get_load_balancer
+from easyun.providers.aws import get_datacenter
+from easyun.providers.aws.resource import get_load_balancer
 from .schemas import ElbDetailItem, ElbBriefItem, ElbDetail
 from . import bp
 

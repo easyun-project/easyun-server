@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from botocore.exceptions import ClientError
 from flask import current_app
 from easyun import log
@@ -15,9 +15,9 @@ from easyun.common.models import Datacenter, Account
 from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.libs.task_manager import run_async, get_task
-from easyun.cloud.aws.quota import get_quota_value
-from easyun.cloud.aws.utils import set_boto3_region
-from easyun.cloud.aws.sdk_tagging import ResGroupTagging
+from easyun.providers.aws.management.quota import get_quota_value
+from easyun.common.dc_utils import set_boto3_region
+from easyun.providers.aws.management.sdk_tagging import ResGroupTagging
 from .schemas import (
     DefaultParmQuery,
     DefaultParmsOut,

@@ -8,7 +8,7 @@
 from apiflask import Schema
 from apiflask.fields import Integer, String, DateTime
 from apiflask.validators import Length, OneOf, Email
-from easyun.cloud.aws.region import get_region_codes
+from easyun.providers.aws.region import get_region_codes
 
 
 class LoginParm(Schema):

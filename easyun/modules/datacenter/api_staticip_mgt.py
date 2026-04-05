@@ -8,7 +8,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, DcNameParm
-from easyun.cloud.aws import get_staticip, get_datacenter
+from easyun.providers.aws import get_staticip, get_datacenter
 from .schemas import DcMsgOut, DelEipParm, StaticIPBasic, StaticIPModel, StaticIPDetail
 
 

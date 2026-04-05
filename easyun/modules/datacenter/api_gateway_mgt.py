@@ -10,7 +10,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from .schemas import AddIntGateway, AddNatGateway, GatewayModel, DcMsgOut
-from easyun.cloud.aws import get_datacenter, get_int_gateway, get_nat_gateway
+from easyun.providers.aws import get_datacenter, get_int_gateway, get_nat_gateway
 
 
 bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')

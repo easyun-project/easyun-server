@@ -8,7 +8,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.cloud.aws import get_datacenter, get_subnet
+from easyun.providers.aws import get_datacenter, get_subnet
 from .schemas import DcMsgOut, AddSubnetParm, DelSubnetParm, ModSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
 
 

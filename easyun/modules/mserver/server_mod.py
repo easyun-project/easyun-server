@@ -3,12 +3,13 @@
 @Description: Server Management - Modify: Name, Instance type, 
 @LastEditors: 
 '''
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Boolean
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.cloud.aws.utils import query_dc_region, get_server_name
+from easyun.common.dc_utils import query_dc_region
+from easyun.providers.aws.utils import get_server_name
 from .schemas import ModSvrNameParm, SvrTagNameItem, ModSvrProtectionParm, SvrProtectionOut, MsgOut
 from . import bp, REGION
 

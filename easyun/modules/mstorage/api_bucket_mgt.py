@@ -5,14 +5,14 @@
   @auth:
 """
 
-from easyun.cloud.aws.session import get_easyun_client
+from easyun.providers.aws.session import get_easyun_client
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws import get_datacenter
-from easyun.cloud.aws.workload import get_st_bucket
-from easyun.cloud.aws.workload.sdk_bucket import vaildate_bucket_exist
+from easyun.providers.aws import get_datacenter
+from easyun.providers.aws.resource import get_st_bucket
+from easyun.providers.aws.resource.storage.sdk_bucket import vaildate_bucket_exist
 from .schemas import StMsgOut, BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail, BucketPropertyOut, BucketPermissionOut
 
 

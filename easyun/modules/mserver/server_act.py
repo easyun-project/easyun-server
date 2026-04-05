@@ -3,7 +3,7 @@
 @Description: Server Management - action: start, restart, stop, delete; and get status
 @LastEditors: 
 '''
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 # EmptySchema removed in APIFlask 3.x, use {} instead

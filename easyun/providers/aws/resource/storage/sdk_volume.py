@@ -7,8 +7,8 @@
 
 from botocore.exceptions import ClientError
 from easyun.libs.utils import load_json_config
-from ..session import get_easyun_session
-from ..utils import get_server_name
+from ...session import get_easyun_session
+from ...utils import get_server_name
 
 
 # 定义系统盘路径

@@ -6,8 +6,8 @@
 """
 
 from botocore.exceptions import ClientError
-from ..session import get_easyun_session
-from ..utils import get_eni_type, get_tag_name
+from ...session import get_easyun_session
+from ...utils import get_eni_type, get_tag_name
 
 
 class StaticIP(object):

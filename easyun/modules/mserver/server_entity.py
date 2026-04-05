@@ -9,11 +9,11 @@
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import TagItem
-from easyun.cloud.aws.ec2_ami import AMI_Windows, AMI_Linux
+from easyun.providers.aws.resource.compute.ec2_ami import AMI_Windows, AMI_Linux
 from .schemas import SvrEntityOut, SvrInstypeParam, MsgOut
 from . import bp
 

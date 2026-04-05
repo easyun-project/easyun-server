@@ -1,80 +1,35 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  Cloud Utils
-  @desc:    存放Cloud相关公共组件
+  @module:  AWS Utils
+  @desc:    AWS SDK 相关工具函数
   @auth:    aleck
 """
 
-from easyun.common.models import Datacenter
-from easyun.cloud.aws.session import get_easyun_session
+from easyun.providers.aws.session import get_easyun_session
 
 
 # 定义系统盘路径
 SYSTEM_DISK = ['/dev/xvda', '/dev/sda1']
 
+
+def get_imds_region():
+    """通过 IMDSv2 获取 EC2 实例所在 region"""
+    import urllib.request
+    token_url = 'http://169.254.169.254/latest/api/token'
+    req = urllib.request.Request(token_url, method='PUT')
+    req.add_header('X-aws-ec2-metadata-token-ttl-seconds', '30')
+    token = urllib.request.urlopen(req, timeout=2).read().decode()
+
+    az_url = 'http://169.254.169.254/latest/meta-data/placement/availability-zone'
+    req = urllib.request.Request(az_url)
+    req.add_header('X-aws-ec2-metadata-token', token)
+    az = urllib.request.urlopen(req, timeout=2).read().decode()
+    return az[:-1]
+
+
 def get_ec2_resource():
     session = get_easyun_session()
     return session.resource('ec2')
-
-
-def gen_dc_tag(dc_name, type='flag'):
-    '''生成dcName对应的tag标签'''
-    if type == 'flag':
-        flagTag = {"Key": "Flag", "Value": dc_name}
-    elif type == 'filter':
-        flagTag = {'Name': 'tag:Flag', 'Values': [dc_name]}
-    return flagTag
-
-
-def gen_hash_tag(dc_name, type='flag'):
-    '''查询并生成dcName对应的tag标签'''
-    thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
-    flagHash = thisDC.get_hash()
-    if type == 'flag':
-        flagTag = {"Key": "Flag", "Value": flagHash}
-    elif type == 'filter':
-        flagTag = {'Name': 'tag:Flag', 'Values': [flagHash]}
-    return flagTag
-
-
-def query_dc_list():
-    '''从本地数据库查询datacenter名单'''
-    try:
-        # dcList = Datacenter.query.with_entities(Datacenter.name).all()
-        dcList = [dc.name for dc in Datacenter.query.all()]
-        return dcList
-    except Exception as ex:
-        # return 'get datacenter list error.'
-        return str(ex)
-
-
-def query_dc_region(dc_name):
-    '''通过dcName查询Region信息'''
-    try:
-        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
-        if thisDC is None:
-            raise ValueError('Datacenter not existed, kindly create it first!')
-        return thisDC.region
-    except Exception as ex:
-        return str(ex)
-
-
-def query_dc_vpc(dc_name):
-    '''通过dcName查询VPC信息'''
-    try:
-        thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
-        return thisDC.vpc_id
-    except Exception:
-        return 'Datacenter not existed, kindly create it first!'
-
-
-def set_boto3_region(dc_name):
-    '''查询 datacenter 对应的 region name（不再设置全局 session）'''
-    thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
-    if thisDC:
-        return thisDC.region
-    else:
-        raise ValueError(f'{dc_name} does not exist !')
 
 
 def get_tag_name(res_type, res_id):
@@ -112,10 +67,7 @@ def get_server_name(svr_id):
     try:
         if svr_id is None:
             raise ValueError('svr_id is None')
-        # server = resource_ec2.Instance(svr_id)
-        # tagName = next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
-        tagName = get_tag_name('server', svr_id)
-        return tagName
+        return get_tag_name('server', svr_id)
     except Exception:
         return None
 
@@ -127,7 +79,6 @@ def get_disk_type(attach_path):
 
 def get_eni_type(eni_id):
     '''获取 Elastic Network Interface 类型'''
-    # 'InterfaceType': 'interface'|'natGateway'|'efa'|'trunk'|'load_balancer'|'network_load_balancer'|'vpc_endpoint'|'transit_gateway',
     resource_ec2 = get_ec2_resource()
     try:
         if eni_id is None:
@@ -140,7 +91,6 @@ def get_eni_type(eni_id):
 
 def get_subnet_type(subnet_id):
     '''判断subnet type是 public 还是 private'''
-    # 偷个懒仅以名称判断，完整功能待实现
     resource_ec2 = get_ec2_resource()
     try:
         if subnet_id is None:

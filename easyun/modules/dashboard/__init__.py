@@ -4,7 +4,7 @@
 @LastEditors: 
 '''
 from apiflask import APIBlueprint
-from easyun.cloud import get_deploy_env
+from easyun.providers import get_deploy_env
 
 
 # define api version

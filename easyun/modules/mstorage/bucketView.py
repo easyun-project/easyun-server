@@ -1,6 +1,6 @@
 from io import BytesIO
 from typing import List
-from easyun.cloud.aws.session import get_easyun_client
+from easyun.providers.aws.session import get_easyun_client
 from datetime import date, timedelta
 from flask import send_file
 from flask.views import MethodView, Schema

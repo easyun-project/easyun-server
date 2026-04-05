@@ -5,14 +5,14 @@
   @auth:    aleck
 """
 
-from easyun.cloud.aws.session import get_easyun_resource
+from easyun.providers.aws.session import get_easyun_resource
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws import get_datacenter
-from easyun.cloud.aws.workload import get_st_volume, get_ec2_server
-from easyun.cloud.aws.utils import get_disk_type
+from easyun.providers.aws import get_datacenter
+from easyun.providers.aws.resource import get_st_volume, get_ec2_server
+from easyun.providers.aws.utils import get_disk_type
 from .schemas import StMsgOut, VolumeModel, VolumeBasic, VolumeDetail, AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
 

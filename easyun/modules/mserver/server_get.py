@@ -3,7 +3,7 @@
 @Description: Server Management - Get info: Server list, Server detail
 @LastEditors: 
 '''
-from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
@@ -11,7 +11,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.models import Datacenter
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws.utils import set_boto3_region, gen_dc_tag
+from easyun.common.dc_utils import set_boto3_region, gen_dc_tag
 from datetime import date, datetime
 from . import bp
 from .schemas import SvrDetailItem, SvrBriefItem

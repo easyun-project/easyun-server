@@ -8,7 +8,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws import get_datacenter, get_secgroup
+from easyun.providers.aws import get_datacenter, get_secgroup
 from .schemas import DcMsgOut, AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
 
 

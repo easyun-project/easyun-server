@@ -8,8 +8,8 @@
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.cloud.aws import get_datacenter
-from easyun.cloud.aws.workload import get_db_instance
+from easyun.providers.aws import get_datacenter
+from easyun.providers.aws.resource import get_db_instance
 from .schemas import DbiDetailItem, DbiBriefItem
 from . import bp
 

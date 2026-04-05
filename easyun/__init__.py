@@ -100,7 +100,7 @@ def register_extensions(app: APIFlask):
 def register_cloud_account(app: APIFlask):
     """注册后端服务器部署的云账号信息"""
     from easyun.common.models import Account
-    from easyun.cloud import get_deploy_env
+    from easyun.providers import get_deploy_env
 
     # 获取 AWS云环境信息
     cloudEvn = get_deploy_env()

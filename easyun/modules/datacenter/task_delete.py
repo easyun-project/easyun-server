@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from easyun.cloud.aws.session import get_easyun_resource
+from easyun.providers.aws.session import get_easyun_resource
 from botocore.exceptions import ClientError
 from easyun import db
 from easyun.common.models import Datacenter

@@ -4,12 +4,12 @@
   @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
   @auth:    aleck
 """
-from easyun.cloud.aws.session import get_easyun_resource
+from easyun.providers.aws.session import get_easyun_resource
 from easyun.libs.utils import load_json_config
 from datetime import datetime
 from easyun import db
 from easyun.common.models import Datacenter, Account
-from easyun.cloud.aws.utils import gen_dc_tag
+from easyun.common.dc_utils import gen_dc_tag
 from . import logger
 
 

@@ -8,7 +8,7 @@
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.cloud.aws.workload.sdk_bucket import get_st_object
+from easyun.providers.aws.resource.storage.sdk_bucket import get_st_object
 from .schemas import ObjectKeyQuery, BucketIdQuery, ObjectContents
 from .api_bucket_mgt import bp
 
