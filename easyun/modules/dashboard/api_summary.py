@@ -14,12 +14,14 @@ from easyun.libs.utils import filter_list_by_key
 from easyun.cloud.aws_region import AWS_Regions, query_country_code, query_region_name
 from .api_inventory import query_inventory
 from .models import Boto3_Cloudwatch
+from .schemas import AzSummaryItem, HealthSummaryOut, ResourceSumItem
 from . import bp, DeployRegion
 
 
 @bp.get("/summary/datacenter")
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(AzSummaryItem(many=True))
 def summary_dc(parm):
     '''获取数据中心 Summary信息'''
     thisDC = Datacenter.query.filter_by(name=parm['dc']).first()
@@ -71,6 +73,7 @@ def summary_dc(parm):
 @bp.get("/summary/health")
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(HealthSummaryOut)
 def summary_health(parm):
     '''获取健康状态 Summary信息'''
     thisDC = Datacenter.query.filter_by(name=parm['dc']).first()
@@ -94,6 +97,7 @@ def summary_health(parm):
 @bp.get("/summary/resource")
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(ResourceSumItem(many=True))
 def summary_resource(parm):
     '''获取所有IaaS资源 Summary信息'''
     dcName = parm['dc']

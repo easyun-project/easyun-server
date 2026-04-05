@@ -11,12 +11,14 @@ from easyun.common.schemas import RegionCodeQuery
 from easyun.common.result import Result
 from easyun.libs.utils import load_json_config
 from easyun.cloud.aws.sdk_quotas import ServiceQuotas
+from .schema import QuotaItem
 from . import bp
 
 
 @bp.get('/quota')
 @bp.auth_required(auth_token)
 @bp.input(RegionCodeQuery, location='query', arg_name='parm')
+@bp.output(QuotaItem(many=True))
 def get_region_quota(parm):
     '''获取指定region的资源配额'''
     thisRegion = parm['region']

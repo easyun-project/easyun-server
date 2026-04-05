@@ -24,6 +24,7 @@ from .schemas import (
     AddDataCenterParm,
     DelDataCenterParm,
     DataCenterModel,
+    DcTaskOut,
 )
 from .task_create import create_dc_task
 from .task_delete import delete_dc_task
@@ -171,6 +172,7 @@ def get_default_parms(parm):
 @bp.auth_required(auth_token)
 @bp.input(AddDataCenterParm, arg_name='parm')
 @log.api_error(logger)
+@bp.output(DcTaskOut)
 def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
     dcName = parm['dcName']
@@ -223,6 +225,7 @@ def create_dc_async(parm):
 @bp.auth_required(auth_token)
 @bp.input(DelDataCenterParm, arg_name='parm')
 @log.api_error(logger)
+@bp.output(DcTaskOut)
 def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
     dcName = parm['dcName']

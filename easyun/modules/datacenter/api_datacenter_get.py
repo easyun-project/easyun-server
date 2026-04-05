@@ -11,7 +11,7 @@ from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, RegionModel
 from easyun.cloud import get_cloud
 from easyun.cloud.aws import get_datacenter
-from .schemas import DataCenterBasic, DataCenterModel
+from .schemas import DataCenterBasic, DataCenterModel, RouteTableModel
 from . import bp
 
 
@@ -91,7 +91,7 @@ def get_available_zones(parm):
 @bp.get('/routetable')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='param')
-# @output(SubnetsOut, description='List DataCenter Subnets Resources')
+@bp.output(RouteTableModel(many=True))
 def list_all_route(param):
     '''获取 全部路由表(route table)信息'''
     dcName = param['dc']

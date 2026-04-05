@@ -14,6 +14,7 @@ from easyun.common.schemas import DcNameQuery
 from easyun.cloud.utils import set_boto3_region, gen_dc_tag
 from datetime import date, datetime
 from . import bp
+from .schemas import SvrDetailItem, SvrBriefItem
 from flask import request, jsonify
 
 class SvrListOut(Schema):
@@ -32,6 +33,7 @@ class SvrListOut(Schema):
 @bp.get('')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(SvrDetailItem(many=True))
 # @output(SvrListOut, description='Get Servers list')
 def list_server_detail(parm):
     '''获取数据中心全部云服务器信息'''
@@ -116,6 +118,7 @@ def list_server_detail(parm):
 @bp.get('/list')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(SvrBriefItem(many=True))
 # @output(SvrListOut, description='Get Servers list')
 def list_server_brief(parm):
     '''获取数据中心全部云服务器列表[仅基础字段]'''

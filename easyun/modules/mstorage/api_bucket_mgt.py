@@ -13,7 +13,7 @@ from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_st_bucket
 from easyun.cloud.aws.workload.sdk_bucket import vaildate_bucket_exist
-from .schemas import BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail
+from .schemas import StMsgOut, BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail, BucketProperty, BucketPermission
 
 
 bp = APIBlueprint('Bucket', __name__, url_prefix='/bucket')
@@ -113,6 +113,7 @@ def add_bucket_s3(parm):
 @bp.post('/add')
 @bp.auth_required(auth_token)
 @bp.input(AddBucketParm, arg_name='parm')
+@bp.output(BucketBasic)
 def add_bucket_cc(parm):
     '''新增存储桶(S3 Bucket)[Cloudcontrol]'''
     bucketId = parm['bucketId']
@@ -170,6 +171,7 @@ def add_bucket_cc(parm):
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(BucketIdParm, arg_name='parm')
+@bp.output(StMsgOut)
 def delete_bucket(parm):
     '''删除存储桶(S3 Bucket)'''
     dcName = parm['dcName']
@@ -187,6 +189,7 @@ def delete_bucket(parm):
 @bp.put('/<bucket_id>/property')
 @bp.auth_required(auth_token)
 @bp.input(BucketPropertyParm, arg_name='parms')
+@bp.output(BucketProperty)
 def modify_bucket_property(bucket_id, parms):
     '''修改存储桶(S3 Bucket)属性'''
     isEncryption = parms.get('isEncryption')
@@ -210,6 +213,7 @@ def modify_bucket_property(bucket_id, parms):
 @bp.put('/<bucket_id>/permission')
 @bp.auth_required(auth_token)
 @bp.input(BucketPublicParm, arg_name='parms')
+@bp.output(BucketPermission)
 def modify_bucket_policy(bucket_id, parms):
     '''修改存储桶的Public Block Policy'''
     pubConfig = parms
@@ -228,6 +232,7 @@ def modify_bucket_policy(bucket_id, parms):
 @bp.get('/vaildate')
 @bp.auth_required(auth_token)
 @bp.input(BucketIdQuery, location='query', arg_name='parms')
+@bp.output(StMsgOut)
 def vaildate_bkt(parms):
     '''查询存储桶名称全局范围是否可用【fix-me】'''
     dcName = parms['dc']

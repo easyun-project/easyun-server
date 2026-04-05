@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter, get_secgroup
-from .schemas import AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
+from .schemas import DcMsgOut, AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
 
 
 bp = APIBlueprint('SecurityGroup', __name__, url_prefix='/secgroup')
@@ -52,6 +52,7 @@ def list_secgroup_brief(parm):
 @bp.post('')
 @bp.auth_required(auth_token)
 @bp.input(AddSecGroupParm, arg_name='parm')
+@bp.output(SecGroupModel)
 def create_secgroup(parm):
     '''新建 SecurityGroup'''
     dcName = parm['dcName']
@@ -72,6 +73,7 @@ def create_secgroup(parm):
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(SecGroupDetail)
+@bp.output(SecGroupDetail)
 def get_secgroup_detail(sg_id, parm):
     '''查看 SecurityGroup 详细信息'''
     dcName = parm['dc']
@@ -88,6 +90,7 @@ def get_secgroup_detail(sg_id, parm):
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(DelSecGroupParm, arg_name='parm')
+@bp.output(DcMsgOut)
 def delete_secgroup(parm):
     '''删除 SecurityGroup'''
     dcName = parm['dcName']
@@ -105,6 +108,7 @@ def delete_secgroup(parm):
 @bp.put('')
 @bp.auth_required(auth_token)
 @bp.input(AddSecGroupParm, arg_name='parm')
+@bp.output(SecGroupModel)
 def update_secgroup(parm):
     '''修改 SecurityGroup 【未完成】'''
     dcName = parm['dc']

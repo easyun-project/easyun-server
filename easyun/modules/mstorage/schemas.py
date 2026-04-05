@@ -226,3 +226,7 @@ class DetachVolParm(Schema):
     volumeId = String(required=True, metadata={"example": 'vol-05b06708c63dce7d9'})
     svrId = String(required=True, metadata={"example": 'i-0ac436622e8766a13'})  # 云服务器ID
     attachPath = String(metadata={"example": '/dev/sdf'})
+
+
+class StMsgOut(Schema):
+    msg = String(metadata={"example": "operation success"})

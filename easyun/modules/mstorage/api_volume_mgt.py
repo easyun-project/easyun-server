@@ -13,15 +13,7 @@ from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_st_volume, get_ec2_server
 from easyun.cloud.utils import get_disk_type
-from .schemas import (
-    VolumeModel,
-    VolumeBasic,
-    VolumeDetail,
-    AddVolumeParm,
-    DelVolumeParm,
-    AttachVolParm,
-    DetachVolParm,
-)
+from .schemas import StMsgOut, VolumeModel, VolumeBasic, VolumeDetail, AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
 
 bp = APIBlueprint('Volume', __name__, url_prefix='/volume')
@@ -170,6 +162,7 @@ def add_volume(parms):
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(DelVolumeParm, arg_name='parm')
+@bp.output(StMsgOut)
 def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
@@ -196,6 +189,7 @@ def del_volume(parm):
 @bp.put('/attach')
 @bp.input(AttachVolParm, arg_name='parm')
 @bp.auth_required(auth_token)
+@bp.output(StMsgOut)
 def attach_server(parm):
     '''块存储关联云服务器(ec2)【ToBeFix】'''
     resource_ec2 = boto3.resource('ec2')
@@ -227,6 +221,7 @@ def attach_server(parm):
 @bp.put('/detach')
 @bp.input(DetachVolParm, arg_name='parm')
 @bp.auth_required(auth_token)
+@bp.output(StMsgOut)
 def detach_server(parm):
     '''块存储分离云服务器(ec2)【ToBeFix】'''
     resource_ec2 = boto3.resource('ec2')

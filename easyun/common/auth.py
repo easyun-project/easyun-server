@@ -12,7 +12,7 @@ from apiflask import (
 )
 from .result import Result
 from .models import User, Account
-from .schemas import LoginParm, UsernameParm, PasswordParm, UserModel, AddUserParm
+from .schemas import LoginParm, UsernameParm, PasswordParm, UserModel, AddUserParm, MsgOut
 from .. import db
 
 # define api version
@@ -89,6 +89,7 @@ def login_user(user):
 
 @bp.delete('/logout')
 @bp.auth_required(auth_token)
+@bp.output(MsgOut)
 def logout_user():
     '''注销当前用户 (revoke token)'''
     # Headers
@@ -102,6 +103,7 @@ def logout_user():
 @bp.put('/password')
 @bp.auth_required(auth_token)
 @bp.input(PasswordParm, arg_name='parm')
+@bp.output(MsgOut)
 def change_passowrd(parm):
     '''修改当前用户密码'''
     auth_token.current_user.set_password(parm['password'])
@@ -150,6 +152,7 @@ def add_user(parm):
 @bp.auth_required(auth_token)
 @bp.input(UsernameParm, arg_name='parm')
 @bp.doc(tags=['【仅限测试用】'], operation_id='Delete a User')
+@bp.output(MsgOut)
 def delete_user(parm):
     '''删除指定用户'''
     try:

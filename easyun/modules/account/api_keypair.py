@@ -207,7 +207,7 @@ def add_keypair(parm):
 @bp.delete('/keypair')
 @bp.auth_required(auth_token)
 @bp.input(KeyPairDelIn, arg_name='parm')
-# @bp.output(SSHKeysOutputSchema(many=True))
+@bp.output(KeypairOut)
 # @log.api_error(logger)
 def del_keypair(parm):
     '''从指定数据中心删除keypair'''

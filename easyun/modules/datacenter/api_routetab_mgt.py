@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.cloud.aws import get_datacenter, get_routetable
-from .schemas import AddRouteTableParm, DelRouteTableParm, RouteTableBasic, RouteTableModel, RouteTableDetail
+from .schemas import AddRouteTableParm, DelRouteTableParm, RouteTableBasic, RouteTableModel, RouteTableDetail, DcMsgOut
 
 
 bp = APIBlueprint('Route', __name__, url_prefix='/routetable')
@@ -69,6 +69,7 @@ def get_routetable_detail(rtb_id, parm):
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(DelRouteTableParm, arg_name='parms')
+@bp.output(DcMsgOut)
 def delete_routetable(parms):
     '''删除 指定RouteTable路由表【to-be-done】'''
     dcName = parms['dcName']
@@ -86,7 +87,7 @@ def delete_routetable(parms):
 @bp.post('')
 @bp.auth_required(auth_token)
 @bp.input(AddRouteTableParm, arg_name='parms')
-# @bp.output(DcResultOut, 201, description='add A new Datacenter')
+@bp.output(RouteTableModel)
 def add_routetable(parms):
     '''新增 RouteTable路由表【to-be-done】'''
     dcName = parms['dcName']

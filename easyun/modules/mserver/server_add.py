@@ -12,6 +12,7 @@ from easyun import FLAG
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
 from easyun.common.result import Result
+from .schemas import NewSvrItem
 from . import bp, REGION
 
 
@@ -47,6 +48,7 @@ class SvrParmIn(Schema):
 @bp.post('')
 @bp.auth_required(auth_token)
 @bp.input(SvrParmIn, arg_name='parm')
+@bp.output(NewSvrItem(many=True))
 # @output(NewSvrSchema)
 def add_server(parm):
     '''新建云服务器(EC2)'''

@@ -10,13 +10,14 @@ from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_load_balancer
-# from .schemas import ElbModel, ElbBasic, ElbDetail
+from .schemas import ElbDetailItem, ElbBriefItem
 from . import bp
 
 
 @bp.get('')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(ElbDetailItem(many=True))
 # @bp.output(ElbModel(many=True), description='All Elb list (detail)')
 def list_elb_detail(parm):
     '''获取数据中心全部负载均衡器信息'''
@@ -36,6 +37,7 @@ def list_elb_detail(parm):
 @bp.get('/list')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(ElbBriefItem(many=True))
 # @bp.output(ElbBasic(many=True), description='All Elb list (brief)')
 def list_elb_brief(parm):
     '''获取数据中心全部负载均衡器列表[仅基础字段]'''

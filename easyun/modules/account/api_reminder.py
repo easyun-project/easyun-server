@@ -51,7 +51,7 @@ def get_freetier_reminder(parm):
 @bp.put('/reminder/freetier')
 @bp.auth_required(auth_token)
 @bp.input(FreeTierParm, arg_name='parms')
-# @bp.output(FreeTierInfo, description='Get FreeTier Reminder Info')
+@bp.output(FreeTierInfo)
 def set_freetier_reminder(parms):
     '''修改云账号的FreeTier 提醒'''
     accountId = parms.get('accountId')

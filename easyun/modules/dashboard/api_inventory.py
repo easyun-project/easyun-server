@@ -12,6 +12,7 @@ from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
+from .schemas import InventoryTypeItem
 from . import bp, DeployRegion
 
 
@@ -44,6 +45,7 @@ INVENTORY_TABLE = {
 @bp.get("/inventory/<resource>")
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(InventoryTypeItem(many=True))
 def get_inventory(resource, parm):
     '''获取数据中心资源明细(Inventory)'''
     if resource not in RESOURCE_NAME:

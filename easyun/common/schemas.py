@@ -109,3 +109,7 @@ class TaskModel(Schema):
     description = String(metadata={"example": "Pubic subnet1 created."})
     current = Integer(metadata={"example": 25})
     total = Integer(metadata={"example": 100})
+
+
+class MsgOut(Schema):
+    msg = String(metadata={"example": "operation success"})

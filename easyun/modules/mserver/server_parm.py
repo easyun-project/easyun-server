@@ -16,6 +16,7 @@ from easyun.cloud.utils import set_boto3_region
 from easyun.cloud.aws_ec2_ami import AMI_Windows, AMI_Linux
 from easyun.cloud.aws_price import ec2_monthly_cost
 from easyun.cloud.aws_ec2_instype import Instance_Family, get_family_descode
+from .schemas import ImageItem, InsFamilyItem, InsTypeItem, InsTypeBriefItem
 from . import bp
 
 
@@ -39,6 +40,7 @@ class ImageQuery(Schema):
 @bp.get('/param/image')
 @bp.auth_required(auth_token)
 @bp.input(ImageQuery, location='query')
+@bp.output(ImageItem(many=True))
 # @output()
 def list_images( parms ):
     '''获取可用的AMI列表(包含 System Disk信息)'''
@@ -115,6 +117,7 @@ class InsFamilyQuery(Schema):
 @bp.get('/param/insfamily')
 @bp.auth_required(auth_token)
 @bp.input(InsFamilyQuery, location='query', arg_name='parm')
+@bp.output(InsFamilyItem(many=True))
 def get_ins_family(parm):
     '''获取可用的Instance Family列表'''
     insArch = parm.get('arch')
@@ -183,6 +186,7 @@ class InsTypelsQuery(Schema):
 @bp.get('/param/instype/list')
 @bp.auth_required(auth_token)
 @bp.input(InsTypelsQuery, location='query', arg_name='parm')
+@bp.output(InsTypeBriefItem(many=True))
 def get_ins_type_list(parm):
     '''获取可用的Instance Types列表(不含成本)'''
     insArch = parm.get('arch')
@@ -264,6 +268,7 @@ class InsTypeQuery(Schema):
 @bp.get('/param/instype')
 @bp.auth_required(auth_token)
 @bp.input(InsTypeQuery, location='query', arg_name='parm')
+@bp.output(InsTypeItem(many=True))
 def list_ins_types(parm):
     '''获取可用的Instance Types列表(含月度成本)'''
     insArch = parm['arch']

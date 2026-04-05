@@ -15,6 +15,7 @@ from easyun.cloud.utils import get_subnet_type
 from easyun.cloud.aws.sdk_cost import CostExplorer, get_ce_region
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.utils import set_boto3_region
+from .schemas import DcSummaryBasicOut, DcResSummaryOut, DcCostSummaryOut
 from . import bp, logger
 
 
@@ -22,6 +23,7 @@ from . import bp, logger
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
+@bp.output(DcSummaryBasicOut)
 def get_vpc_summary(parm):
     '''获取指定的数据中心VPC基础服务统计信息'''
     dcName = parm['dc']
@@ -81,6 +83,7 @@ def get_vpc_summary(parm):
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(DCInfoOut, description='Get Datacenter Metadata')
+@bp.output(DcResSummaryOut)
 def get_res_summary(parm):
     '''获取指定的数据中心Resource统计信息'''
     dcName = parm['dc']
@@ -112,6 +115,7 @@ def get_res_summary(parm):
 @bp.get('/summary/cost')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(DcCostSummaryOut)
 def get_cost_summary(parm):
     '''获取指定的数据中心成本及用量统计信息'''
     dcName = parm['dc']

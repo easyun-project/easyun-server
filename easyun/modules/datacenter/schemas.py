@@ -392,3 +392,65 @@ class AddNatGateway(Schema):
     subnetId = String(required=True, metadata={"example": 'subnet-06bfe659f6ecc2eed'})
     allocationId = String(required=True, metadata={"example": 'allo-xxxxxx'})
     tagName = String(metadata={"example": "Easyun_NAT_Gateway"})
+
+
+# ---- Generic output for write operations ----
+
+class DcTaskOut(Schema):
+    taskId = String()
+    status = String(metadata={"example": "STARTED"})
+
+class GatewayModel(Schema):
+    gwId = String()
+    gwType = String(metadata={"example": "internet"})
+    tagName = String()
+    state = String(metadata={"example": "available"})
+    vpcId = String()
+    attachments = List(Dict())
+
+class DcMsgOut(Schema):
+    msg = String(metadata={"example": "operation success"})
+
+
+# ---- datacenter summary output schemas ----
+
+class VpcSummary(Schema):
+    pubNum = Integer()
+    priNum = Integer()
+    igwNum = Integer()
+    sgNum = Integer()
+    aclNum = Integer()
+    rtbNum = Integer()
+    eipNum = Integer()
+    natNum = Integer()
+
+
+class AzSummaryBrief(Schema):
+    azName = String(metadata={"example": "us-east-1a"})
+    subnetNum = Integer()
+
+
+class DcSummaryBasicOut(Schema):
+    azSummary = List(Nested(AzSummaryBrief))
+    vpcSummary = Nested(VpcSummary)
+
+
+class DcResSummaryOut(Schema):
+    serverNum = Integer()
+    volumeNum = Integer()
+    bucketNum = Integer()
+    efsNum = Integer()
+    rdsNum = Integer()
+    elbNum = Integer()
+    elbtgNum = Integer()
+    volbackupNum = Integer()
+    rdsbackupNum = Integer()
+    efsbackupNum = Integer()
+
+
+class DcCostSummaryOut(Schema):
+    currMonthTotal = Field()
+    forecastTotal = Field()
+    lastMonthTotal = Field()
+    currMonthCost = Field()
+    latestWeekCost = Field()

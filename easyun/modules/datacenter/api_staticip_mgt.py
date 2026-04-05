@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, DcNameParm
 from easyun.cloud.aws import get_staticip, get_datacenter
-from .schemas import DelEipParm, StaticIPBasic, StaticIPModel
+from .schemas import DcMsgOut, DelEipParm, StaticIPBasic, StaticIPModel, StaticIPDetail
 
 
 bp = APIBlueprint('StaticIP', __name__, url_prefix='/staticip')
@@ -53,6 +53,7 @@ def list_eip_brief(param):
 @bp.auth_required(auth_token)
 @bp.input(DcNameParm, arg_name='parm')
 # @output(DcResultOut, 201, description='add A new Datacenter')
+@bp.output(StaticIPModel)
 def add_eip(parm):
     '''新增 静态IP(EIP)'''
     dcName = parm['dcName']
@@ -75,6 +76,7 @@ def add_eip(parm):
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
+@bp.output(StaticIPDetail)
 def get_eip_detail(eip_id, parm):
     '''获取 指定静态IP(EIP)信息'''
     dcName = parm['dc']
@@ -95,6 +97,7 @@ def get_eip_detail(eip_id, parm):
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(DelEipParm, arg_name='parm')
+@bp.output(DcMsgOut)
 def delete_eip(parm):
     '''删除 指定静态IP(EIP)'''
     dcName = parm['dcName']

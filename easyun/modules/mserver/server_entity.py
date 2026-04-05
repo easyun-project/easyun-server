@@ -13,6 +13,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import TagItem
 from easyun.cloud.aws_ec2_ami import AMI_Windows, AMI_Linux
+from .schemas import SvrEntityOut, SvrInstypeParam, MsgOut
 from . import bp
 
 
@@ -60,6 +61,7 @@ class DetailOut(Schema):
 
 @bp.get('/detail/<svr_id>')
 @bp.auth_required(auth_token)
+@bp.output(SvrEntityOut)
 # @output(DetailOut, description='Server detail info')
 def get_server_detail(svr_id):
     '''获取指定云服务器详情信息'''
@@ -199,6 +201,7 @@ def get_server_detail(svr_id):
 
 @bp.get('/instype/<svr_id>')
 @bp.auth_required(auth_token)
+@bp.output(SvrInstypeParam)
 def get_ins_types(svr_id):
     '''获取指定云服务器实例参数 [测试]'''
     # 用于查询受支持的Instance Family列表)
@@ -230,6 +233,7 @@ class DiskInfoIn(Schema):
 @bp.put('/disk')
 @bp.auth_required(auth_token)
 @bp.input(DiskInfoIn, arg_name='param')
+@bp.output(MsgOut)
 def attach_disk(param):
     '''云服务器关联与解绑磁盘(volume)'''
     try:
@@ -333,6 +337,7 @@ class EipAttachInfoIn(Schema):
 @bp.put('/eip')
 @bp.auth_required(auth_token)
 @bp.input(EipAttachInfoIn, arg_name='param')
+@bp.output(MsgOut)
 def attach_eip(param):
     '''云服务器关联和解绑静态IP(eip)'''
     try:
@@ -403,6 +408,7 @@ class SgAttachInfoIn(Schema):
 @bp.put('/secgroup')
 @bp.auth_required(auth_token)
 @bp.input(SgAttachInfoIn, arg_name='param')
+@bp.output(MsgOut)
 def attach_secgroup(param):
     '''云服务器关联和解绑安全组(secgroup)'''
     try:
@@ -488,6 +494,7 @@ def list_svr_tags(svr_id):
 @bp.put('/tags/<svr_id>')
 @bp.auth_required(auth_token)
 @bp.input(TagItem, arg_name='parm')
+@bp.output(TagItem(many=True))
 # @bp.input(TagItem(many=True))
 def mod_svr_tags(svr_id, parm):
     '''为指定云服务器新增/修改用户Tags'''
@@ -512,6 +519,7 @@ def mod_svr_tags(svr_id, parm):
 @bp.delete('/tags/<svr_id>')
 @bp.auth_required(auth_token)
 @bp.input(TagItem, arg_name='parm')
+@bp.output(TagItem(many=True))
 def del_svr_tags(svr_id, parm):
     '''为指定云服务器删除用户Tags'''
     try:

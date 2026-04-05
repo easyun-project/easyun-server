@@ -9,7 +9,7 @@ from apiflask.fields import Integer, String, List, Dict, Boolean
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.cloud.utils import query_dc_region, get_server_name
-from .schemas import ModSvrNameParm, SvrTagNameItem,ModSvrProtectionParm
+from .schemas import ModSvrNameParm, SvrTagNameItem, ModSvrProtectionParm, SvrProtectionOut, MsgOut
 from . import bp, REGION
 
 
@@ -73,6 +73,7 @@ ModSvrNameParm
 @bp.put('/protection')
 # @auth_required(auth_token)
 @bp.input(ModSvrProtectionParm, arg_name='parms')
+@bp.output(SvrProtectionOut)
 # @output(SvrTagNameItem(many=True))
 def update_svr_protection(parms):
     '''修改指定云服务器protection'''
@@ -137,6 +138,7 @@ class ConfigIn(Schema):
 @bp.post('/config')
 @bp.auth_required(auth_token)
 @bp.input(ConfigIn, arg_name='new')
+@bp.output(MsgOut)
 # @output(UpdateOut)
 def update_config(new):
     '''修改指定云服务器实例配置'''

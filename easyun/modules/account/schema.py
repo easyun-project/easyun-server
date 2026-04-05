@@ -73,3 +73,11 @@ class FreeTierInfo(Schema):
     activeDate = Date(metadata={"example": '2022-02-27'})
     remainDays = Integer(metadata={"example": 180})
     iconColor = String(metadata={"example": "green"})
+
+
+class QuotaItem(Schema):
+    quotaName = String()
+    quotaCode = String()
+    quotaValue = Integer()
+    usageValue = Integer()
+    serviceName = String()

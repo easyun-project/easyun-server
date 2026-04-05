@@ -10,12 +10,14 @@ from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_db_instance
+from .schemas import DbiDetailItem, DbiBriefItem
 from . import bp
 
 
 @bp.get('')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(DbiDetailItem(many=True))
 def list_database_detail(parm):
     '''获取数据中心全部数据库(RDS)信息'''
     dcName = parm['dc']
@@ -34,6 +36,7 @@ def list_database_detail(parm):
 @bp.get('/list')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(DbiBriefItem(many=True))
 # @bp.output(SvrListOut, description='Get Servers list')
 def list_database_brief(parm):
     '''获取数据中心全部数据库(RDS)列表[仅基础字段]'''
@@ -53,6 +56,7 @@ def list_database_brief(parm):
 @bp.get('/<rds_id>')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
+@bp.output(DbiDetailItem)
 def get_database_detail(rds_id, parm):
     '''获取指定数据库(RDS)详细信息'''
     dcName = parm['dc']

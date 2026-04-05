@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.cloud.aws import get_datacenter, get_subnet
-from .schemas import AddSubnetParm, DelSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
+from .schemas import DcMsgOut, AddSubnetParm, DelSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
 
 
 bp = APIBlueprint('Subnet', __name__, url_prefix='/subnet')
@@ -69,6 +69,7 @@ def get_subnet_detail(subnet_id, parm):
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(DelSubnetParm, arg_name='parms')
+@bp.output(DcMsgOut)
 def delete_subnet(parms):
     '''删除 指定子网subnet'''
     dcName = parms['dcName']
@@ -87,6 +88,7 @@ def delete_subnet(parms):
 @bp.auth_required(auth_token)
 @bp.input(AddSubnetParm, arg_name='parms')
 # @output(DcResultOut, 201, description='add A new Datacenter')
+@bp.output(SubnetModel)
 def add_subnet(parms):
     '''新增 子网Subnet'''
     dcName = parms['dcName']
@@ -107,6 +109,7 @@ def add_subnet(parms):
 @bp.auth_required(auth_token)
 # @input(DataCenterSubnetInsert)
 # @output(DcResultOut, 201, description='add A new Datacenter')
+@bp.output(SubnetModel)
 def mod_subnet(param):
     '''修改数据中心Subnet 【to-be-done】'''
 
