@@ -6075,7 +6075,7 @@
         "tags": [
           "\u6570\u636e\u4e2d\u5fc3\u7ba1\u7406.Route"
         ],
-        "summary": "\u65b0\u589e RouteTable\u8def\u7531\u8868\u3010to-be-done\u3011",
+        "summary": "\u65b0\u589e RouteTable \u8def\u7531\u8868",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6167,7 +6167,7 @@
         "tags": [
           "\u6570\u636e\u4e2d\u5fc3\u7ba1\u7406.Route"
         ],
-        "summary": "\u5220\u9664 \u6307\u5b9aRouteTable\u8def\u7531\u8868\u3010to-be-done\u3011",
+        "summary": "\u5220\u9664\u6307\u5b9a RouteTable \u8def\u7531\u8868",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6404,7 +6404,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/ElbDetail"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -6489,7 +6491,7 @@
         "tags": [
           "\u8d1f\u8f7d\u5747\u8861\u5668\u7ba1\u7406"
         ],
-        "summary": "\u83b7\u53d6\u6307\u5b9a\u8d1f\u8f7d\u5747\u8861\u5668(Elb)\u8be6\u7ec6\u4fe1\u606f\u3010to-be-done\u3011",
+        "summary": "\u83b7\u53d6\u6307\u5b9a\u8d1f\u8f7d\u5747\u8861\u5668(ELB)\u8be6\u7ec6\u4fe1\u606f",
         "security": [
           {
             "BearerAuth": []
@@ -9712,7 +9714,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/RouteTableDetail"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -9797,7 +9801,7 @@
         "tags": [
           "\u6570\u636e\u4e2d\u5fc3\u7ba1\u7406.Route"
         ],
-        "summary": "\u83b7\u53d6 \u6307\u5b9aRouteTable\u8def\u7531\u8868\u8be6\u7ec6\u4fe1\u606f\u3010to-be-done\u3011",
+        "summary": "\u83b7\u53d6\u6307\u5b9a RouteTable \u8def\u7531\u8868\u8be6\u7ec6\u4fe1\u606f",
         "security": [
           {
             "BearerAuth": []
@@ -12944,6 +12948,66 @@
         ],
         "additionalProperties": false
       },
+      "ElbBasic": {
+        "type": "object",
+        "properties": {
+          "elbId": {
+            "type": "string",
+            "example": "my-alb"
+          },
+          "tagName": {
+            "type": "string",
+            "example": "my-load-balancer"
+          },
+          "dnsName": {
+            "type": "string",
+            "example": "my-alb-123456.us-east-1.elb.amazonaws.com"
+          },
+          "elbType": {
+            "type": "string",
+            "example": "application"
+          },
+          "elbState": {
+            "type": "string",
+            "example": "active"
+          },
+          "elbScheme": {
+            "type": "string",
+            "example": "internet-facing"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ElbDetail": {
+        "type": "object",
+        "properties": {
+          "elbBasic": {
+            "$ref": "#/components/schemas/ElbBasic"
+          },
+          "elbListeners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "elbConfig": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "elbProperty": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "userTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagItem"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "SubnetBasic": {
         "type": "object",
         "properties": {
@@ -13765,6 +13829,51 @@
           "eniNum": {
             "type": "integer",
             "example": 3
+          },
+          "userTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagItem"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RouteTableDetail": {
+        "type": "object",
+        "properties": {
+          "rtbId": {
+            "type": "string",
+            "example": "rtb-040ac5d25869f45ab"
+          },
+          "tagName": {
+            "type": "string",
+            "example": "route-nat-easyun"
+          },
+          "vpcId": {
+            "type": "string",
+            "example": "vpc-057f0e3d715c24147"
+          },
+          "associations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "propagateVgws": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           },
           "userTags": {
             "type": "array",

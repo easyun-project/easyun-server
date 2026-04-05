@@ -39,17 +39,27 @@ class RouteTable(object):
         rtb = self.rtbObj
         try:
             userTags = [t for t in rtb.tags if t['Key'] not in ['Flag', 'Name']]
+            routes = []
+            for route in rtb.routes:
+                routes.append({
+                    'destinationCidr': route.destination_cidr_block,
+                    'gatewayId': route.gateway_id,
+                    'natGatewayId': route.nat_gateway_id,
+                    'state': route.state,
+                })
+            associations = []
+            for assoc in rtb.associations:
+                associations.append({
+                    'associationId': assoc.id,
+                    'subnetId': assoc.subnet_id,
+                    'main': assoc.main,
+                })
             rtbDetail = {
-                'rtbId': rtb.group_id,
+                'rtbId': rtb.id,
                 'tagName': self.tagName,
-                'rtbName': rtb.group_name,
-                'rtbDesc': rtb.description,
-                # Inbound Ip Permissions
-                'ibRulesNum': len(rtb.ip_permissions),
-                'ibPermissions': rtb.ip_permissions,
-                # Outbound Ip Permissions
-                'obRulesNum': len(rtb.ip_permissions_egress),
-                'obPermissions': rtb.ip_permissions_egress,
+                'vpcId': rtb.vpc_id,
+                'routes': routes,
+                'associations': associations,
                 'userTags': userTags,
             }
             return rtbDetail
@@ -59,17 +69,16 @@ class RouteTable(object):
     def delete(self):
         rtb = self.rtbObj
         try:
-            if rtb.group_name != 'default':
-                rtb.delete()
-            else:
-                raise ValueError('Can Not Delete the default SecurityGroup!')
+            # disassociate all non-main associations first
+            for assoc in rtb.associations:
+                if not assoc.main:
+                    assoc.delete()
+            rtb.delete()
             oprtRes = {
-                'operation': 'Delete SecurityGroup',
+                'operation': 'Delete RouteTable',
                 'rtbId': self.id,
-                'rtbName': self.rtbName,
                 'tagName': self.tagName,
             }
-            # del self
             return oprtRes
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))

@@ -10,7 +10,7 @@ from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_load_balancer
-from .schemas import ElbDetailItem, ElbBriefItem
+from .schemas import ElbDetailItem, ElbBriefItem, ElbDetail
 from . import bp
 
 
@@ -57,9 +57,9 @@ def list_elb_brief(parm):
 @bp.get('/<elb_id>')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
-# @bp.output(ElbDetail, description='A Elb Detail Info')
+@bp.output(ElbDetail)
 def get_elb_detail(elb_id, parm):
-    '''获取指定负载均衡器(Elb)详细信息【to-be-done】'''
+    '''获取指定负载均衡器(ELB)详细信息'''
     dcName = parm.get('dc')
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)

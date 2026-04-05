@@ -6,6 +6,7 @@
 
 from apiflask import Schema
 from apiflask.fields import String, List, Dict, Nested
+from easyun.common.schemas import TagItem
 
 
 class ElbAzItem(Schema):
@@ -34,3 +35,20 @@ class ElbBriefItem(Schema):
     elbType = String(metadata={"example": "application"})
     elbState = String(metadata={"example": "active"})
     elbScheme = String(metadata={"example": "internet-facing"})
+
+
+class ElbBasic(Schema):
+    elbId = String(metadata={"example": "my-alb"})
+    tagName = String(metadata={"example": "my-load-balancer"})
+    dnsName = String(metadata={"example": "my-alb-123456.us-east-1.elb.amazonaws.com"})
+    elbType = String(metadata={"example": "application"})
+    elbState = String(metadata={"example": "active"})
+    elbScheme = String(metadata={"example": "internet-facing"})
+
+
+class ElbDetail(Schema):
+    elbBasic = Nested(ElbBasic)
+    elbListeners = List(Dict())
+    elbConfig = Dict()
+    elbProperty = Dict()
+    userTags = List(Nested(TagItem))

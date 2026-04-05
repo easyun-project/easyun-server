@@ -9,6 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.cloud.aws import get_datacenter, get_routetable
+from easyun.cloud.utils import gen_dc_tag
 from .schemas import AddRouteTableParm, DelRouteTableParm, RouteTableBasic, RouteTableModel, RouteTableDetail, DcMsgOut
 
 
@@ -52,9 +53,9 @@ def list_routetable_brief(parm):
 @bp.get('/<rtb_id>')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
-# @bp.output(RouteTableDetail, description='List DataCenter RouteTables Resources')
+@bp.output(RouteTableDetail)
 def get_routetable_detail(rtb_id, parm):
-    '''获取 指定RouteTable路由表详细信息【to-be-done】'''
+    '''获取指定 RouteTable 路由表详细信息'''
     dcName = parm['dc']
     try:
         rtb = get_routetable(rtb_id, dcName)
@@ -71,7 +72,7 @@ def get_routetable_detail(rtb_id, parm):
 @bp.input(DelRouteTableParm, arg_name='parms')
 @bp.output(DcMsgOut)
 def delete_routetable(parms):
-    '''删除 指定RouteTable路由表【to-be-done】'''
+    '''删除指定 RouteTable 路由表'''
     dcName = parms['dcName']
     rtbId = parms['rtbId']
     try:
@@ -89,13 +90,25 @@ def delete_routetable(parms):
 @bp.input(AddRouteTableParm, arg_name='parms')
 @bp.output(RouteTableModel)
 def add_routetable(parms):
-    '''新增 RouteTable路由表【to-be-done】'''
+    '''新增 RouteTable 路由表'''
     dcName = parms['dcName']
-
+    cidrBlock = parms.get('cidrBlock')
+    azName = parms.get('azName')
     try:
-        newRouteTable = 'developing'
-        resp = Result(detail=newRouteTable, status_code=200)
+        dc = get_datacenter(dcName)
+        vpc = dc._resource.Vpc(dc.vpc_id)
+        flagTag = gen_dc_tag(dcName)
+        nameTag = {"Key": "Name", "Value": parms.get('tagName', f'{dcName}-rtb')}
+        rtb = vpc.create_route_table(
+            TagSpecifications=[{'ResourceType': 'route-table', 'Tags': [flagTag, nameTag]}]
+        )
+        resp = Result(detail={
+            'rtbId': rtb.id,
+            'tagName': nameTag['Value'],
+            'vpcId': vpc.id,
+        }, status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=2011)
+        resp.err_resp()
         resp.err_resp()
