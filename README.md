@@ -31,9 +31,7 @@ $ cd Easyun/server
 
 create & activate virtual env then install dependency:
 ```
-$ python3 -m venv .venv
-$ source .venv/bin/activate  # use `.venv\Scripts\activate` on Windows
-$ pip install -r requirements/min.txt
+$ uv sync
 ```
 
 configure environment variables:
@@ -44,12 +42,12 @@ $ cp .env.example .env
 
 initialize database:
 ```
-$ flask initdb
+$ uv run flask initdb
 ```
 
 run:
 ```
-$ python3 run.py
+$ uv run python run.py
 ```
 
 api docs:
@@ -59,17 +57,17 @@ open url: http://127.0.0.1:6660/api/docs with browser
 
 1. 初始化数据库
 ```
-$ flask initdb
+$ uv run flask initdb
 ```
 2. 删除数据库
 ```
-$ flask dropdb
+$ uv run flask dropdb
 ```
 3. 迁移数据库
 ```
-$ flask db init       # 初始化migrate仓库
-$ flask db migrate -m "<your commit message>"  # 创建迁移脚本文件
-$ flask db upgrade    # 运行更新脚本迁移数据库
+$ uv run flask db init       # 初始化migrate仓库
+$ uv run flask db migrate -m "<your commit message>"  # 创建迁移脚本文件
+$ uv run flask db upgrade    # 运行更新脚本迁移数据库
 ```
 
 # 目录结构
