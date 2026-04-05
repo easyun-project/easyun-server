@@ -14,7 +14,7 @@ from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.common.dc_utils import set_boto3_region
 from easyun.providers.aws.resource.compute.ec2_ami import AMI_Windows, AMI_Linux
-from easyun.providers.aws.management.pricing import ec2_monthly_cost
+from easyun.providers.aws.management.sdk_pricing import ec2_monthly_cost
 from easyun.providers.aws.resource.compute.ec2_instype import Instance_Family, get_family_descode
 from .schemas import ImageItem, InsFamilyItem, InsTypeItem, InsTypeBriefItem
 from . import bp

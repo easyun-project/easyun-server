@@ -279,3 +279,96 @@ class AwsPricing(object):
         except Exception as ex:
             # logger.error(f"{self.__class__.__name__} exec failed. Error: {ex}'")
             return {self.__class__.__name__: str(ex)}
+
+
+# ---- 以下从 pricing.py 合并 ----
+
+# AWS Price API only support us-east-1, ap-south-1
+PRICE_REGION_LIST = ['us-east-1', 'ap-south-1']
+
+# Platform to Usage Operation mapping
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/billing-info-fields.html
+Platform_to_Operation = [
+    {'platformDetails': 'Linux/UNIX', 'usageOperation': 'RunInstances'},
+    {'platformDetails': 'Red Hat BYOL Linux', 'usageOperation': 'RunInstances:00g0'},
+    {'platformDetails': 'Red Hat Enterprise Linux', 'usageOperation': 'RunInstances:0010'},
+    {'platformDetails': 'Red Hat Enterprise Linux with HA', 'usageOperation': 'RunInstances:1010'},
+    {'platformDetails': 'Red Hat Enterprise Linux with SQL Server Standard and HA', 'usageOperation': 'RunInstances:1014'},
+    {'platformDetails': 'Red Hat Enterprise Linux with SQL Server Enterprise and HA', 'usageOperation': 'RunInstances:1110'},
+    {'platformDetails': 'Red Hat Enterprise Linux with SQL Server Standard', 'usageOperation': 'RunInstances:0014'},
+    {'platformDetails': 'Red Hat Enterprise Linux with SQL Server Web', 'usageOperation': 'RunInstances:0210'},
+    {'platformDetails': 'Red Hat Enterprise Linux with SQL Server Enterprise', 'usageOperation': 'RunInstances:0110'},
+    {'platformDetails': 'SQL Server Enterprise', 'usageOperation': 'RunInstances:0100'},
+    {'platformDetails': 'SQL Server Standard', 'usageOperation': 'RunInstances:0004'},
+    {'platformDetails': 'SQL Server Web', 'usageOperation': 'RunInstances:0200'},
+    {'platformDetails': 'SUSE Linux', 'usageOperation': 'RunInstances:000g'},
+    {'platformDetails': 'Windows', 'usageOperation': 'RunInstances:0002'},
+    {'platformDetails': 'Windows BYOL', 'usageOperation': 'RunInstances:0800'},
+    {'platformDetails': 'Windows with SQL Server Enterprise *', 'usageOperation': 'RunInstances:0102'},
+    {'platformDetails': 'Windows with SQL Server Standard', 'usageOperation': 'RunInstances:0006'},
+    {'platformDetails': 'Windows with SQL Server Web', 'usageOperation': 'RunInstances:0202'},
+]
+
+OS_Code_List = ['amzn2', 'ubuntu', 'debian', 'linux', 'rhel', 'sles', 'windows']
+
+
+# 模块级便捷函数（保持向后兼容）
+def get_attribute_values(service_code='AmazonEC2', attribute_name='instanceType'):
+    '''Retrieve available values for an attribute'''
+    client = boto3.client('pricing', region_name=PRICE_REGION_LIST[0])
+    valueList = []
+    args = {'ServiceCode': service_code, 'AttributeName': attribute_name}
+    while True:
+        resp = client.get_attribute_values(**args)
+        valueList.extend([a['Value'] for a in resp['AttributeValues']])
+        if 'NextToken' not in resp:
+            break
+        args['NextToken'] = resp['NextToken']
+    return valueList
+
+
+def ec2_monthly_cost(region, instype, os):
+    '''获取EC2的月度成本(单位时间Month)'''
+    if not os:
+        return None
+    try:
+        pricelist = _ec2_pricelist(region, instype, os)
+        unit = pricelist.get('unit')
+        currency = list(pricelist['pricePerUnit'].keys())[0]
+        unitPrice = pricelist['pricePerUnit'].get(currency)
+        if unit == 'Hrs':
+            monthPrice = float(unitPrice) * 730
+        return {'value': monthPrice, 'currency': currency}
+    except Exception as ex:
+        return ex
+
+
+def _ec2_pricelist(region, instype, os, soft='NA', option='OnDemand', tenancy='Shared'):
+    '''获取EC2的价格列表(单位时间Hrs)'''
+    os_map = {'amzn2': 'Linux', 'ubuntu': 'Linux', 'debian': 'Linux', 'linux': 'Linux',
+              'rhel': 'RHEL', 'sles': 'SUSE', 'windows': 'Windows'}
+    insOS = os_map.get(os, 'NA')
+
+    client = boto3.client('pricing', region_name=PRICE_REGION_LIST[0])
+    result = client.get_products(
+        ServiceCode='AmazonEC2',
+        Filters=[
+            {'Type': 'TERM_MATCH', 'Field': 'ServiceCode', 'Value': 'AmazonEC2'},
+            {'Type': 'TERM_MATCH', 'Field': 'locationType', 'Value': 'AWS Region'},
+            {'Type': 'TERM_MATCH', 'Field': 'capacitystatus', 'Value': 'UnusedCapacityReservation'},
+            {'Type': 'TERM_MATCH', 'Field': 'RegionCode', 'Value': region},
+            {'Type': 'TERM_MATCH', 'Field': 'marketoption', 'Value': option},
+            {'Type': 'TERM_MATCH', 'Field': 'tenancy', 'Value': tenancy},
+            {'Type': 'TERM_MATCH', 'Field': 'instanceType', 'Value': instype},
+            {'Type': 'TERM_MATCH', 'Field': 'operatingSystem', 'Value': insOS},
+            {'Type': 'TERM_MATCH', 'Field': 'preInstalledSw', 'Value': soft},
+        ],
+    )
+    if not result.get('PriceList'):
+        return 'Unmatched parameters'
+    prod = ast.literal_eval(result['PriceList'][0])
+    price1 = prod['terms'].get(option)
+    key1 = list(price1.keys())[0]
+    price2 = price1[key1]['priceDimensions']
+    key2 = list(price2.keys())[0]
+    return price2[key2]

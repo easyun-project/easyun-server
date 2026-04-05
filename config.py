@@ -16,6 +16,7 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///base.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback-key')
+    OPENAPI_VERSION = '3.0.3'
 
     # openapi.info.description
     DESCRIPTION = '''

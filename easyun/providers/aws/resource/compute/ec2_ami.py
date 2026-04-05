@@ -6,7 +6,7 @@
 """
 
 from easyun.libs.utils import load_json_config
-from easyun.providers.aws.management.pricing import get_attribute_values
+from easyun.providers.aws.management.sdk_pricing import get_attribute_values
 
 
 # 获取 windows ami 列表

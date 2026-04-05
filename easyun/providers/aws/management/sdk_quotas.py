@@ -113,3 +113,11 @@ class ServiceQuotas(object):
 
         except Exception as ex:
             return str(ex)
+
+
+# 模块级便捷函数（保持向后兼容）
+def get_quota_value(svc_code, quota_code):
+    '''Retrieve service quota's value'''
+    client_sq = boto3.client('service-quotas')
+    resp = client_sq.get_service_quota(ServiceCode=svc_code, QuotaCode=quota_code)['Quota']
+    return resp['Value']

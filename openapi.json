@@ -10991,7 +10991,7 @@
       }
     }
   },
-  "openapi": "3.1.0",
+  "openapi": "3.0.3",
   "components": {
     "schemas": {
       "UserModel": {
@@ -11541,7 +11541,11 @@
             "example": {
               "cidrBlock": "10.15.0.0/16"
             },
-            "$ref": "#/components/schemas/VpcParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VpcParm"
+              }
+            ]
           },
           "pubSubnet1": {
             "example": {
@@ -11551,7 +11555,11 @@
               "gwName": "easyun-igw",
               "routeTable": "easyun-rtb-igw"
             },
-            "$ref": "#/components/schemas/SubnetParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubnetParm"
+              }
+            ]
           },
           "pubSubnet2": {
             "example": {
@@ -11561,7 +11569,11 @@
               "gwName": "easyun-igw",
               "routeTable": "easyun-rtb-igw"
             },
-            "$ref": "#/components/schemas/SubnetParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubnetParm"
+              }
+            ]
           },
           "priSubnet1": {
             "example": {
@@ -11571,7 +11583,11 @@
               "gwName": "easyun-natgw",
               "routeTable": "easyun-rtb-nat"
             },
-            "$ref": "#/components/schemas/SubnetParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubnetParm"
+              }
+            ]
           },
           "priSubnet2": {
             "example": {
@@ -11581,7 +11597,11 @@
               "gwName": "easyun-natgw",
               "routeTable": "easyun-rtb-nat"
             },
-            "$ref": "#/components/schemas/SubnetParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubnetParm"
+              }
+            ]
           },
           "securityGroup0": {
             "example": {
@@ -11590,7 +11610,11 @@
               "enableSSH": true,
               "enableRDP": false
             },
-            "$ref": "#/components/schemas/SecGroupParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SecGroupParm"
+              }
+            ]
           },
           "securityGroup1": {
             "example": {
@@ -11599,7 +11623,11 @@
               "enableSSH": true,
               "enableRDP": false
             },
-            "$ref": "#/components/schemas/SecGroupParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SecGroupParm"
+              }
+            ]
           },
           "securityGroup2": {
             "example": {
@@ -11608,7 +11636,11 @@
               "enableSSH": true,
               "enableRDP": false
             },
-            "$ref": "#/components/schemas/SecGroupParm"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SecGroupParm"
+              }
+            ]
           },
           "createNatGW": {
             "type": "boolean",
@@ -11999,7 +12031,11 @@
               "status": "private",
               "description": "All objects are private"
             },
-            "$ref": "#/components/schemas/BucketAccess"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BucketAccess"
+              }
+            ]
           }
         },
         "required": [
@@ -14043,11 +14079,9 @@
             "items": {}
           },
           "msg": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "default": null
+            "type": "string",
+            "default": null,
+            "nullable": true
           }
         },
         "additionalProperties": false
