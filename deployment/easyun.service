@@ -1,0 +1,14 @@
+[Unit]
+Description=Easyun API Server
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/easyun-server
+ExecStart=/home/ec2-user/.local/bin/uv run python run.py
+Restart=always
+RestartSec=5
+Environment=FLASK_CONFIG=dev
+
+[Install]
+WantedBy=multi-user.target

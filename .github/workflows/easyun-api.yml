@@ -1,48 +1,31 @@
-name: Deploy-to-DevServer(ec2)
-# Controls when the workflow will run
+name: Deploy to Dev Server (EC2)
+
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches:
       - master
-  pull_request:
-    branches: 
-      - master
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  # This workflow contains a single job called "build"
   deploy:
-    name: Push easyun api to EC2 Instance
-    # The type of runner that the job will run on
+    name: Deploy easyun-server via SSM
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository, so your job can access it
-      - name: Code Checkout
-        uses: actions/checkout@v2
-      
-      - name: Deploy to my EC2 instance
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY_USEAST1 }}
-          SOURCE: "./"
-          REMOTE_HOST: ${{ secrets.IP_USEAST1 }}
-          REMOTE_USER: "ec2-user"
-          TARGET: "/home/ec2-user/easyun-server"
-          EXCLUDE: ".git/, .venv"
-          
-      - name: executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@master
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.IP_USEAST1 }}
-          username: "ec2-user"
-          key: ${{ secrets.EC2_SSH_KEY_USEAST1 }}
-          script: sudo systemctl restart easyun && sudo systemctl restart easyun-celery
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_DEPLOY_REGION }}
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Deploy via SSM
         run: |
-          echo Code update,
-          echo Easyun API restart.
+          aws ssm send-command \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["sudo -u ec2-user bash -c \"cd /home/ec2-user/easyun-server && git pull origin master && /home/ec2-user/.local/bin/uv sync\" && cp /home/ec2-user/easyun-server/deployment/easyun.service /etc/systemd/system/ && systemctl daemon-reload && systemctl restart easyun"]' \
+            --comment "GitHub Actions deploy" \
+            --output text
