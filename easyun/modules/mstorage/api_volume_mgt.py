@@ -191,31 +191,29 @@ def del_volume(parm):
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
 def attach_server(parm):
-    '''块存储关联云服务器(ec2)【ToBeFix】'''
-    resource_ec2 = boto3.resource('ec2')
-    thisVol = resource_ec2.Volume(parm['volumeId'])
-    # 判断 volume state
-    if thisVol.state == 'Available':
+    '''块存储关联云服务器(ec2)'''
+    try:
+        resource_ec2 = boto3.resource('ec2')
+        thisVol = resource_ec2.Volume(parm['volumeId'])
+        if thisVol.state != 'available':
+            resp = Result(message=f'Volume state is {thisVol.state}, must be available', status_code=5002, http_status_code=400)
+            return resp.err_resp()
         diskType = 'system' if parm['attachPath'] in SystemDisk else 'user'
-    if thisVol.state == 'In-use':
-        detachResult = thisVol.attach_to_instance(
+        attachResult = thisVol.attach_to_instance(
             InstanceId=parm["svrId"],
             Device=parm["attachPath"],
         )
-
-        # 返回增加 volume attachment相关信息
         volResp = {
             'attachSvr': parm["svrId"],
             'attachPath': parm["attachPath"],
             'diskType': diskType,
-            # 获取 volume状态更新
-            'volumeState': detachResult['State'],
+            'volumeState': attachResult['State'],
         }
-    else:
-        raise
-
-    response = Result(detail=volResp, status_code=200)
-    return response.make_resp()
+        response = Result(detail=volResp, status_code=200)
+        return response.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=5002, http_status_code=400)
+        resp.err_resp()
 
 
 @bp.put('/detach')
@@ -223,17 +221,19 @@ def attach_server(parm):
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
 def detach_server(parm):
-    '''块存储分离云服务器(ec2)【ToBeFix】'''
-    resource_ec2 = boto3.resource('ec2')
-    thisVol = resource_ec2.Volume(parm['volumeId'])
-    # 判断 volume state
-    if thisVol.state == 'In-use':
+    '''块存储分离云服务器(ec2)'''
+    try:
+        resource_ec2 = boto3.resource('ec2')
+        thisVol = resource_ec2.Volume(parm['volumeId'])
+        if thisVol.state != 'in-use':
+            resp = Result(message=f'Volume state is {thisVol.state}, must be in-use', status_code=5003, http_status_code=400)
+            return resp.err_resp()
         detachResult = thisVol.detach_from_instance(
             InstanceId=parm["svrId"],
             Device=parm["attachPath"],
         )
-    else:
-        raise
-
-    response = Result(detail=detachResult, status_code=200)
-    return response.make_resp()
+        response = Result(detail=detachResult, status_code=200)
+        return response.make_resp()
+    except Exception as ex:
+        resp = Result(message=str(ex), status_code=5003, http_status_code=400)
+        resp.err_resp()

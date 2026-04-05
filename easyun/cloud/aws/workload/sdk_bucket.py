@@ -181,7 +181,7 @@ class StorageBucket(object):
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
     def get_bkt_size_cw(self):
-        '''从Cloudwatch查询存储桶(bucket)总容量 【fix-me】'''
+        '''从Cloudwatch查询存储桶(bucket)总容量'''
         try:
             cw_client = self._session.client('cloudwatch')
             currTime = datetime.now()
@@ -190,7 +190,7 @@ class StorageBucket(object):
                 Namespace='AWS/S3',
                 MetricName='BucketSizeBytes',
                 Dimensions=[
-                    {'Name': 'bucketId', 'Value': self.id},
+                    {'Name': 'BucketName', 'Value': self.id},
                     {'Name': 'StorageType', 'Value': 'StandardStorage'},
                 ],
                 # Statistics=['SampleCount'|'Average'|'Sum'|'Minimum'|'Maximum',]

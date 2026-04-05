@@ -52,8 +52,6 @@ def create_dc_task(self, parm, user):
         )
     except Exception as ex:
         logger.error('[VPC]' + str(ex))
-        # 如果出错任务结束,更新状态为:FAILURE
-        # fix-me: 遇Exception 返回 update_state() 信息丢失
         self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2010}
 

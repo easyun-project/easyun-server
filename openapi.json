@@ -6261,7 +6261,7 @@
         "tags": [
           "\u5b58\u50a8\u7ba1\u7406.Volume"
         ],
-        "summary": "\u5757\u5b58\u50a8\u5173\u8054\u4e91\u670d\u52a1\u5668(ec2)\u3010ToBeFix\u3011",
+        "summary": "\u5757\u5b58\u50a8\u5173\u8054\u4e91\u670d\u52a1\u5668(ec2)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6355,7 +6355,7 @@
         "tags": [
           "\u5b58\u50a8\u7ba1\u7406.Volume"
         ],
-        "summary": "\u5757\u5b58\u50a8\u5206\u79bb\u4e91\u670d\u52a1\u5668(ec2)\u3010ToBeFix\u3011",
+        "summary": "\u5757\u5b58\u50a8\u5206\u79bb\u4e91\u670d\u52a1\u5668(ec2)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7369,7 +7369,7 @@
         "tags": [
           "\u5b58\u50a8\u7ba1\u7406.Bucket"
         ],
-        "summary": "\u67e5\u8be2\u5b58\u50a8\u6876\u540d\u79f0\u5168\u5c40\u8303\u56f4\u662f\u5426\u53ef\u7528\u3010fix-me\u3011",
+        "summary": "\u67e5\u8be2\u5b58\u50a8\u6876\u540d\u79f0\u5168\u5c40\u8303\u56f4\u662f\u5426\u53ef\u7528",
         "security": [
           {
             "BearerAuth": []

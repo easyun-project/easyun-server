@@ -26,7 +26,6 @@ def get_cloud_account(account_id=None):
 
 
 class CloudAccount(object):
-    # 【fix-me】
     def __init__(self, account_id):
         # self.session = get_easyun_session()
         self.id = account_id

@@ -234,7 +234,7 @@ def modify_bucket_policy(bucket_id, parms):
 @bp.input(BucketIdQuery, location='query', arg_name='parms')
 @bp.output(StMsgOut)
 def vaildate_bkt(parms):
-    '''查询存储桶名称全局范围是否可用【fix-me】'''
+    '''查询存储桶名称全局范围是否可用'''
     dcName = parms['dc']
     bucketId = parms['bkt']
     try:
