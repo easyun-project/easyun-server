@@ -11,18 +11,11 @@ from easyun import db
 # from ..session import get_easyun_session
 
 
-_CLOUD_ACCOUNT = None
-
-
 def get_cloud_account(account_id=None):
-    global _CLOUD_ACCOUNT
-    if _CLOUD_ACCOUNT is not None and _CLOUD_ACCOUNT.id == account_id:
-        return _CLOUD_ACCOUNT
-    else:
-        if account_id is None:
-            defAccount = Account.query.first()
-            account_id = defAccount.account_id
-        return CloudAccount(account_id)
+    if account_id is None:
+        defAccount = Account.query.first()
+        account_id = defAccount.account_id
+    return CloudAccount(account_id)
 
 
 class CloudAccount(object):

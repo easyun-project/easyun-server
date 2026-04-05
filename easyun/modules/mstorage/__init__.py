@@ -16,24 +16,13 @@ ver = '/api/v1'
 
 bp = APIBlueprint('存储管理', __name__, url_prefix=ver + '/storage')
 
-_ST_VOLUME = None
-_ST_BUCKET = None
-
 
 def get_st_volume(dcName):
-    global _ST_VOLUME
-    if _ST_VOLUME is not None and _ST_VOLUME.dcName == dcName:
-        return _ST_VOLUME
-    else:
-        return StorageVolume(dcName)
+    return StorageVolume(dcName)
 
 
 def get_st_bucket(dcName):
-    global _ST_BUCKET
-    if _ST_BUCKET is not None and _ST_BUCKET.dcName == dcName:
-        return _ST_BUCKET
-    else:
-        return StorageBucket(dcName)
+    return StorageBucket(dcName)
 
 
 @bp.get('/s3-region')

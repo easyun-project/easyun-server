@@ -9,16 +9,9 @@ from ec2_metadata import ec2_metadata
 from .aws import AWSCloud
 
 
-_AWS_CLOUD = None
-
-
 def get_cloud(account_id, region_type, provider='aws'):
     if provider == 'aws':
-        global _AWS_CLOUD
-        if _AWS_CLOUD is not None and _AWS_CLOUD.account_id == account_id:
-            return _AWS_CLOUD
-        else:
-            return AWSCloud(account_id, region_type)
+        return AWSCloud(account_id, region_type)
     else:
         # 获取其它云环境的CLOUD对象实例(待实现)
         pass

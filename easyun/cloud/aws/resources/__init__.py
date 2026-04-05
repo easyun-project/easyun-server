@@ -14,26 +14,8 @@ from ..session import get_easyun_session
 from easyun.cloud.utils import get_server_name
 
 
-# _EC2_SERVER = None
-_STORAGE_VOLUME = None
-# _STORAGE_BUCKET = None
-# _LOAD_BALANCER = None
-
-
-# def get_ec2_server(svr_id, dc_name):
-#     global _EC2_SERVER
-#     if _EC2_SERVER is not None and _EC2_SERVER.id == svr_id:
-#         return _EC2_SERVER
-#     else:
-#         return EC2Server(svr_id, dc_name)
-
-
 def get_st_volume(dcName):
-    global _STORAGE_VOLUME
-    if _STORAGE_VOLUME is not None and _STORAGE_VOLUME.dcName == dcName:
-        return _STORAGE_VOLUME
-    else:
-        return StorageVolume(dcName)
+    return StorageVolume(dcName)
 
 
 # def get_st_bucket(dcName):

@@ -13,15 +13,9 @@ from easyun.cloud.aws.session import get_easyun_session
 # 定义系统盘路径
 SYSTEM_DISK = ['/dev/xvda', '/dev/sda1']
 
-_EC2_RESOURCE = None
-
-
 def get_ec2_resource():
-    global _EC2_RESOURCE
-    if _EC2_RESOURCE is None:
-        eySession = get_easyun_session()
-        _EC2_RESOURCE = eySession.resource('ec2')
-    return _EC2_RESOURCE
+    session = get_easyun_session()
+    return session.resource('ec2')
 
 
 def gen_dc_tag(dc_name, type='flag'):
@@ -76,11 +70,9 @@ def query_dc_vpc(dc_name):
 
 
 def set_boto3_region(dc_name):
-    '''设置Boto3会话默认region,返回region name'''
+    '''查询 datacenter 对应的 region name（不再设置全局 session）'''
     thisDC: Datacenter = Datacenter.query.filter_by(name=dc_name).first()
     if thisDC:
-        # 设置 boto3 接口默认 region_name
-        boto3.setup_default_session(region_name=thisDC.region)
         return thisDC.region
     else:
         raise ValueError(f'{dc_name} does not exist !')

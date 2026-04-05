@@ -180,8 +180,8 @@ def create_dc_async(parm):
 
     # Check the prerequisites before create datacenter task
     try:
-        boto3.setup_default_session(region_name=dcRgeion)
-        resource_ec2 = boto3.resource('ec2')
+        session = boto3.Session(region_name=dcRgeion)
+        resource_ec2 = session.resource('ec2')
 
         # Check if the DC Name is available
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()

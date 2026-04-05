@@ -18,8 +18,9 @@ VolumeTypes = load_json_config('aws_ebs_types')
 
 class StorageVolume(object):
     def __init__(self, dcName):
-        set_boto3_region(dcName)
-        self._resource = boto3.resource('ec2')
+        dcRegion = set_boto3_region(dcName)
+        session = boto3.Session(region_name=dcRegion)
+        self._resource = session.resource('ec2')
         self._client = self._resource.meta.client
         self.dcName = dcName
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dcName]}

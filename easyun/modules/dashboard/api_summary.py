@@ -101,8 +101,6 @@ def summary_health(parm):
 def summary_resource(parm):
     '''获取所有IaaS资源 Summary信息'''
     dcName = parm['dc']
-    # 设置 boto3 接口默认 region_name
-    boto3.setup_default_session(region_name=DeployRegion)
 
     # Summary server
     serverList = query_inventory('server', dcName).get('data')

@@ -15,51 +15,24 @@ from ..session import get_easyun_session
 from easyun.cloud.utils import get_server_name
 
 
-_EC2_SERVER = None
-_STORAGE_VOLUME = None
-_STORAGE_BUCKET = None
-_DB_INSTANCE = None
-_LOAD_BALANCER = None
-
-
 def get_ec2_server(svr_id, dc_name):
-    global _EC2_SERVER
-    if _EC2_SERVER is not None and _EC2_SERVER.id == svr_id:
-        return _EC2_SERVER
-    else:
-        return EC2Server(svr_id, dc_name)
+    return EC2Server(svr_id, dc_name)
 
 
 def get_st_volume(volume_id, dc_name):
-    global _STORAGE_VOLUME
-    if _STORAGE_VOLUME is not None and _STORAGE_VOLUME.id == volume_id:
-        return _STORAGE_VOLUME
-    else:
-        return StorageVolume(volume_id, dc_name)
+    return StorageVolume(volume_id, dc_name)
 
 
 def get_st_bucket(bucket_id, dc_name=None):
-    global _STORAGE_BUCKET
-    if _STORAGE_BUCKET is not None and _STORAGE_BUCKET.id == bucket_id:
-        return _STORAGE_BUCKET
-    else:
-        return StorageBucket(bucket_id, dc_name)
+    return StorageBucket(bucket_id, dc_name)
 
 
 def get_db_instance(dbi_id, dc_name):
-    global _DB_INSTANCE
-    if _DB_INSTANCE is not None and _DB_INSTANCE.id == dbi_id:
-        return _DB_INSTANCE
-    else:
-        return DBInstance(dbi_id, dc_name)
+    return DBInstance(dbi_id, dc_name)
 
 
 def get_load_balancer(elb_id, dc_name):
-    global _LOAD_BALANCER
-    if _LOAD_BALANCER is not None and _LOAD_BALANCER.id == elb_id:
-        return _LOAD_BALANCER
-    else:
-        return LoadBalancer(elb_id, dc_name)
+    return LoadBalancer(elb_id, dc_name)
 
 
 class Workload(object):

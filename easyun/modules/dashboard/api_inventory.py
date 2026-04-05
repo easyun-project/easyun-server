@@ -59,11 +59,6 @@ def get_inventory(resource, parm):
     #获取查询参数 ?dc=xxx ,默认值‘Easyun’
     dcName = parm.get('dc')
     try:
-        # thisDC = Datacenter.query.filter_by(name=dcName).first()
-        # dcRegion = thisDC.get_region()
-        # 设置 boto3 接口默认 region_name
-        boto3.setup_default_session(region_name = DeployRegion)
-
         inventoryList = [
             query_inventory('server', dcName),
             query_inventory('st_object', dcName),
