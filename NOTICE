@@ -1,0 +1,18 @@
+Easyun Server
+Copyright 2022 Easyun Contributors
+
+This product includes software developed by third parties:
+
+- Flask (BSD-3-Clause) - https://flask.palletsprojects.com/
+- APIFlask (MIT) - https://apiflask.com/
+- Flask-SQLAlchemy (BSD) - https://flask-sqlalchemy.palletsprojects.com/
+- Flask-Migrate (MIT) - https://flask-migrate.readthedocs.io/
+- Flask-Cors (MIT) - https://github.com/corydolphin/flask-cors
+- marshmallow (MIT) - https://marshmallow.readthedocs.io/
+- apispec (MIT) - https://github.com/marshmallow-code/apispec
+- webargs (MIT) - https://github.com/marshmallow-code/webargs
+- boto3 (Apache-2.0) - https://github.com/boto/boto3
+- python-dotenv (BSD-3-Clause) - https://github.com/theskumar/python-dotenv
+- Werkzeug (BSD-3-Clause) - https://werkzeug.palletsprojects.com/
+- Jinja2 (BSD) - https://jinja.palletsprojects.com/
+- click (BSD-3-Clause) - https://click.palletsprojects.com/

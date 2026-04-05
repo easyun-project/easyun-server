@@ -1,107 +1,91 @@
-# 说明
+# Easyun Server
 
-- 以 Python 3.10+ 为开发语言
-- 采用 APIFlask 3.x 轻量级 Python Web API 框架
-- 支持从 marshmallow / Pydantic schemas 自动生成 API 文档：
-    * Swagger UI path： '/api/docs'
-- 自动生成 OpenAPI spec 文件（路径：/openapi.json ）
-- 引入 Marshmallow 库实现数据类型相互转换（序列化/反序列化/校验）
-- 采用 AWS SDK for Python (Boto3) 创建、管理各项AWS服务/资源
-- 采用 Cloud Control API 对受支持资源通过统一的方法实现生命周期管理
-- 基于蓝图(Blueprint)对功能模块进行拆分，一个目录/文件就是一个功能模块
+[中文文档](docs/README_zh.md)
 
-## 技术栈
+AWS cloud resource management platform — API server.
 
-| 组件 | 版本 |
+- Python 3.12+, built with APIFlask (lightweight Flask-based API framework)
+- Auto-generated OpenAPI spec and Swagger UI at `/api/docs`
+- Data validation via marshmallow schemas
+- AWS resource management via Boto3 SDK
+- Multi-cloud ready architecture with provider abstraction layer
+
+## Tech Stack
+
+| Component | Version |
 |---|---|
+| Python | ≥3.12 |
 | Flask | 3.1 |
-| APIFlask | 3.0 |
+| APIFlask | 3.1 |
 | Flask-SQLAlchemy | 3.1 |
 | Flask-Migrate | 4.1 |
-| Marshmallow | 4.x |
-| Boto3 | 1.36+ |
+| marshmallow | 4.x |
+| boto3 | 1.36+ |
+| uv | Package manager |
 
-## 启动项目
+## Quick Start
 
-clone:
-```
-$ git clone https://github.com/aleck31/Easyun.git
-$ cd Easyun/server
-```
+```bash
+git clone https://github.com/aleck31/Easyun.git
+cd Easyun/server
 
-create & activate virtual env then install dependency:
-```
-$ uv sync
-```
+# Install dependencies
+uv sync
 
-configure environment variables:
-```
-$ cp .env.example .env
-# edit .env to set your own SECRET_KEY, database URI, etc.
-```
+# Configure environment
+cp .env.example .env
+# Edit .env to set SECRET_KEY, database URI, etc.
 
-initialize database:
-```
-$ uv run flask initdb
+# Initialize database
+uv run flask initdb
+
+# Run
+uv run python run.py
 ```
 
-run:
-```
-$ uv run python run.py
-```
+API docs: http://127.0.0.1:6660/api/docs
 
-api docs:
-open url: http://127.0.0.1:6660/api/docs with browser
-
-### 相关命令
-
-1. 初始化数据库
-```
-$ uv run flask initdb
-```
-2. 删除数据库
-```
-$ uv run flask dropdb
-```
-3. 迁移数据库
-```
-$ uv run flask db init       # 初始化migrate仓库
-$ uv run flask db migrate -m "<your commit message>"  # 创建迁移脚本文件
-$ uv run flask db upgrade    # 运行更新脚本迁移数据库
-```
-
-# 目录结构
+## Project Structure
 
 ```
-└─server
-    ├─.venv                     本地虚拟环境
-    ├─easyun                
-    │  ├─common                 通用组件
-    │  │  ├─auth.py             认证模块
-    │  │  ├─models.py           模型定义
-    │  │  ├─schemas.py          Schema定义
-    │  │  ├─result.py           返回响应体定义
-    │  │  └─init_db.py          数据库初始化
-    │  ├─libs                   工具库
-    │  │  ├─task_manager.py     异步任务管理
-    │  │  ├─log/                日志模块
-    │  │  └─utils.py            公共工具
-    │  ├─cloud                  云平台功能组件
-    │  ├─config                 AWS配置文件(JSON)
-    │  ├─base.db                数据库文件       
-    │  └─modules                功能模块
-    │     ├─account             账户管理BP
-    │     ├─dashboard           监控面板BP
-    │     ├─datacenter          数据中心管理BP
-    │     ├─mbackup             备份管理BP
-    │     ├─mserver             服务器管理BP
-    │     ├─mstorage            存储管理BP
-    │     ├─mdatabase           数据库管理BP
-    │     └─mloadbalancer       负载均衡BP
-    ├─deployment                应用部署   
-    ├─logs                      运行日志
-    ├─requirements              环境依赖
-    ├─migrations                数据库migration文件 
-    ├─config.py                 配置文件
-    └─run.py                    启动脚本
+easyun-server/
+├── easyun/                         # Main package
+│   ├── common/                     # Shared components (auth, models, schemas)
+│   ├── providers/                  # Cloud provider SDK (multi-cloud architecture)
+│   │   ├── base.py                 # Abstract base classes
+│   │   └── aws/                    # AWS implementation
+│   │       ├── resource/           # Cloud resources by type
+│   │       │   ├── compute/        # EC2, AMI, Instance Types
+│   │       │   ├── storage/        # S3, EBS
+│   │       │   ├── network/        # VPC, Subnet, SG, ELB, etc.
+│   │       │   └── database/       # RDS
+│   │       └── management/         # Pricing, Quotas, Cost, Tagging
+│   ├── modules/                    # API blueprints
+│   │   ├── dashboard/              # Monitoring dashboard
+│   │   ├── datacenter/             # VPC / datacenter management
+│   │   ├── mserver/                # EC2 server management
+│   │   ├── mstorage/               # S3 + EBS storage management
+│   │   ├── mdatabase/              # RDS database management
+│   │   ├── mloadbalancer/          # ELB management
+│   │   └── account/                # Account & keypair management
+│   └── libs/                       # Utilities (task manager, logging)
+├── config.py                       # Flask configuration
+├── run.py                          # Entry point
+└── pyproject.toml                  # Project config (uv)
 ```
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Commit your changes (`git commit -m 'feat: add some feature'`)
+4. Push to the branch (`git push origin feat/my-feature`)
+5. Open a Pull Request
+
+Please follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `docs:`, `build:`
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).

@@ -13,7 +13,7 @@ from easyun.providers.aws.region import get_region_codes
 
 class LoginParm(Schema):
     username = String(required=True, validate=Length(3, 20), metadata={"example": 'demo'})
-    password = String(required=True, validate=Length(5, 30), metadata={"example": 'Passw0rd'})
+    password = String(required=True, validate=Length(5, 30), metadata={"example": 'easyun'})
 
 
 class UsernameParm(Schema):
@@ -21,7 +21,7 @@ class UsernameParm(Schema):
 
 
 class PasswordParm(Schema):
-    password = String(required=True, validate=Length(5, 20), metadata={"example": "Passw0rd"})
+    password = String(required=True, validate=Length(5, 20), metadata={"example": "easyun"})
 
 
 class AccountBasic(Schema):
