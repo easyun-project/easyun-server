@@ -10,7 +10,7 @@ from apiflask import Schema
 from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Integer, Field
 from apiflask.validators import Length, OneOf, Regexp
 from easyun.common.schemas import TagItem
-from easyun.cloud.aws_region import get_region_codes
+from easyun.cloud.aws.region import get_region_codes
 
 
 # 定义获取DC默认值的query参数

@@ -12,7 +12,7 @@ from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.cloud.aws import get_datacenter
 from easyun.cloud.aws.workload import get_st_volume, get_ec2_server
-from easyun.cloud.utils import get_disk_type
+from easyun.cloud.aws.utils import get_disk_type
 from .schemas import StMsgOut, VolumeModel, VolumeBasic, VolumeDetail, AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
 
@@ -36,7 +36,7 @@ def list_volume_detail(parm):
         # vol = get_st_volume(dcName)
         # volumeList = vol.list_all_volume()
         dc = get_datacenter(dcName)
-        volumeList = dc.resources.list_all_volume()
+        volumeList = dc.workload.list_all_volume()
 
         resp = Result(detail=volumeList, status_code=200)
         return resp.make_resp()
@@ -60,7 +60,7 @@ def list_volume_brief(parm):
         # vol = get_st_volume(dcName)
         # volumeList = vol.get_volume_list()
         dc = get_datacenter(dcName)
-        volumeList = dc.resources.get_volume_list()
+        volumeList = dc.workload.get_volume_list()
 
         resp = Result(detail=volumeList, status_code=200)
         return resp.make_resp()

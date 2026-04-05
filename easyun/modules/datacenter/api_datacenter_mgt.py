@@ -15,8 +15,8 @@ from easyun.common.models import Datacenter, Account
 from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.libs.task_manager import run_async, get_task
-from easyun.cloud.aws_quota import get_quota_value
-from easyun.cloud.utils import set_boto3_region
+from easyun.cloud.aws.quota import get_quota_value
+from easyun.cloud.aws.utils import set_boto3_region
 from easyun.cloud.aws.sdk_tagging import ResGroupTagging
 from .schemas import (
     DefaultParmQuery,

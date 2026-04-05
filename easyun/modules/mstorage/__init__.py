@@ -7,22 +7,12 @@ from easyun.common.models import Account
 from easyun.common.result import Result
 from easyun.common.schemas import RegionModel
 from easyun.cloud import get_cloud
-from easyun.cloud.aws.workload import StorageBucket
-from easyun.cloud.aws.resources import StorageVolume
 
 
 # define api version
 ver = '/api/v1'
 
 bp = APIBlueprint('存储管理', __name__, url_prefix=ver + '/storage')
-
-
-def get_st_volume(dcName):
-    return StorageVolume(dcName)
-
-
-def get_st_bucket(dcName):
-    return StorageBucket(dcName)
 
 
 @bp.get('/s3-region')

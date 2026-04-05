@@ -12,7 +12,7 @@ from .sdk_bucket import StorageBucket, query_bucket_flag
 from .sdk_database import DBInstance
 from .sdk_loadbalancer import LoadBalancer
 from ..session import get_easyun_session
-from easyun.cloud.utils import get_server_name
+from easyun.cloud.aws.utils import get_server_name
 
 
 def get_ec2_server(svr_id, dc_name):

@@ -5,7 +5,6 @@
   @auth:    aleck
 """
 
-import boto3
 from easyun.common.models import Datacenter
 from easyun.cloud.aws.session import get_easyun_session
 

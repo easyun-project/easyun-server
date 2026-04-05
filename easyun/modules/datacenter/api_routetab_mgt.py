@@ -9,7 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.cloud.aws import get_datacenter, get_routetable
-from easyun.cloud.utils import gen_dc_tag
+from easyun.cloud.aws.utils import gen_dc_tag
 from .schemas import AddRouteTableParm, DelRouteTableParm, RouteTableBasic, RouteTableModel, RouteTableDetail, DcMsgOut
 
 

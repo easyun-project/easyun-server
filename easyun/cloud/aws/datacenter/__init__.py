@@ -8,14 +8,13 @@
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
 from easyun.libs.utils import len_iter
-from ..utils import get_easyun_session
+from ..session import get_easyun_session
 from .sdk_subnet import Subnet
 from .sdk_routetable import RouteTable
 from .sdk_secgroup import SecurityGroup
 from .sdk_staticip import StaticIP
 from .sdk_gateway import InternetGateway, NatGateway
 from ..workload import Workload
-from ..resources import Resources
 from ..sdk_tagging import ResGroupTagging
 from ..utils import get_subnet_type, get_eni_type, get_tag_name
 
@@ -33,7 +32,6 @@ class DataCenter(object):
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
         self.workload = Workload(dc_name)
         self.tagging = ResGroupTagging(dc_name)
-        self.resources = Resources(dc_name)
 
     def get_azone_list(self):
         try:

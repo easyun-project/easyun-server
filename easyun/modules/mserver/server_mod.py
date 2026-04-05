@@ -8,7 +8,7 @@ from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Boolean
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.cloud.utils import query_dc_region, get_server_name
+from easyun.cloud.aws.utils import query_dc_region, get_server_name
 from .schemas import ModSvrNameParm, SvrTagNameItem, ModSvrProtectionParm, SvrProtectionOut, MsgOut
 from . import bp, REGION
 

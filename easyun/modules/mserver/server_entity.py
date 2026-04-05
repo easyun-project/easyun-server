@@ -13,7 +13,7 @@ from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import TagItem
-from easyun.cloud.aws_ec2_ami import AMI_Windows, AMI_Linux
+from easyun.cloud.aws.ec2_ami import AMI_Windows, AMI_Linux
 from .schemas import SvrEntityOut, SvrInstypeParam, MsgOut
 from . import bp
 

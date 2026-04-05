@@ -11,7 +11,7 @@ from easyun.common.result import Result
 from easyun.common.models import Account, Datacenter
 from easyun.common.schemas import DcNameQuery
 from easyun.libs.utils import filter_list_by_key
-from easyun.cloud.aws_region import AWS_Regions, query_country_code, query_region_name
+from easyun.cloud.aws.region import AWS_Regions, query_country_code, query_region_name
 from .api_inventory import query_inventory
 from .models import Boto3_Cloudwatch
 from .schemas import AzSummaryItem, HealthSummaryOut, ResourceSumItem

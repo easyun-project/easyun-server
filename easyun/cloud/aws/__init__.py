@@ -8,7 +8,7 @@
 from botocore.exceptions import ClientError
 from easyun.common.models import Datacenter
 from .session import get_easyun_session
-from ..aws_region import query_country_code, query_region_name
+from .region import query_country_code, query_region_name
 from .datacenter import DataCenter, Subnet, RouteTable, InternetGateway, NatGateway, SecurityGroup, StaticIP
 
 

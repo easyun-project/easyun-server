@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
 # from easyun.libs.utils import len_iter
 from easyun.common.models import Account
-from ...utils import get_easyun_session
+from ..session import get_easyun_session
 
 
 def get_st_object(object_key, bucket_id):
