@@ -88,6 +88,7 @@ def set_freetier_reminder(parms):
 @bp.get('/reminder/credit')
 @bp.auth_required(auth_token)
 @bp.input(FreeTierQuery, location='query', arg_name='parm')
+@bp.output(FreeTierInfo)
 def get_credit_reminder(parm):
     '''获取云账号的Credits提醒【to-be-done】'''
     accountId = parm.get('account_id')
@@ -104,6 +105,7 @@ def get_credit_reminder(parm):
 @bp.put('/reminder/credit')
 @bp.auth_required(auth_token)
 @bp.input(FreeTierParm, location='query', arg_name='parms')
+@bp.output(FreeTierInfo)
 def set_credit_reminder(parms):
     '''设置云账号的Credits提醒【to-be-done】'''
     accountId = parms.get('accountId')

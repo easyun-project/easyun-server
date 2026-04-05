@@ -41,7 +41,7 @@ class BucketOptions(Schema):
 
 S3_REPORT_NAME_PATTERN = "[0-9A-Za-z!\\-_.*\'()]+"
 S3_PREFIX_PATTERN = "[0-9A-Za-z!\\-_.*\\'()/]*"
-BUCKET_NANE_PATTERN = "(?!^(\d{1,3}\.){3}\d{1,3}$)(^[a-z0-9]([a-z0-9-]*(\.[a-z0-9])?)*$)"
+BUCKET_NANE_PATTERN = r"(?!^(\d{1,3}\.){3}\d{1,3}$)(^[a-z0-9]([a-z0-9-]*(\.[a-z0-9])?)*$)"
 VOLUME_TYPES = ['gp2', 'gp3', 'io1', 'io2', 'sc1', 'st1', 'standard']
 
 class AddBucketParm(Schema):
@@ -110,6 +110,17 @@ class BucketPermission(Schema):
 class BucketProperty(Schema):
     isEncryption = Boolean(required=True, metadata={"example": False})
     isVersioning = Boolean(required=True, metadata={"example": False})
+
+
+class BucketPropertyOut(Schema):
+    bucketId = String(metadata={"example": "my-bucket"})
+    isEncryption = Boolean(metadata={"example": False})
+    isVersioning = Boolean(metadata={"example": False})
+
+
+class BucketPermissionOut(Schema):
+    bucketId = String(metadata={"example": "my-bucket"})
+    bucketPermission = Nested(BucketPermission)
 
 
 class BucketDetail(Schema):

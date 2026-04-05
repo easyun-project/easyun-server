@@ -3910,7 +3910,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/MsgOut"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -7007,7 +7009,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/MsgOut"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -7396,7 +7400,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/FreeTierInfo"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -7505,7 +7511,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/FreeTierInfo"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -10326,7 +10334,7 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/BucketProperty1"
+                      "$ref": "#/components/schemas/BucketPropertyOut"
                     },
                     "status_code": {
                       "type": "integer"
@@ -10579,7 +10587,7 @@
                       "type": "string"
                     },
                     "detail": {
-                      "$ref": "#/components/schemas/BucketPermission1"
+                      "$ref": "#/components/schemas/BucketPermissionOut"
                     },
                     "status_code": {
                       "type": "integer"
@@ -10722,7 +10730,9 @@
                     "message": {
                       "type": "string"
                     },
-                    "detail": {},
+                    "detail": {
+                      "$ref": "#/components/schemas/ObjectContents"
+                    },
                     "status_code": {
                       "type": "integer"
                     },
@@ -13225,6 +13235,29 @@
         },
         "additionalProperties": false
       },
+      "FreeTierInfo": {
+        "type": "object",
+        "properties": {
+          "isReminderOn": {
+            "type": "boolean",
+            "example": true
+          },
+          "activeDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2022-02-27"
+          },
+          "remainDays": {
+            "type": "integer",
+            "example": 180
+          },
+          "iconColor": {
+            "type": "string",
+            "example": "green"
+          }
+        },
+        "additionalProperties": false
+      },
       "AzSummaryBrief": {
         "type": "object",
         "properties": {
@@ -13392,29 +13425,6 @@
           "familyDes": {
             "type": "string",
             "example": "General purpose"
-          }
-        },
-        "additionalProperties": false
-      },
-      "FreeTierInfo": {
-        "type": "object",
-        "properties": {
-          "isReminderOn": {
-            "type": "boolean",
-            "example": true
-          },
-          "activeDate": {
-            "type": "string",
-            "format": "date",
-            "example": "2022-02-27"
-          },
-          "remainDays": {
-            "type": "integer",
-            "example": 180
-          },
-          "iconColor": {
-            "type": "string",
-            "example": "green"
           }
         },
         "additionalProperties": false
@@ -13814,9 +13824,13 @@
         ],
         "additionalProperties": false
       },
-      "BucketProperty1": {
+      "BucketPropertyOut": {
         "type": "object",
         "properties": {
+          "bucketId": {
+            "type": "string",
+            "example": "my-bucket"
+          },
           "isEncryption": {
             "type": "boolean",
             "example": false
@@ -13826,10 +13840,6 @@
             "example": false
           }
         },
-        "required": [
-          "isEncryption",
-          "isVersioning"
-        ],
         "additionalProperties": false
       },
       "BucketPropertyParm": {
@@ -13846,30 +13856,15 @@
         },
         "additionalProperties": false
       },
-      "BucketPermission1": {
+      "BucketPermissionOut": {
         "type": "object",
         "properties": {
-          "status": {
+          "bucketId": {
             "type": "string",
-            "example": "private"
+            "example": "my-bucket"
           },
-          "description": {
-            "type": "string",
-            "example": "All objects are private"
-          },
-          "bucketACL": {
-            "type": "string",
-            "example": "private"
-          },
-          "pubBlockConfig": {
-            "type": "object",
-            "example": {
-              "isBlockNewAcls": true,
-              "isBlockAllAcls": true,
-              "isBlockNewPolicy": true,
-              "isBlockAllPolicy": true
-            },
-            "additionalProperties": {}
+          "bucketPermission": {
+            "$ref": "#/components/schemas/BucketPermission"
           }
         },
         "additionalProperties": false

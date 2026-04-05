@@ -40,6 +40,7 @@ def get_object_list(bucket_id, parm):
 @bp.get('/<bucket_id>/<object_key>')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='bucket_id')
+@bp.output(ObjectContents)
 def get_object_detail(bucket_id, object_key, parm):
     '''获取指定存储桶(Bucket)内单个对象文件信息【to-be-done】'''
     dcName = parm['dc']

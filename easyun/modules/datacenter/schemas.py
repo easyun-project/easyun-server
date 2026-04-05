@@ -58,7 +58,7 @@ class SubnetParm(Schema):
 
 
 # 定义新建Datacenter 传参格式
-DATACENTER_NANE_PATTERN = "(?!^(\d{1,3}\.){3}\d{1,3}$)(^[a-zA-Z0-9]([a-zA-Z0-9-]*(\.[a-zA-Z0-9])?)*$)"
+DATACENTER_NANE_PATTERN = r"(?!^(\d{1,3}\.){3}\d{1,3}$)(^[a-zA-Z0-9]([a-zA-Z0-9-]*(\.[a-zA-Z0-9])?)*$)"
 
 
 class AddDataCenterParm(Schema):

@@ -7,7 +7,7 @@
 
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
-from easyun.common.schemas import RegionCodeQuery
+from easyun.common.schemas import RegionCodeQuery, MsgOut
 from easyun.common.result import Result
 from easyun.libs.utils import load_json_config
 from easyun.cloud.aws.sdk_quotas import ServiceQuotas
@@ -60,6 +60,7 @@ def get_region_quota(parm):
 
 @bp.get('/quota/all')
 @bp.auth_required(auth_token)
+@bp.output(MsgOut)
 def get_account_quota():
     '''获取云账号下资源配额【to-be-done】'''
     pass
