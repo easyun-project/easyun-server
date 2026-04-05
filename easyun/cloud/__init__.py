@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  AWS Basic function
-  @desc:    Contains some basic cloud functions
+  @module:  Cloud Provider Entry
+  @desc:    Multi-cloud entry point. Currently supports AWS only.
   @auth:    aleck
 """
 import boto3
