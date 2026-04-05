@@ -3,7 +3,7 @@
 @Description: Server Management - Get info: Server list, Server detail
 @LastEditors: 
 '''
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
@@ -47,10 +47,10 @@ def list_server_detail(parm):
 
     try:
         # vpc = resource_ec2.Vpc(dcVPC)
-        client_ec2 = boto3.client('ec2')
+        client_ec2 = get_easyun_client('ec2')
 
         # 通过 ec2.instances.filter() 接口获取 instance 对象列表
-        resource_ec2 = boto3.resource('ec2')       
+        resource_ec2 = get_easyun_resource('ec2')       
         svrIterator = resource_ec2.instances.filter(
             Filters=[filterTag],
         )        
@@ -130,7 +130,7 @@ def list_server_brief(parm):
 
     try:
         # 通过 ec2.instances.filter() 接口获取 instance 对象列表
-        resource_ec2 = boto3.resource('ec2')       
+        resource_ec2 = get_easyun_resource('ec2')       
         svrIterator = resource_ec2.instances.filter(
             Filters=[
                 {'Name': 'tag:Flag', 'Values': [dcName]},

@@ -3,7 +3,7 @@
 @Description: Server Management - action: start, restart, stop, delete; and get status
 @LastEditors: 
 '''
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 # EmptySchema removed in APIFlask 3.x, use {} instead
@@ -37,7 +37,7 @@ def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
     # print(operate)
     try:
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         servers = resource_ec2.instances.filter(
             InstanceIds=operate["svr_ids"]
             )
@@ -89,7 +89,7 @@ def operate_svr(operate):
 def delete_svr(parm):
     '''删除(Terminate)云服务器'''
     try:
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         servers = resource_ec2.instances.filter(
             InstanceIds=parm["svrIds"],
             # Filters=[

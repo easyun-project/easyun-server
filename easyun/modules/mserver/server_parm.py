@@ -4,7 +4,7 @@
   @desc:    Get parameters to create new server, like: AMI id,instance type
   @auth:    
 """
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Nested
 from apiflask.validators import Length, OneOf
@@ -61,7 +61,7 @@ def list_images( parms ):
     try:
         # 设置 boto3 接口默认 region_name
         dcRegion = set_boto3_region( dcName )
-        client_ec2 = boto3.client('ec2')
+        client_ec2 = get_easyun_client('ec2')
 
         # No paginator needed for describe_images
         images = client_ec2.describe_images(
@@ -208,7 +208,7 @@ def get_ins_type_list(parm):
         # this_dc = Datacenter(name=dcname)
         thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
         dcRegion = thisDC.get_region()
-        client_ec2 = boto3.client('ec2', region_name = dcRegion)
+        client_ec2 = get_easyun_client('ec2', region_name=dcRegion)
         # 基于NextToken判断获取完整 instance types 列表
         desc_args = {
             'Filters' : filters,
@@ -291,7 +291,7 @@ def list_ins_types(parm):
     try:
         thisDC = Datacenter.query.filter_by(name = parm['dc']).first()
         dcRegion = thisDC.get_region()
-        client_ec2 = boto3.client('ec2', region_name = dcRegion)
+        client_ec2 = get_easyun_client('ec2', region_name=dcRegion)
         # 基于NextToken判断获取完整 instance types 列表
         describe_args = {}
         instypeList = []

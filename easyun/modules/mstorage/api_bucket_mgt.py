@@ -5,7 +5,7 @@
   @auth:
 """
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_client
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
@@ -149,7 +149,7 @@ def add_bucket_cc(parm):
         )
     try:
         # 调cloudtontro接口创建bucket
-        client_cc = boto3.client('cloudcontrol', region_name=bktRegion)
+        client_cc = get_easyun_client('cloudcontrol', region_name=bktRegion)
         bucket = client_cc.create_resource(
             TypeName='AWS::S3::Bucket', DesiredState=str(desiredState)
         )

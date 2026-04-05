@@ -5,13 +5,13 @@
   @author:  xdq
 """
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 
 
 class Boto3_Cloudwatch:
-    def __init__(self, region=boto3.session.Session().region_name):
+    def __init__(self, region=None):
         self._region = region
-        self._client = boto3.client('cloudwatch', region_name=region)
+        self._client = get_easyun_client('cloudwatch', region_name=region)
 
     def get_alarms(self):
         alarms = {
@@ -55,8 +55,8 @@ class Boto3_Cloudwatch:
 
 class Boto3_DynamoDB:
     def __init__(self, region_name='us-east-1'):
-        self._resource = boto3.resource('dynamodb', region_name=region_name)
-        self._client = boto3.client('dynamodb')
+        self._resource = get_easyun_resource('dynamodb', region_name=region_name)
+        self._client = get_easyun_client('dynamodb', region_name=region_name)
 
     def get_table_names(self):
         dynamodb_client = self._client

@@ -4,7 +4,7 @@
   @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
   @auth:    aleck
 """
-import boto3
+from easyun.cloud.aws.session import get_easyun_resource
 from easyun.libs.utils import load_json_config
 from datetime import datetime
 from easyun import db
@@ -27,7 +27,7 @@ def create_dc_task(self, parm, user):
     flagTag = gen_dc_tag(dcName)
 
     # boto3.setup_default_session(region_name = dcRgeion )
-    resource_ec2 = boto3.resource('ec2', region_name=dcRgeion)
+    resource_ec2 = get_easyun_resource('ec2', region_name=dcRgeion)
 
     # Step 0:  Check the prerequisites for creating new datacenter
     # 移到任务执行前检测

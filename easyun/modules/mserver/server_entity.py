@@ -5,10 +5,11 @@
   @auth:    
 """
 
-import boto3
+
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import TagItem
@@ -65,12 +66,12 @@ class DetailOut(Schema):
 # @output(DetailOut, description='Server detail info')
 def get_server_detail(svr_id):
     '''获取指定云服务器详情信息'''
-    CLIENT = boto3.client('ec2')
+    CLIENT = get_easyun_client('ec2')
     try:
         instance = CLIENT.describe_instances(InstanceIds=[svr_id])
 
         instance_res = [j for i in instance['Reservations'] for j in i['Instances']][0]
-        ec2 = boto3.resource('ec2')
+        ec2 = get_easyun_resource('ec2')
         instance_res1 = ec2.Instance(instance_res['InstanceId'])
 
         instance_type = CLIENT.describe_instance_types(
@@ -206,7 +207,7 @@ def get_ins_types(svr_id):
     '''获取指定云服务器实例参数 [测试]'''
     # 用于查询受支持的Instance Family列表)
     try:
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
         instypeParam = {
             'insArch': thisSvr.architecture,
@@ -237,8 +238,8 @@ class DiskInfoIn(Schema):
 def attach_disk(param):
     '''云服务器关联与解绑磁盘(volume)'''
     try:
-        # CLIENT = boto3.client('ec2')
-        RESOURCE = boto3.resource('ec2')
+        # CLIENT = get_easyun_client('ec2')
+        RESOURCE = get_easyun_resource('ec2')
         volume = RESOURCE.Volume(param['volumeId'])
         # waiter = CLIENT.get_waiter('volume_available')
         # waiter.wait(
@@ -283,8 +284,8 @@ def attach_disk(param):
 # def detach_disk(param):
 #     '''云服务器分离磁盘(volume)'''
 #     try:
-#         CLIENT = boto3.client('ec2')
-#         RESOURCE = boto3.resource('ec2')
+#         CLIENT = get_easyun_client('ec2')
+#         RESOURCE = get_easyun_resource('ec2')
 #         # server =RESOURCE.Instance(param['svrId'])
 #         disks = CLIENT.describe_instances(InstanceIds=[param['svrId']])['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
 #         vid = [i['Ebs']['VolumeId'] for i in disks if i['DeviceName'] == param['diskPath']]
@@ -341,7 +342,7 @@ class EipAttachInfoIn(Schema):
 def attach_eip(param):
     '''云服务器关联和解绑静态IP(eip)'''
     try:
-        CLIENT = boto3.client('ec2')
+        CLIENT = get_easyun_client('ec2')
         if param["action"] == "attach":
             CLIENT.associate_address(
                 InstanceId=param['svrId'],
@@ -376,7 +377,7 @@ def attach_eip(param):
 # def detach_eip(param):
 #     '''云服务器分离静态IP(eip)'''
 #     try:
-#         CLIENT = boto3.client('ec2')
+#         CLIENT = get_easyun_client('ec2')
 #         publicIp = CLIENT.describe_addresses(
 #             PublicIps = [param['publicIp']],
 #         )
@@ -412,7 +413,7 @@ class SgAttachInfoIn(Schema):
 def attach_secgroup(param):
     '''云服务器关联和解绑安全组(secgroup)'''
     try:
-        ec2 = boto3.resource('ec2')
+        ec2 = get_easyun_resource('ec2')
         if param["action"] == "attach":
             for network_interface in ec2.Instance(param['svrId']).network_interfaces:
                 group_ids = [group['GroupId'] for group in network_interface.groups]
@@ -451,7 +452,7 @@ def attach_secgroup(param):
 # def detach_secgroup(param):
 #     '''云服务器解绑安全组(secgroup)'''
 #     try:
-#         ec2 = boto3.resource('ec2')
+#         ec2 = get_easyun_resource('ec2')
 #         for network_interface in ec2.Instance(param['svrId']).network_interfaces:
 #             group_ids = [group['GroupId'] for group in network_interface.groups]
 #             if param['secgroupId'] in group_ids:
@@ -474,7 +475,7 @@ def attach_secgroup(param):
 def list_svr_tags(svr_id):
     '''获取指定云服务器的用户Tags'''
     try:
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
         userTags = [
             tag
@@ -505,7 +506,7 @@ def mod_svr_tags(svr_id, parm):
         if parm["Key"] == 'Flag':
             raise ValueError('Flag tag unsupported')
 
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
         newTags = thisSvr.create_tags(Tags=[parm])
         userTags = [t for t in thisSvr.tags if t['Key'] != "Flag"]
@@ -527,7 +528,7 @@ def del_svr_tags(svr_id, parm):
         if parm["Key"] == 'Flag':
             raise ValueError('Flag tag unsupported')
 
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         thisSvr = resource_ec2.Instance(svr_id)
         delTags = thisSvr.delete_tags(Tags=[parm])
 

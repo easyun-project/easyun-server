@@ -3,7 +3,7 @@
 @Description: Server Management - Add new server
 @LastEditors: 
 '''
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 # EmptySchema removed in APIFlask 3.x, use {} instead 
 from apiflask.fields import Integer, String, List, Dict
@@ -59,7 +59,7 @@ def add_server(parm):
         thisDC = Datacenter.query.filter_by(name = parm['dcName']).first()
         dcRegion = thisDC.get_region()
 
-        resource_ec2 = boto3.resource('ec2', region_name = dcRegion)
+        resource_ec2 = get_easyun_resource('ec2', region_name=dcRegion)
         servers = resource_ec2.create_instances(
             MaxCount = parm['svrNumber'],
             MinCount = parm['svrNumber'],

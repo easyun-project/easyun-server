@@ -1,6 +1,6 @@
 from io import BytesIO
 from typing import List
-import boto3
+from easyun.cloud.aws.session import get_easyun_client
 from datetime import date, timedelta
 from flask import send_file
 from flask.views import MethodView, Schema
@@ -15,7 +15,7 @@ from . import TYPE, bp, FLAG
 
 
 def get_bucket_Region(bucketId):
-    client = boto3.client('s3')
+    client = get_easyun_client('s3')
     response = client.get_bucket_location(
         Bucket = bucketId
     )
@@ -33,7 +33,7 @@ class S3_Buckets(MethodView):
     # 获取 Easyun Bucket 列表
     def get(self):
         try:
-            CLIENT = boto3.client('resourcegroupstaggingapi') 
+            CLIENT = get_easyun_client('resourcegroupstaggingapi') 
             response = CLIENT.get_resources(TagFilters=[{'Key': 'Flag','Values':['Easyun']}],ResourceTypeFilters=['s3']) 
             buckets = response['ResourceTagMappingList']
             bucketsName = []
@@ -46,7 +46,7 @@ class S3_Buckets(MethodView):
                 bucketRegion = get_bucket_Region(name)
                 try:
                     # 获取存储桶的权限
-                    client = boto3.client('s3')
+                    client = get_easyun_client('s3')
                     access = client.get_public_access_block(Bucket=name)
                     if access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == False or access['PublicAccessBlockConfiguration']['IgnorePublicAcls'] == False or access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == False or access['PublicAccessBlockConfiguration']['BlockPublicPolicy'] == False:
                         bucketStatus = 'Objects can be public'
@@ -104,7 +104,7 @@ class S3_Buckets(MethodView):
                 'PublicAccessBlockConfiguration' : {'BlockPublicAcls': False, 'BlockPublicPolicy' : False, 'IgnorePublicAcls' : False, 'RestrictPublicBuckets' : False}
             }
             region = data.get('region')
-            CLIENT = boto3.client('cloudcontrol', region_name=region)
+            CLIENT = get_easyun_client('cloudcontrol', region_name=region)
             # 通过boto3发起请求
             bucket = CLIENT.create_resource(
                 TypeName = TYPE,

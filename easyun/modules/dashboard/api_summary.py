@@ -5,7 +5,7 @@
   @auth:    
 """
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.models import Account, Datacenter
@@ -37,7 +37,7 @@ def summary_dc(parm):
         "name": regionDict.get('regionName')['eng'],
     }
 
-    client_ec2 = boto3.client('ec2', region_name=dcRegion)
+    client_ec2 = get_easyun_client('ec2', region_name=dcRegion)
     azs = client_ec2.describe_availability_zones()
 
     summaryList = []

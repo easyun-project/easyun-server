@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """dashboard model views."""
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from botocore.exceptions import ClientError
 from apiflask import Schema
 from flask import send_file
@@ -26,7 +26,7 @@ def list_keypair(parm):
     dcName=parm['dc']
     try:
         dcRegion = set_boto3_region(dcName)
-        client_ec2 = boto3.client('ec2')
+        client_ec2 = get_easyun_client('ec2')
         filterTag = gen_dc_tag(dcName, 'filter')
         keys = client_ec2.describe_key_pairs(
             Filters=[ filterTag ],
@@ -71,7 +71,7 @@ def list_keypair_brief(parm):
     dcName=parm['dc']
     try:
         dcRegion = set_boto3_region(dcName)
-        client_ec2 = boto3.client('ec2')
+        client_ec2 = get_easyun_client('ec2')
         filterTag = gen_dc_tag(dcName, 'filter')
         keys = client_ec2.describe_key_pairs(
             Filters=[filterTag],
@@ -110,7 +110,7 @@ def get_keypair(key_name, parm):
     dcName=parm['dc']    
     try:
         dcRegion = query_dc_region(dcName)
-        resource_ec2 = boto3.resource('ec2', region_name=dcRegion)
+        resource_ec2 = get_easyun_resource('ec2', region_name=dcRegion)
         # thisKeyinfo = resource_ec2.KeyPairInfo(key_name)
         # explain: https://github.com/boto/boto3/issues/1945#issuecomment-492803349
         thisKey = resource_ec2.KeyPair(key_name)        
@@ -155,7 +155,7 @@ def add_keypair(parm):
     try:
         #Step1: 在 datacenter对应region新建 keypair
         dcRegion = query_dc_region(dcName)
-        resource_ec2 = boto3.resource('ec2', region_name=dcRegion)
+        resource_ec2 = get_easyun_resource('ec2', region_name=dcRegion)
         flagTag = gen_dc_tag(dcName)
 
         keyPair = resource_ec2.create_key_pair(
@@ -216,7 +216,7 @@ def del_keypair(parm):
     #Step1: 将 keypair 从cloud删除    
     try:
         dcRegion = query_dc_region(dcName)
-        client_ec2 = boto3.client('ec2', region_name=dcRegion)        
+        client_ec2 = get_easyun_client('ec2', region_name=dcRegion)        
         client_ec2.delete_key_pair(KeyName=keyName)
     except Exception as ex:
         resp = Result(

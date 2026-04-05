@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_resource
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
@@ -167,7 +167,7 @@ def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
         # dcRegion = set_boto3_region(dcName)
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         deleteList = []
         for volumeId in parm['volumeIds']:
             thisVol = resource_ec2.Volume(volumeId)
@@ -193,7 +193,7 @@ def del_volume(parm):
 def attach_server(parm):
     '''块存储关联云服务器(ec2)'''
     try:
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         thisVol = resource_ec2.Volume(parm['volumeId'])
         if thisVol.state != 'available':
             resp = Result(message=f'Volume state is {thisVol.state}, must be available', status_code=5002, http_status_code=400)
@@ -223,7 +223,7 @@ def attach_server(parm):
 def detach_server(parm):
     '''块存储分离云服务器(ec2)'''
     try:
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
         thisVol = resource_ec2.Volume(parm['volumeId'])
         if thisVol.state != 'in-use':
             resp = Result(message=f'Volume state is {thisVol.state}, must be in-use', status_code=5003, http_status_code=400)

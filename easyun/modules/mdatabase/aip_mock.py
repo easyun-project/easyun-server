@@ -5,7 +5,6 @@
   @auth:    
 """
 
-import boto3
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length, OneOf

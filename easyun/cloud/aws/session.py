@@ -19,3 +19,25 @@ def get_easyun_session(dc_name=None):
         return boto3.session.Session(region_name=thisDC.region)
     else:
         raise ValueError(f'{dc_name} does not exist !')
+
+
+def get_easyun_client(service, dc_name=None, region_name=None):
+    '''创建 boto3 client，优先用 dc_name 查 region，其次用 region_name'''
+    if dc_name:
+        session = get_easyun_session(dc_name)
+    elif region_name:
+        session = boto3.session.Session(region_name=region_name)
+    else:
+        session = boto3.session.Session()
+    return session.client(service)
+
+
+def get_easyun_resource(service, dc_name=None, region_name=None):
+    '''创建 boto3 resource，优先用 dc_name 查 region，其次用 region_name'''
+    if dc_name:
+        session = get_easyun_session(dc_name)
+    elif region_name:
+        session = boto3.session.Session(region_name=region_name)
+    else:
+        session = boto3.session.Session()
+    return session.resource(service)

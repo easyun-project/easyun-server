@@ -3,7 +3,7 @@
 @Description: Server Management - Modify: Name, Instance type, 
 @LastEditors: 
 '''
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict, Boolean
 from easyun.common.auth import auth_token
@@ -46,7 +46,7 @@ def update_svr_name(parms):
     try:
         nameTag = {'Key': 'Name', 'Value': parms["svrName"]}
 
-        resource_ec2 = boto3.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2')
 
         svrList = []
         if len(parms['svrIds']) > 0:
@@ -78,7 +78,7 @@ ModSvrNameParm
 def update_svr_protection(parms):
     '''修改指定云服务器protection'''
     try:
-        ec2 = boto3.resource('ec2')
+        ec2 = get_easyun_resource('ec2')
         successIds = []
         if len(parms['svrIds']) > 0:
             instances = ec2.instances.filter(
@@ -89,7 +89,7 @@ def update_svr_protection(parms):
             value = True if parms['action'] == 'disable' else False
             
             for instance in instances:
-                # CLIENT = boto3.client('ec2')
+                # CLIENT = get_easyun_client('ec2')
                 # tmp = CLIENT.describe_instance_attribute(InstanceId = instance.id,Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
                 # print(tmp)
                 ec2.Instance(instance.id).modify_attribute(
@@ -143,7 +143,7 @@ class ConfigIn(Schema):
 def update_config(new):
     '''修改指定云服务器实例配置'''
     try: 
-        RESOURCE = boto3.resource('ec2', region_name=REGION)
+        RESOURCE = get_easyun_resource('ec2', region_name=REGION)
         ####有的实例是没有subnet_id的
         servers = RESOURCE.instances.filter(
             InstanceIds=new["svr_ids"]
@@ -176,7 +176,7 @@ def update_config(new):
 # # @output()
 # def get_ins_types(svr_id):
 #     '''查询指定云服务器的实例配置'''
-#     RESOURCE = boto3.resource('ec2', region_name=REGION)
+#     RESOURCE = get_easyun_resource('ec2', region_name=REGION)
 #     # 1.查询云服务器的架构 x86-64bit / arm-64bit
 #     server = RESOURCE.Instance(svr_id)
 

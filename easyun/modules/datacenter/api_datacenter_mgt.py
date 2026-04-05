@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_client, get_easyun_resource
 from botocore.exceptions import ClientError
 from flask import current_app
 from easyun import log
@@ -55,7 +55,7 @@ def get_default_parms(parm):
             inputRegion = curr_account.get_region()
 
         # get az list
-        client_ec2 = boto3.client('ec2', region_name=inputRegion)
+        client_ec2 = get_easyun_client('ec2', region_name=inputRegion)
         azs = client_ec2.describe_availability_zones()
         azList = [az['ZoneName'] for az in azs['AvailabilityZones']]
 
@@ -180,8 +180,7 @@ def create_dc_async(parm):
 
     # Check the prerequisites before create datacenter task
     try:
-        session = boto3.Session(region_name=dcRgeion)
-        resource_ec2 = session.resource('ec2')
+        resource_ec2 = get_easyun_resource('ec2', region_name=dcRgeion)
 
         # Check if the DC Name is available
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()

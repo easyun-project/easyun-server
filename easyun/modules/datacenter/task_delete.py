@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-import boto3
+from easyun.cloud.aws.session import get_easyun_resource
 from botocore.exceptions import ClientError
 from easyun import db
 from easyun.common.models import Datacenter
@@ -21,7 +21,7 @@ def delete_dc_task(self, parm, region):
     try:
         # Datacenter basic attribute define
         dcName = parm['dcName']
-        resource_ec2 = boto3.resource('ec2', region_name=region)
+        resource_ec2 = get_easyun_resource('ec2', region_name=region)
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
         thisVPC = resource_ec2.Vpc(thisDC.vpc_id)
         try:
