@@ -2,11 +2,10 @@
 """
   @module:  AWS EC2 Images (AMI)
   @desc:    Define basic attributes of AWS EC2 in this file.
-  @auth:    aleck
 """
 
 from easyun.libs.utils import load_json_config
-from easyun.providers.aws.management.sdk_pricing import get_attribute_values
+from easyun.providers.aws.management.sdk_pricing import AwsPricing
 
 
 # 获取 windows ami 列表
@@ -16,7 +15,7 @@ AMI_Windows = load_json_config('aws_ec2_ami').get('windows')
 AMI_Linux = load_json_config('aws_ec2_ami').get('linux')
 
 # 全部受支持的 AMI Operating System 列表
-OperatingSystemALL = get_attribute_values('AmazonEC2', 'operatingSystem')
+OperatingSystemALL = AwsPricing().get_attribute_values('AmazonEC2', 'operatingSystem')
 
 
 def split_ami_name(imgName, platform):

@@ -2,7 +2,6 @@
 """
   @module:  Subnet SDK Module
   @desc:    AWS SDK Boto3 Subnet Client and Resource Wrapper.
-  @auth:
 """
 
 from botocore.exceptions import ClientError
@@ -10,7 +9,9 @@ from easyun.libs.utils import len_iter
 from ...session import get_easyun_session
 
 
-class Subnet(object):
+from easyun.providers.base import SubnetBase
+
+class Subnet(SubnetBase):
     def __init__(self, sub_id, dc_name=None):
         session = get_easyun_session(dc_name)
         self.id = sub_id
@@ -71,6 +72,12 @@ class Subnet(object):
             return subnetDetail
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_tags(self):
+        try:
+            return [t for t in self.subnetObj.tags if t["Key"] not in ["Flag"]]
+        except Exception:
+            return []
 
     def delete(self):
         subnet = self.subnetObj

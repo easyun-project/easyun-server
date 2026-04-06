@@ -14,7 +14,7 @@ from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from easyun.common.dc_utils import set_boto3_region
 from easyun.providers.aws.resource.compute.ec2_ami import AMI_Windows, AMI_Linux
-from easyun.providers.aws.management.sdk_pricing import ec2_monthly_cost
+from easyun.providers.aws.management.sdk_pricing import AwsPricing
 from easyun.providers.aws.resource.compute.ec2_instype import Instance_Family, get_family_descode
 from .schemas import ImageItem, InsFamilyItem, InsTypeItem, InsTypeBriefItem
 from . import bp
@@ -271,6 +271,7 @@ class InsTypeQuery(Schema):
 @bp.output(InsTypeItem(many=True))
 def list_ins_types(parm):
     '''获取可用的Instance Types列表(含月度成本)'''
+    pricing = AwsPricing()
     insArch = parm['arch']
     insFamily = parm['family']
     if insFamily == 'all':
@@ -309,7 +310,7 @@ def list_ins_types(parm):
                     "memSize": i['MemoryInfo']['SizeInMiB']/1024,
                     # "Memory": "{} GiB".format(i['MemoryInfo']['SizeInMiB']/1024),
                     "netSpeed": i['NetworkInfo']['NetworkPerformance'],                    
-                    "monthPrice": ec2_monthly_cost(dcRegion,i['InstanceType'], parm.get('os')),
+                    "monthPrice": pricing.ec2_monthly_cost(dcRegion,i['InstanceType'], parm.get('os')),
                 }
                 instypeList.append(tmp)
             if 'NextToken' not in result:

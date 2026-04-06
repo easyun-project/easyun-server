@@ -12,7 +12,7 @@ class Config(object):
     # Put any configurations here that are common across all environments
     TESTING = False
     HOST = os.environ.get('FLASK_HOST', '0.0.0.0')
-    PORT = int(os.environ.get('FLASK_PORT', 6660))
+    PORT = int(os.environ.get('FLASK_PORT', 8443))
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///base.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback-key')

@@ -2,14 +2,15 @@
 """
   @module:  Load balancer SDK Module
   @desc:    AWS SDK Boto3 Loadbalancer(ELB v2) Client and Resource Wrapper.
-  @auth:
 """
 
 from botocore.exceptions import ClientError
 from ...session import get_easyun_session
 
 
-class LoadBalancer(object):
+from easyun.providers.base import LoadBalancerBase
+
+class LoadBalancer(LoadBalancerBase):
     def __init__(self, elb_id, dc_name=None):
         self.id = elb_id
         session = get_easyun_session(dc_name)
@@ -59,6 +60,24 @@ class LoadBalancer(object):
                 'userTags': userTags,
             }
             return elbDetail
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_listeners(self):
+        '''获取负载均衡器的监听器列表'''
+        try:
+            return self._client.describe_listeners(
+                LoadBalancerArn=self.arn
+            )['Listeners']
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_target_groups(self):
+        '''获取负载均衡器的目标组列表'''
+        try:
+            return self._client.describe_target_groups(
+                LoadBalancerArn=self.arn
+            )['TargetGroups']
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 

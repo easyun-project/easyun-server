@@ -2,10 +2,8 @@
 """
   @module:  Block Storage Module
   @desc:    块存储(EBS) Volume 卷管理相关
-  @auth:    aleck
 """
 
-from easyun.providers.aws.session import get_easyun_resource
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
@@ -166,14 +164,11 @@ def add_volume(parms):
 def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
-        # dcRegion = set_boto3_region(dcName)
-        resource_ec2 = get_easyun_resource('ec2')
         deleteList = []
         for volumeId in parm['volumeIds']:
-            thisVol = resource_ec2.Volume(volumeId)
-            # 判断 volume state
-            if thisVol.state == 'available':
-                thisVol.delete()  # Returns  None
+            vol = get_st_volume(volumeId, parm.get('dcName'))
+            if vol.volObj.state == 'available':
+                vol.delete()
                 deleteResult = {volumeId: 'success deleted'}
             else:
                 deleteResult = {volumeId: 'failed, volume in-use'}
@@ -191,15 +186,14 @@ def del_volume(parm):
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
 def attach_server(parm):
-    '''块存储关联云服务器(ec2)'''
+    '''块存储关联云服务器'''
     try:
-        resource_ec2 = get_easyun_resource('ec2')
-        thisVol = resource_ec2.Volume(parm['volumeId'])
-        if thisVol.state != 'available':
-            resp = Result(message=f'Volume state is {thisVol.state}, must be available', status_code=5002, http_status_code=400)
+        vol = get_st_volume(parm['volumeId'], parm.get('dcName'))
+        if vol.volObj.state != 'available':
+            resp = Result(message=f'Volume state is {vol.volObj.state}, must be available', status_code=5002, http_status_code=400)
             return resp.err_resp()
         diskType = 'system' if parm['attachPath'] in SystemDisk else 'user'
-        attachResult = thisVol.attach_to_instance(
+        vol.volObj.attach_to_instance(
             InstanceId=parm["svrId"],
             Device=parm["attachPath"],
         )
@@ -207,7 +201,7 @@ def attach_server(parm):
             'attachSvr': parm["svrId"],
             'attachPath': parm["attachPath"],
             'diskType': diskType,
-            'volumeState': attachResult['State'],
+            'volumeState': 'attaching',
         }
         response = Result(detail=volResp, status_code=200)
         return response.make_resp()
@@ -223,16 +217,15 @@ def attach_server(parm):
 def detach_server(parm):
     '''块存储分离云服务器(ec2)'''
     try:
-        resource_ec2 = get_easyun_resource('ec2')
-        thisVol = resource_ec2.Volume(parm['volumeId'])
-        if thisVol.state != 'in-use':
-            resp = Result(message=f'Volume state is {thisVol.state}, must be in-use', status_code=5003, http_status_code=400)
+        vol = get_st_volume(parm['volumeId'], parm.get('dcName'))
+        if vol.volObj.state != 'in-use':
+            resp = Result(message=f'Volume state is {vol.volObj.state}, must be in-use', status_code=5003, http_status_code=400)
             return resp.err_resp()
-        detachResult = thisVol.detach_from_instance(
+        vol.volObj.detach_from_instance(
             InstanceId=parm["svrId"],
             Device=parm["attachPath"],
         )
-        response = Result(detail=detachResult, status_code=200)
+        response = Result(detail={'volumeId': parm['volumeId'], 'volumeState': 'detaching'}, status_code=200)
         return response.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=5003, http_status_code=400)

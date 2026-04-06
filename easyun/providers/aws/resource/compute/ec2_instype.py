@@ -2,17 +2,17 @@
 """
   @module:  AWS ec2 instance types
   @desc:    Define basic attributes of AWS EC2 in this file.
-  @auth:    aleck
 """
+
 from easyun.libs.utils import load_json_config
-from easyun.providers.aws.management.sdk_pricing import get_attribute_values
+from easyun.providers.aws.management.sdk_pricing import AwsPricing
 
 
 # 获取 EC2 Instance Family 列表
 Instance_Family = load_json_config('aws_ec2_family')
 
 '''全部受支持的Instance Tpye列表'''
-InstanceTypeALL = get_attribute_values('AmazonEC2', 'instanceType')
+InstanceTypeALL = AwsPricing().get_attribute_values('AmazonEC2', 'instanceType')
 
 
 def get_family_descode(parm):

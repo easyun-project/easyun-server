@@ -2,14 +2,15 @@
 """
   @module:  Database SDK Module
   @desc:    AWS SDK Boto3 Database(RDS) Client and Resource Wrapper.
-  @auth:    aleck
 """
 
 from botocore.exceptions import ClientError
 from ...session import get_easyun_session
 
 
-class DBInstance(object):
+from easyun.providers.base import DatabaseInstanceBase
+
+class DBInstance(DatabaseInstanceBase):
     def __init__(self, dbi_id, dc_name=None):
         self.id = dbi_id
         session = get_easyun_session(dc_name)
@@ -48,3 +49,20 @@ class DBInstance(object):
             return dbiItem
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, ex)
+
+    def get_tags(self):
+        try:
+            return [t for t in self.dbiDict.get("TagList", []) if t["Key"] not in ["Flag"]]
+        except Exception:
+            return []
+
+    def delete(self):
+        '''delete the db instance'''
+        try:
+            resp = self._client.delete_db_instance(
+                DBInstanceIdentifier=self.id,
+                SkipFinalSnapshot=True,
+            )
+            return {'dbiId': self.id, 'status': resp['DBInstance']['DBInstanceStatus']}
+        except ClientError as ex:
+            return '%s: %s' % (self.__class__.__name__, str(ex))

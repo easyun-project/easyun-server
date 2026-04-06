@@ -6386,7 +6386,7 @@
         "tags": [
           "\u5b58\u50a8\u7ba1\u7406.Volume"
         ],
-        "summary": "\u5757\u5b58\u50a8\u5173\u8054\u4e91\u670d\u52a1\u5668(ec2)",
+        "summary": "\u5757\u5b58\u50a8\u5173\u8054\u4e91\u670d\u52a1\u5668",
         "requestBody": {
           "content": {
             "application/json": {
@@ -10486,6 +10486,16 @@
               "type": "string"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -10737,6 +10747,16 @@
             "name": "bucket_id",
             "schema": {
               "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
             },
             "required": true
           }

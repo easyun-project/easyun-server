@@ -12,26 +12,35 @@ class CloudProvider(ABC):
 
     @abstractmethod
     def get_session(self, dc_name=None):
-        """获取云平台 session"""
         ...
 
     @abstractmethod
     def get_client(self, service, **kwargs):
-        """获取服务 client"""
         ...
 
     @abstractmethod
     def get_resource(self, service, **kwargs):
-        """获取服务 resource"""
         ...
 
 
-class DataCenterBase(ABC):
-    """数据中心（虚拟网络）抽象基类"""
+class ResourceBase(ABC):
+    """云资源通用基类"""
 
     @abstractmethod
     def get_detail(self) -> dict:
         ...
+
+    @abstractmethod
+    def get_tags(self) -> list:
+        ...
+
+    @abstractmethod
+    def delete(self) -> dict:
+        ...
+
+
+class DataCenterBase(ResourceBase):
+    """数据中心（虚拟网络）"""
 
     @abstractmethod
     def list_subnets(self) -> list:
@@ -46,40 +55,33 @@ class DataCenterBase(ABC):
         ...
 
     @abstractmethod
-    def delete(self) -> dict:
-        ...
-
-
-class SubnetBase(ABC):
-    """子网抽象基类"""
-
-    @abstractmethod
-    def get_detail(self) -> dict:
+    def list_gateways(self) -> list:
         ...
 
     @abstractmethod
-    def delete(self) -> dict:
+    def list_static_ips(self) -> list:
         ...
 
 
-class SecurityGroupBase(ABC):
-    """安全组抽象基类"""
+class SubnetBase(ResourceBase):
+    """子网"""
+    pass
+
+
+class SecurityGroupBase(ResourceBase):
+    """安全组"""
 
     @abstractmethod
-    def get_detail(self) -> dict:
+    def add_rule(self, rule) -> dict:
         ...
 
     @abstractmethod
-    def delete(self) -> dict:
+    def remove_rule(self, rule_id) -> dict:
         ...
 
 
-class ComputeInstanceBase(ABC):
-    """计算实例抽象基类"""
-
-    @abstractmethod
-    def get_detail(self) -> dict:
-        ...
+class ComputeInstanceBase(ResourceBase):
+    """计算实例"""
 
     @abstractmethod
     def start(self) -> dict:
@@ -90,28 +92,20 @@ class ComputeInstanceBase(ABC):
         ...
 
     @abstractmethod
-    def delete(self) -> dict:
+    def reboot(self) -> dict:
         ...
 
 
-class StorageBucketBase(ABC):
-    """对象存储抽象基类"""
+class StorageBucketBase(ResourceBase):
+    """对象存储"""
 
     @abstractmethod
-    def get_detail(self) -> dict:
-        ...
-
-    @abstractmethod
-    def delete(self) -> dict:
+    def list_objects(self) -> list:
         ...
 
 
-class StorageVolumeBase(ABC):
-    """块存储抽象基类"""
-
-    @abstractmethod
-    def get_detail(self) -> dict:
-        ...
+class StorageVolumeBase(ResourceBase):
+    """块存储"""
 
     @abstractmethod
     def attach(self, instance_id, device) -> dict:
@@ -121,30 +115,19 @@ class StorageVolumeBase(ABC):
     def detach(self) -> dict:
         ...
 
-    @abstractmethod
-    def delete(self) -> dict:
-        ...
+
+class DatabaseInstanceBase(ResourceBase):
+    """数据库实例"""
+    pass
 
 
-class DatabaseInstanceBase(ABC):
-    """数据库实例抽象基类"""
-
-    @abstractmethod
-    def get_detail(self) -> dict:
-        ...
+class LoadBalancerBase(ResourceBase):
+    """负载均衡"""
 
     @abstractmethod
-    def delete(self) -> dict:
-        ...
-
-
-class LoadBalancerBase(ABC):
-    """负载均衡抽象基类"""
-
-    @abstractmethod
-    def get_detail(self) -> dict:
+    def get_listeners(self) -> list:
         ...
 
     @abstractmethod
-    def delete(self) -> dict:
+    def get_target_groups(self) -> list:
         ...

@@ -2,10 +2,10 @@
 """
   @module:  Volume (ebs) SDK Module
   @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper.
-  @auth:
 """
 
 from botocore.exceptions import ClientError
+from easyun.providers.base import StorageVolumeBase
 from easyun.libs.utils import load_json_config
 from ...session import get_easyun_session
 from ...utils import get_server_name
@@ -17,7 +17,7 @@ SystemDisk = ['/dev/xvda', '/dev/sda1']
 VolumeTypes = load_json_config('aws_ebs_types')
 
 
-class StorageVolume(object):
+class StorageVolume(StorageVolumeBase):
     id: str
     tagName: str
     createTime: str
@@ -104,6 +104,12 @@ class StorageVolume(object):
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
+    def get_tags(self):
+        try:
+            return [t for t in self.volObj.tags if t["Key"] not in ["Flag"]]
+        except Exception:
+            return []
+
     def delete(self):
         try:
 
@@ -111,14 +117,14 @@ class StorageVolume(object):
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def attach_to_server(self):
+    def attach(self, instance_id=None, device=None):
         try:
 
             return
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
-    def detach_from_server(self):
+    def detach(self):
         try:
 
             return

@@ -2,7 +2,6 @@
 """
   @module:  Bucket (S3) SDK Module
   @desc:    AWS SDK Boto3 EC2 Client and Resource Wrapper. 
-  @auth:
 """
 
 import os
@@ -76,7 +75,9 @@ def get_file_type(object_key):
             return f'{suffix.upper()} File'
 
 
-class StorageBucket(object):
+from easyun.providers.base import StorageBucketBase
+
+class StorageBucket(StorageBucketBase):
     def __init__(self, bucket_id, dc_name=None):
         self.id = bucket_id
         self._session = get_easyun_session(dc_name)
@@ -209,6 +210,13 @@ class StorageBucket(object):
             return bucketLifecycle
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    def get_tags(self):
+        try:
+            resp = self._client.get_bucket_tagging(Bucket=self.id)
+            return resp.get('TagSet', [])
+        except Exception:
+            return []
 
     def delete(self):
         bucket = self.bucketObj
