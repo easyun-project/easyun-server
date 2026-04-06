@@ -2,7 +2,6 @@
 """
   @module:  Storage Schemas
   @desc:    存储管理模块Schema定义
-  @auth:    
 """
 
 from apiflask import Schema
@@ -69,10 +68,10 @@ class BucketPublicParm(Schema):
 
 
 class BucketBasic(Schema):
-    bucketId = String(required=True, validate=Length(0, 60), metadata={"example": 'my-bucket'})
-    createTime = DateTime(required=True, metadata={"example": '2022-02-20T09:59:21.61+00:00'})
-    bucketRegion = String(required=True, metadata={"example": 'us-east-1'})
-    bucketUrl = String(metadata={"example": 'my-bucket.s3.amazonaws.com'})
+    bucketId = String(attribute='id', required=True, validate=Length(0, 60), metadata={"example": 'my-bucket'})
+    createTime = DateTime(attribute='create_time', required=True, metadata={"example": '2022-02-20T09:59:21.61+00:00'})
+    bucketRegion = String(attribute='region', required=True, metadata={"example": 'us-east-1'})
+    bucketUrl = String(attribute='url', metadata={"example": 'my-bucket.s3.amazonaws.com'})
 
 
 class BucketAccess(Schema):
@@ -81,17 +80,13 @@ class BucketAccess(Schema):
 
 
 class BucketModel(Schema):
-    bucketId = String(required=True, validate=Length(0, 60), metadata={"example": 'my-bucket'})
-    createTime = DateTime(required=True, metadata={"example": '2022-02-20T09:59:21.61+00:00'})
-    bucketRegion = String(required=True, metadata={"example": 'us-east-1'})
-    bucketUrl = String(metadata={"example": 'my-bucket.s3.amazonaws.com'})
-    # bucketLifecycle = List(Dict())
+    bucketId = String(attribute='id', required=True, validate=Length(0, 60), metadata={"example": 'my-bucket'})
+    createTime = DateTime(attribute='create_time', required=True, metadata={"example": '2022-02-20T09:59:21.61+00:00'})
+    bucketRegion = String(attribute='region', required=True, metadata={"example": 'us-east-1'})
+    bucketUrl = String(attribute='url', metadata={"example": 'my-bucket.s3.amazonaws.com'})
     bucketAccess = Nested(
-        BucketAccess, metadata={"example": {'status': 'private', 'description': 'All objects are private'}},
+        BucketAccess, attribute='access', metadata={"example": {'status': 'private', 'description': 'All objects are private'}},
     )
-    # bucketSize = Dict(
-    #     example={'value': 123, 'unit': 'MiB'}
-    # )
 
 
 class BucketPermission(Schema):
@@ -162,36 +157,30 @@ class VolumeConfig(Schema):
 
 
 class VolumeBasic(Schema):
-    volumeId = String(required=True, metadata={"example": 'vol-0bd70f2001d6fb8bc'})
-    tagName = String(metadata={"example": 'disk_test'})
-    isAttachable = Boolean(metadata={"example": False})
-    volumeState = String(metadata={"example": 'in-use'})
-    volumeAz = String(metadata={"example": 'us-east-1a'})
-    volumeType = String(metadata={"example": 'gp3'})
-    volumeSize = Integer(metadata={"example": 10})
-    createTime = DateTime(
-        # 效果同 .isoformat()
-        metadata={"example": '2022-02-20T09:59:21.61+00:00'}
-    )
+    volumeId = String(attribute='id', required=True, metadata={"example": 'vol-0bd70f2001d6fb8bc'})
+    tagName = String(attribute='name', metadata={"example": 'disk_test'})
+    isAttachable = Boolean(attribute='is_attachable', metadata={"example": False})
+    volumeState = String(attribute='state', metadata={"example": 'in-use'})
+    volumeAz = String(attribute='az', metadata={"example": 'us-east-1a'})
+    volumeType = String(attribute='volume_type', metadata={"example": 'gp3'})
+    volumeSize = Integer(attribute='size_gib', metadata={"example": 10})
+    createTime = DateTime(attribute='create_time', metadata={"example": '2022-02-20T09:59:21.61+00:00'})
 
 
 class VolumeModel(Schema):
-    volumeId = String(required=True, metadata={"example": 'vol-0bd70f2001d6fb8bc'})
-    tagName = String(metadata={"example": 'disk_test'})
-    volumeState = String(metadata={"example": 'in-use'})
-    isAttachable = Boolean(metadata={"example": False})
-    volumeAz = String(metadata={"example": 'us-east-1a'})
-    createTime = DateTime(
-        # 效果同 .isoformat()
-        metadata={"example": '2022-02-20T09:59:21.61+00:00'}
-    )
-    volumeType = String(metadata={"example": 'gp3'})
-    volumeSize = Integer(metadata={"example": 10})
-    volumeIops = Integer(metadata={"example": 3000})
-    volumeThruput = Integer(metadata={"example": 500})
-    isEncrypted = Boolean(metadata={"example": False})
-    isMultiAttach = Boolean(metadata={"example": False})
-    volumeAttach = Nested(VolAttachment(many=True))
+    volumeId = String(attribute='id', required=True, metadata={"example": 'vol-0bd70f2001d6fb8bc'})
+    tagName = String(attribute='name', metadata={"example": 'disk_test'})
+    volumeState = String(attribute='state', metadata={"example": 'in-use'})
+    isAttachable = Boolean(attribute='is_attachable', metadata={"example": False})
+    volumeAz = String(attribute='az', metadata={"example": 'us-east-1a'})
+    createTime = DateTime(attribute='create_time', metadata={"example": '2022-02-20T09:59:21.61+00:00'})
+    volumeType = String(attribute='volume_type', metadata={"example": 'gp3'})
+    volumeSize = Integer(attribute='size_gib', metadata={"example": 10})
+    volumeIops = Integer(attribute='iops', metadata={"example": 3000})
+    volumeThruput = Integer(attribute='throughput', metadata={"example": 500})
+    isEncrypted = Boolean(attribute='is_encrypted', metadata={"example": False})
+    isMultiAttach = Boolean(attribute='is_multi_attach', metadata={"example": False})
+    volumeAttach = Nested(VolAttachment(many=True), attribute='attachments')
 
 
 class VolumeDetail(Schema):

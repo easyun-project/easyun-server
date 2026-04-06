@@ -44,6 +44,7 @@ class Resource(object):
 
     def list_all_server(self):
         """列出 datacenter 下所有 server 详细信息"""
+        from easyun.providers.models import ServerDetail
         resource = self._session.resource('ec2')
         client = resource.meta.client
         try:
@@ -64,37 +65,38 @@ class Resource(object):
                     osName = resource.Image(s.image_id).platform_details
                 except Exception:
                     osName = 'unknown'
-                svrList.append({
-                    'svrId': s.id,
-                    'tagName': nameTag,
-                    'svrState': s.state['Name'],
-                    'insType': s.instance_type,
-                    'vpuNum': s.cpu_options['CoreCount'],
-                    'ramSize': ramSize / 1024,
-                    'volumeSize': volumeSize,
-                    'osName': osName,
-                    'azName': s.placement.get('AvailabilityZone'),
-                    'pubIp': s.public_ip_address,
-                    'priIp': s.private_ip_address,
-                    'isEip': bool(association and association.get('IpOwnerId') != 'amazon'),
-                })
+                svrList.append(ServerDetail(
+                    id=s.id,
+                    name=nameTag,
+                    state=s.state['Name'],
+                    instance_type=s.instance_type,
+                    az=s.placement.get('AvailabilityZone'),
+                    vcpu=s.cpu_options['CoreCount'],
+                    memory_gib=ramSize / 1024,
+                    volume_size_gib=volumeSize,
+                    os_name=osName,
+                    public_ip=s.public_ip_address,
+                    private_ip=s.private_ip_address,
+                    is_eip=bool(association and association.get('IpOwnerId') != 'amazon'),
+                ))
             return svrList
         except Exception as ex:
             raise ex
 
     def list_server_brief(self):
         """列出 datacenter 下所有 server 基础信息"""
+        from easyun.providers.models import ServerBrief
         resource = self._session.resource('ec2')
         try:
             svrIterator = resource.instances.filter(Filters=[self.tagFilter])
             return [
-                {
-                    'svrId': s.id,
-                    'tagName': next((tag['Value'] for tag in (s.tags or []) if tag['Key'] == 'Name'), None),
-                    'svrState': s.state['Name'],
-                    'insType': s.instance_type,
-                    'azName': s.placement.get('AvailabilityZone'),
-                }
+                ServerBrief(
+                    id=s.id,
+                    name=next((tag['Value'] for tag in (s.tags or []) if tag['Key'] == 'Name'), None),
+                    state=s.state['Name'],
+                    instance_type=s.instance_type,
+                    az=s.placement.get('AvailabilityZone'),
+                )
                 for s in svrIterator
             ]
         except Exception as ex:
@@ -131,245 +133,163 @@ class Resource(object):
             for s in servers
         ]
     def list_all_volume(self):
+        from easyun.providers.models import VolumeDetail
         resource = self._session.resource('ec2')
         try:
             volIterator = resource.volumes.filter(Filters=[self.tagFilter])
             volumeList = []
             for vol in volIterator:
-                nameTag = next(
-                    (tag['Value'] for tag in vol.tags if tag["Key"] == 'Name'), None
-                )
+                nameTag = next((tag['Value'] for tag in vol.tags if tag['Key'] == 'Name'), None)
                 attachList = []
-                attachs = vol.attachments
-                if attachs:
-                    # 定义系统盘路径
+                if vol.attachments:
                     SYSTEMDISK_PATH = ['/dev/xvda', '/dev/sda1']
-                    for a in attachs:
-                        # 基于卷挂载路径判断disk类型是 system 还是 user
-                        diskType = (
-                            'system' if a['Device'] in SYSTEMDISK_PATH else 'user'
-                        )
-                        attachList.append(
-                            {
-                                'attachPath': a['Device'],
-                                'svrId': a['InstanceId'],
-                                'tagName': get_server_name(a['InstanceId']),
-                                'attachTime': a['AttachTime'],
-                                'diskType': diskType,
-                            }
-                        )
-                isAttachable = (
-                    True
-                    if vol.multi_attach_enabled or vol.state == 'available'
-                    else False
-                )
-                volItem = {
-                    'volumeId': vol.id,
-                    'tagName': nameTag,
-                    'volumeState': vol.state,
-                    'isAttachable': isAttachable,
-                    'volumeAz': vol.availability_zone,
-                    'createTime': vol.create_time,
-                    'volumeType': vol.volume_type,
-                    'volumeSize': vol.size,
-                    'volumeIops': vol.iops,
-                    'volumeThruput': vol.throughput,
-                    'isEncrypted': vol.encrypted,
-                    'isMultiAttach': vol.multi_attach_enabled,
-                    #             'usedSize': none,
-                    'volumeAttach': attachList,
-                }
-                volumeList.append(volItem)
+                    for a in vol.attachments:
+                        attachList.append({
+                            'attachPath': a['Device'],
+                            'svrId': a['InstanceId'],
+                            'tagName': get_server_name(a['InstanceId']),
+                            'attachTime': a['AttachTime'],
+                            'diskType': 'system' if a['Device'] in SYSTEMDISK_PATH else 'user',
+                        })
+                volumeList.append(VolumeDetail(
+                    id=vol.id, name=nameTag, state=vol.state,
+                    az=vol.availability_zone, volume_type=vol.volume_type,
+                    size_gib=vol.size, is_attachable=bool(vol.multi_attach_enabled or vol.state == 'available'),
+                    create_time=vol.create_time,
+                    iops=vol.iops, throughput=vol.throughput,
+                    is_encrypted=vol.encrypted, is_multi_attach=vol.multi_attach_enabled,
+                    attachments=attachList,
+                ))
             return volumeList
         except Exception as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def get_volume_list(self):
+        from easyun.providers.models import VolumeBrief
         resource = self._session.resource('ec2')
         try:
             volIterator = resource.volumes.filter(Filters=[self.tagFilter])
-            volumeList = []
-            for vol in volIterator:
-                nameTag = next(
-                    (tag['Value'] for tag in vol.tags if tag["Key"] == 'Name'), None
+            return [
+                VolumeBrief(
+                    id=vol.id,
+                    name=next((tag['Value'] for tag in vol.tags if tag['Key'] == 'Name'), None),
+                    state=vol.state, az=vol.availability_zone,
+                    volume_type=vol.volume_type, size_gib=vol.size,
+                    is_attachable=bool(vol.multi_attach_enabled or vol.state == 'available'),
+                    create_time=vol.create_time,
                 )
-                isAttachable = (
-                    True
-                    if vol.multi_attach_enabled or vol.state == 'available'
-                    else False
-                )
-                volItem = {
-                    'volumeId': vol.id,
-                    'tagName': nameTag,
-                    'isAttachable': isAttachable,
-                    'volumeState': vol.state,
-                    'volumeAz': vol.availability_zone,
-                    'volumeType': vol.volume_type,
-                    'volumeSize': vol.size,
-                    'createTime': vol.create_time,
-                }
-                volumeList.append(volItem)
-            return volumeList
+                for vol in resource.volumes.filter(Filters=[self.tagFilter])
+            ]
         except Exception as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def list_all_bucket(self):
+        from easyun.providers.models import BucketDetail
         s3 = self._session.resource('s3')
         try:
             bucketList = []
-            buckets = s3.buckets.all()
-            for bucket in buckets:
+            for bucket in s3.buckets.all():
                 if query_bucket_flag(bucket) == self.dcName:
                     bkt = StorageBucket(bucket.name)
-                    bktEndpoint = bkt.get_bkt_endpoint()
-                    bktItem = {
-                        'bucketId': bucket.name,
-                        'createTime': bucket.creation_date,
-                        'bucketRegion': bktEndpoint['bucketRegion'],
-                        'bucketUrl': bktEndpoint['bucketUrl'],
-                        # 'bucketAccess': bkt.get_public_status(),
-                        'bucketAccess': {
-                            'status': 'private',
-                            'description': 'All objects are private',
-                        },
-                    }
-                    # bktItem.update(self.query_bucket_public(bkt.name))
-                    bucketList.append(bktItem)
+                    ep = bkt.get_bkt_endpoint()
+                    bucketList.append(BucketDetail(
+                        id=bucket.name, region=ep['bucketRegion'],
+                        create_time=bucket.creation_date, url=ep['bucketUrl'],
+                        access={'status': 'private', 'description': 'All objects are private'},
+                    ))
             return bucketList
         except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def get_bucket_list(self):
+        from easyun.providers.models import BucketBrief
         s3 = self._session.resource('s3')
         try:
             bucketList = []
-            buckets = s3.buckets.all()
-            for bucket in buckets:
+            for bucket in s3.buckets.all():
                 if query_bucket_flag(bucket) == self.dcName:
                     bkt = StorageBucket(bucket.name)
-                    bucketList.append(
-                        {
-                            'bucketId': bucket.name,
-                            'createTime': bucket.creation_date,
-                            'bucketRegion': bkt.get_bkt_endpoint()['bucketRegion'],
-                        }
-                    )
+                    bucketList.append(BucketBrief(
+                        id=bucket.name, region=bkt.get_bkt_endpoint()['bucketRegion'],
+                        create_time=bucket.creation_date,
+                    ))
             return bucketList
         except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def list_all_dbinstance(self):
+        from easyun.providers.models import DBInstanceDetail
         client = self._session.client('rds')
-        try:      
-            dbis = client.describe_db_instances(
-                # Filters=[self.tagFilter]
-            )['DBInstances']
+        try:
+            dbis = client.describe_db_instances()['DBInstances']
             dbiList = []
             for dbi in dbis:
-                # filter不支持tag过滤条件，手动判断Flag标记
-                flagTag = next((tag['Value'] for tag in dbi['TagList'] if tag["Key"] == 'Flag'), None)
+                flagTag = next((tag['Value'] for tag in dbi['TagList'] if tag['Key'] == 'Flag'), None)
                 if flagTag == self.dcName:
-                    dbiItem = {
-                        'dbiId': dbi['DBInstanceIdentifier'],
-                        'dbiEngine': dbi['Engine'],
-                        'engineVer': dbi['EngineVersion'],
-                        'dbiStatus': 'available',
-                        'dbiSize': dbi['DBInstanceClass'],
-                        'vcpuNum': 1,
-                        'ramSize': 2,
-                        'volumeSize': 20,
-                        'dbiAz': dbi['AvailabilityZone'],
-                        'multiAz': dbi['MultiAZ'],
-                        'dbiEndpoint': dbi['Endpoint'].get('Address'),
-                        # 'createTime': dbi['InstanceCreateTime'].isoformat()
-                    }
-                    dbiList.append(dbiItem)
+                    dbiList.append(DBInstanceDetail(
+                        id=dbi['DBInstanceIdentifier'], engine=dbi['Engine'],
+                        engine_version=dbi['EngineVersion'], status='available',
+                        instance_class=dbi['DBInstanceClass'],
+                        az=dbi['AvailabilityZone'], multi_az=dbi['MultiAZ'],
+                        endpoint=dbi['Endpoint'].get('Address', ''),
+                    ))
             return dbiList
         except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def get_dbinstance_list(self):
+        from easyun.providers.models import DBInstanceBrief
         client = self._session.client('rds')
-        try:      
-            dbis = client.describe_db_instances(
-                # Filters=[self.tagFilter]
-            )['DBInstances']
+        try:
+            dbis = client.describe_db_instances()['DBInstances']
             dbiList = []
             for dbi in dbis:
-                # filter不支持tag过滤条件，手动判断Flag标记
-                flagTag = next((tag['Value'] for tag in dbi['TagList'] if tag["Key"] == 'Flag'), None)
+                flagTag = next((tag['Value'] for tag in dbi['TagList'] if tag['Key'] == 'Flag'), None)
                 if flagTag == self.dcName:
-                    dbiItem = {
-                        'dbiId': dbi['DBInstanceIdentifier'],
-                        'dbiEngine': dbi['Engine'],
-                        'dbiStatus': 'available',
-                        'dbiSize': dbi['DBInstanceClass'],
-                        'dbiAz': dbi['AvailabilityZone'],
-                    }
-                    dbiList.append(dbiItem)
+                    dbiList.append(DBInstanceBrief(
+                        id=dbi['DBInstanceIdentifier'], engine=dbi['Engine'],
+                        status='available', instance_class=dbi['DBInstanceClass'],
+                        az=dbi['AvailabilityZone'],
+                    ))
             return dbiList
         except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def list_all_loadbalancer(self):
+        from easyun.providers.models import LoadBalancerDetail
         client = self._session.client('elbv2')
         try:
-            elbs = client.describe_load_balancers(
-                # Filters=[self.tagFilter]
-            )['LoadBalancers']
-            elbList = []
-            for elb in elbs:
-                # nameTag = 'to_be_done'
-                elbAzList = []
-                for i in elb.get('AvailabilityZones'):
-                    elbAzList.append(
-                        {
-                            'azName': i['ZoneName'],
-                            'subnetId': i['SubnetId'],
-                            'elbAddresses': i['LoadBalancerAddresses'],
-                        }
-                    )
-                elbItem = {
-                    'elbId': elb['LoadBalancerName'],
-                    # 'tagName': nameTag,
-                    'dnsName': elb['DNSName'],
-                    'elbArn': elb['LoadBalancerArn'],
-                    'elbAzs': elbAzList,
-                    'ipType': elb['IpAddressType'],
-                    'elbType': elb['Type'],
-                    'elbState': elb['State']['Code'],
-                    'elbScheme': elb['Scheme'],
-                    # 'vpcId': elb['VpcId'],
-                    'secGroups': elb['SecurityGroups'],
-                    'createTime': elb['CreatedTime'],
-                }
-                elbList.append(elbItem)
-            return elbList
+            elbs = client.describe_load_balancers()['LoadBalancers']
+            return [
+                LoadBalancerDetail(
+                    id=elb['LoadBalancerName'], arn=elb['LoadBalancerArn'],
+                    dns_name=elb['DNSName'], lb_type=elb['Type'],
+                    state=elb['State']['Code'], scheme=elb['Scheme'],
+                    ip_type=elb['IpAddressType'],
+                    azs=[{'azName': az['ZoneName'], 'subnetId': az['SubnetId'], 'elbAddresses': az['LoadBalancerAddresses']} for az in elb.get('AvailabilityZones', [])],
+                    security_groups=elb.get('SecurityGroups', []),
+                    create_time=elb.get('CreatedTime'),
+                )
+                for elb in elbs
+            ]
         except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def get_loadbalancer_list(self):
+        from easyun.providers.models import LoadBalancerBrief
         client = self._session.client('elbv2')
         try:
-            elbs = client.describe_load_balancers(
-                # Filters=[self.tagFilter]
-            )['LoadBalancers']
-            elbList = []
-            for elb in elbs:
-                # nameTag = 'to_be_done'
-                elbItem = {
-                    'elbId': elb['LoadBalancerName'],
-                    'elbArn': elb['LoadBalancerArn'],
-                    # 'tagName': nameTag,
-                    'dnsName': elb['DNSName'],
-                    'elbType': elb['Type'],
-                    'elbState': elb['State']['Code'],
-                    'elbScheme': elb['Scheme'],
-                }
-                elbList.append(elbItem)
-            return elbList
+            elbs = client.describe_load_balancers()['LoadBalancers']
+            return [
+                LoadBalancerBrief(
+                    id=elb['LoadBalancerName'], arn=elb['LoadBalancerArn'],
+                    dns_name=elb['DNSName'], lb_type=elb['Type'],
+                    state=elb['State']['Code'], scheme=elb['Scheme'],
+                )
+                for elb in elbs
+            ]
         except ClientError as ex:
-            return '%s: %s' % (self.__class__.__name__, str(ex))
+            raise ex
 
     def create_bucket(self, bucket_id, options):
         s3 = self._session.resource('s3')

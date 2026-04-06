@@ -33,12 +33,11 @@ class KeyPairDelIn(Schema):
 
 
 class KeypairOut(Schema):
-    keyName = String(required=True, metadata={"example": 'easyun-dev-key'})  # Keypair name
-    keyType = String(required=False, metadata={"example": 'rsa'})  # Keypair type
-    keyFile = String()
-    keyFingerprint = String()
-    keyTags = List(Dict())
-    keyRegion = String()
+    keyName = String(attribute='name', required=True, metadata={"example": 'easyun-dev-key'})
+    keyType = String(attribute='key_type', required=False, metadata={"example": 'rsa'})
+    keyFingerprint = String(attribute='fingerprint')
+    keyTags = List(Dict(), attribute='tags')
+    keyRegion = String()  # 由 API 层附加，不在 dataclass 里
 
 
 class CreateSSHKeySchema(Schema):

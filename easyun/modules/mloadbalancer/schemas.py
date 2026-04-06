@@ -16,25 +16,25 @@ class ElbAzItem(Schema):
 
 
 class ElbDetailItem(Schema):
-    elbId = String(metadata={"example": "my-alb"})
-    dnsName = String(metadata={"example": "my-alb-123456.us-east-1.elb.amazonaws.com"})
-    elbArn = String()
-    elbAzs = List(Nested(ElbAzItem))
-    ipType = String(metadata={"example": "ipv4"})
-    elbType = String(metadata={"example": "application"})
-    elbState = String(metadata={"example": "active"})
-    elbScheme = String(metadata={"example": "internet-facing"})
-    secGroups = List(String())
-    createTime = String()
+    elbId = String(attribute='id', metadata={"example": "my-alb"})
+    dnsName = String(attribute='dns_name', metadata={"example": "my-alb-123456.us-east-1.elb.amazonaws.com"})
+    elbArn = String(attribute='arn')
+    elbAzs = List(Nested(ElbAzItem), attribute='azs')
+    ipType = String(attribute='ip_type', metadata={"example": "ipv4"})
+    elbType = String(attribute='lb_type', metadata={"example": "application"})
+    elbState = String(attribute='state', metadata={"example": "active"})
+    elbScheme = String(attribute='scheme', metadata={"example": "internet-facing"})
+    secGroups = List(String(), attribute='security_groups')
+    createTime = String(attribute='create_time')
 
 
 class ElbBriefItem(Schema):
-    elbId = String(metadata={"example": "my-alb"})
-    elbArn = String()
-    dnsName = String()
-    elbType = String(metadata={"example": "application"})
-    elbState = String(metadata={"example": "active"})
-    elbScheme = String(metadata={"example": "internet-facing"})
+    elbId = String(attribute='id', metadata={"example": "my-alb"})
+    elbArn = String(attribute='arn')
+    dnsName = String(attribute='dns_name')
+    elbType = String(attribute='lb_type', metadata={"example": "application"})
+    elbState = String(attribute='state', metadata={"example": "active"})
+    elbScheme = String(attribute='scheme', metadata={"example": "internet-facing"})
 
 
 class ElbBasic(Schema):

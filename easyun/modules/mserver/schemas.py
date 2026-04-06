@@ -2,7 +2,6 @@
 """
   @module:  Server Schema
   @desc:    Server Input/output schema
-  @author:  aleck
 """
 
 from apiflask import Schema
@@ -61,26 +60,26 @@ class SvrTagNameItem(Schema):
 # ---- server list/detail output schemas ----
 
 class SvrDetailItem(Schema):
-    svrId = String(metadata={"example": "i-0e7105687e0fec039"})
-    tagName = String(metadata={"example": "my-server"})
-    svrState = String(metadata={"example": "running"})
-    insType = String(metadata={"example": "t3.micro"})
-    vpuNum = Integer(metadata={"example": 2})
-    ramSize = Float(metadata={"example": 1.0})
-    volumeSize = Integer(metadata={"example": 30})
-    osName = String(metadata={"example": "Linux/UNIX"})
-    azName = String(metadata={"example": "us-east-1a"})
-    pubIp = String(metadata={"example": "54.123.45.67"})
-    priIp = String(metadata={"example": "10.0.1.100"})
-    isEip = Boolean()
+    svrId = String(attribute='id', metadata={"example": "i-0e7105687e0fec039"})
+    tagName = String(attribute='name', metadata={"example": "my-server"})
+    svrState = String(attribute='state', metadata={"example": "running"})
+    insType = String(attribute='instance_type', metadata={"example": "t3.micro"})
+    vpuNum = Integer(attribute='vcpu', metadata={"example": 2})
+    ramSize = Float(attribute='memory_gib', metadata={"example": 1.0})
+    volumeSize = Integer(attribute='volume_size_gib', metadata={"example": 30})
+    osName = String(attribute='os_name', metadata={"example": "Linux/UNIX"})
+    azName = String(attribute='az', metadata={"example": "us-east-1a"})
+    pubIp = String(attribute='public_ip', metadata={"example": "54.123.45.67"})
+    priIp = String(attribute='private_ip', metadata={"example": "10.0.1.100"})
+    isEip = Boolean(attribute='is_eip')
 
 
 class SvrBriefItem(Schema):
-    svrId = String(metadata={"example": "i-0e7105687e0fec039"})
-    tagName = String(metadata={"example": "my-server"})
-    svrState = String(metadata={"example": "running"})
-    insType = String(metadata={"example": "t3.micro"})
-    azName = String(metadata={"example": "us-east-1a"})
+    svrId = String(attribute='id', metadata={"example": "i-0e7105687e0fec039"})
+    tagName = String(attribute='name', metadata={"example": "my-server"})
+    svrState = String(attribute='state', metadata={"example": "running"})
+    insType = String(attribute='instance_type', metadata={"example": "t3.micro"})
+    azName = String(attribute='az', metadata={"example": "us-east-1a"})
 
 
 class SvrPropertyOut(Schema):
@@ -121,7 +120,7 @@ class SvrSecGroupItem(Schema):
 
 class SvrEntityOut(Schema):
     svrProperty = Nested(SvrPropertyOut)
-    svrConfig = Nested(SvrConfigOut)
+    svrConfig = Dict()
     svrDisk = Dict()
     svrNetworking = Dict()
     svrSecurity = List(Nested(SvrSecGroupItem))
@@ -130,10 +129,10 @@ class SvrEntityOut(Schema):
 
 
 class SvrInstypeParam(Schema):
-    insArch = String(metadata={"example": "x86_64"})
-    insHyper = String(metadata={"example": "xen"})
-    insType = String(metadata={"example": "t3.micro"})
-    imgID = String(metadata={"example": "ami-0abcdef1234567890"})
+    insArch = String(attribute='architecture', metadata={"example": "x86_64"})
+    insHyper = String(attribute='hypervisor', metadata={"example": "xen"})
+    insType = String(attribute='instance_type', metadata={"example": "t3.micro"})
+    imgID = String(attribute='image_id', metadata={"example": "ami-0abcdef1234567890"})
 
 
 # ---- server param output schemas ----
@@ -155,17 +154,17 @@ class InsFamilyItem(Schema):
 
 
 class InsTypeItem(Schema):
-    insType = String(metadata={"example": "m5.large"})
-    vcpuNum = Integer(metadata={"example": 2})
-    memSize = Float(metadata={"example": 8.0})
-    netSpeed = String(metadata={"example": "Up to 10 Gigabit"})
-    monthPrice = Float(metadata={"example": 69.12})
+    insType = String(attribute='instance_type', metadata={"example": "m5.large"})
+    vcpuNum = Integer(attribute='vcpu', metadata={"example": 2})
+    memSize = Float(attribute='memory_gib', metadata={"example": 8.0})
+    netSpeed = String(attribute='network_speed', metadata={"example": "Up to 10 Gigabit"})
+    monthPrice = Float(attribute='monthly_price', metadata={"example": 69.12})
 
 
 class InsTypeBriefItem(Schema):
-    insType = String(metadata={"example": "m5.large"})
-    familyName = String(metadata={"example": "m5"})
-    familyDes = String(metadata={"example": "General purpose"})
+    insType = String(attribute='instance_type', metadata={"example": "m5.large"})
+    familyName = String(attribute='family', metadata={"example": "m5"})
+    familyDes = String(attribute='family_desc', metadata={"example": "General purpose"})
 
 
 # ---- server write operation output schemas ----

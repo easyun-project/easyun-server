@@ -52,59 +52,43 @@ class EC2Server(ComputeInstanceBase):
 
             association = inst_res.get('NetworkInterfaces', [{}])[0].get('Association') if inst_res.get('NetworkInterfaces') else None
 
-            svrProperty = {
-                'instanceName': self.tagName,
-                'instanceType': s.instance_type,
-                'vCpu': vCpu,
-                'memory': memory,
-                'privateIp': inst_res.get('PrivateIpAddress'),
-                'publicIp': s.public_ip_address,
-                'isEip': bool(association and association.get('IpOwnerId') != 'amazon'),
-                'status': s.state['Name'],
-                'instanceId': self.id,
-                'launchTime': inst_res['LaunchTime'].isoformat(),
-                'privateIpv4Dns': inst_res.get('PrivateDnsName'),
-                'publicIpv4Dns': inst_res.get('PublicDnsName'),
-                'platformDetails': inst_res.get('PlatformDetails'),
-                'virtualization': inst_res.get('VirtualizationType'),
-                'tenancy': 'default',
-                'usageOperation': inst_res.get('UsageOperation'),
-                'monitoring': inst_res['Monitoring']['State'],
-                'terminationProtection': 'disabled' if protection else 'enabled',
-                'amiId': s.image_id,
-                'amiName': imageName,
-                'amiPath': imagePath,
-                'keyPairName': inst_res.get('KeyName'),
-                'iamRole': inst_res.get('IamInstanceProfile', {}).get('Arn', '').split('/')[-1] if inst_res.get('IamInstanceProfile') else '',
-            }
-            svrConfig = {'arch': arch, 'os': 'amzn2'}
-            svrDisk = {'volumeIds': [v['Ebs']['VolumeId'] for v in inst_res.get('BlockDeviceMappings', [])]}
-            svrNetworking = {'privateIp': inst_res.get('PrivateIpAddress'), 'publicIp': s.public_ip_address}
-            svrSecurity = [{'sgId': g['GroupId'], 'sgName': g['GroupName']} for g in inst_res.get('SecurityGroups', [])]
-            svrTags = [t for t in (inst_res.get('Tags') or []) if t['Key'] not in ['Flag', 'Name']]
-            svrConnect = {'userName': 'ec2-user', 'publicIp': s.public_ip_address}
-
-            return {
-                'svrProperty': svrProperty,
-                'svrConfig': svrConfig,
-                'svrDisk': svrDisk,
-                'svrNetworking': svrNetworking,
-                'svrSecurity': svrSecurity,
-                'svrTags': svrTags,
-                'svrConnect': svrConnect,
-            }
+            from easyun.providers.models import ServerFullDetail
+            return ServerFullDetail(
+                id=self.id,
+                name=self.tagName,
+                instance_type=s.instance_type,
+                vcpu=vCpu,
+                memory_gib=memory,
+                private_ip=inst_res.get('PrivateIpAddress'),
+                public_ip=s.public_ip_address,
+                is_eip=bool(association and association.get('IpOwnerId') != 'amazon'),
+                state=s.state['Name'],
+                launch_time=inst_res['LaunchTime'].isoformat(),
+                private_dns=inst_res.get('PrivateDnsName'),
+                public_dns=inst_res.get('PublicDnsName'),
+                platform=inst_res.get('PlatformDetails', ''),
+                virtualization=inst_res.get('VirtualizationType', ''),
+                tenancy='default',
+                usage_operation=inst_res.get('UsageOperation', ''),
+                monitoring=inst_res['Monitoring']['State'],
+                termination_protection='disabled' if protection else 'enabled',
+                ami_id=s.image_id,
+                ami_name=imageName,
+                ami_path=imagePath,
+                arch=arch,
+                os_code='amzn2',
+                key_pair_name=inst_res.get('KeyName', ''),
+                iam_role=inst_res.get('IamInstanceProfile', {}).get('Arn', '').split('/')[-1] if inst_res.get('IamInstanceProfile') else '',
+                volume_ids=[v['Ebs']['VolumeId'] for v in inst_res.get('BlockDeviceMappings', [])],
+                security_groups=[{'sgId': g['GroupId'], 'sgName': g['GroupName']} for g in inst_res.get('SecurityGroups', [])],
+                tags=[t for t in (inst_res.get('Tags') or []) if t['Key'] not in ['Flag', 'Name']],
+            )
         except Exception as ex:
             raise ex
 
     def get_instype_param(self):
-        """获取实例类型参数"""
-        s = self.svrObj
-        return {
-            'insArch': s.architecture,
-            'insHyper': s.hypervisor,
-            'insType': s.instance_type,
-            'imgID': s.image_id,
-        }
+        """获取实例类型参数，返回 svrObj 本身供 Schema attribute 映射"""
+        return self.svrObj
 
     def get_tags(self):
         try:
@@ -186,6 +170,7 @@ class EC2Server(ComputeInstanceBase):
     @classmethod
     def list_images(cls, session, arch=None, os_type=None):
         """列出可用 AMI 列表"""
+        from easyun.providers.models import ImageInfo
         from .ec2_ami import AMI_Windows, AMI_Linux
         amiList = AMI_Windows.get(arch, []) if os_type == 'windows' else AMI_Linux.get(arch, [])
         if not amiList:
@@ -200,24 +185,23 @@ class EC2Server(ComputeInstanceBase):
         ]
         images = client.describe_images(Filters=filters)['Images']
         return [
-            {
-                'imgID': img['ImageId'],
-                'osName': next((a['osName'] for a in amiList if a['amiName'] == img['Name']), ''),
-                'osVersion': next((a['osVersion'] for a in amiList if a['amiName'] == img['Name']), ''),
-                'osCode': next((a['osCode'] for a in amiList if a['amiName'] == img['Name']), ''),
-                'imgDescription': img.get('Description', ''),
-                'rootDevice': {
-                    'devicePath': img['RootDeviceName'],
-                    'deviceType': img['RootDeviceType'],
-                    'deviceDisk': img['BlockDeviceMappings'][0].get('Ebs') if img.get('BlockDeviceMappings') else None,
-                },
-            }
+            ImageInfo(
+                id=img['ImageId'],
+                os_name=next((a['osName'] for a in amiList if a['amiName'] == img['Name']), ''),
+                os_version=next((a['osVersion'] for a in amiList if a['amiName'] == img['Name']), ''),
+                os_code=next((a['osCode'] for a in amiList if a['amiName'] == img['Name']), ''),
+                description=img.get('Description', ''),
+                root_device_path=img['RootDeviceName'],
+                root_device_type=img['RootDeviceType'],
+                root_device_disk=img['BlockDeviceMappings'][0].get('Ebs') if img.get('BlockDeviceMappings') else None,
+            )
             for img in images
         ]
 
     @classmethod
     def list_instance_types(cls, session, arch=None, family=None):
         """列出可用实例规格"""
+        from easyun.providers.models import InstanceTypeInfo
         from .ec2_instype import get_family_descode
         client = session.client('ec2')
         filters = [
@@ -233,14 +217,14 @@ class EC2Server(ComputeInstanceBase):
             for i in result['InstanceTypes']:
                 ins_type = i['InstanceType']
                 ins_family = ins_type.split('.')[0]
-                result_list.append({
-                    'insType': ins_type,
-                    'familyName': ins_family,
-                    'familyDes': get_family_descode(ins_family),
-                    'vcpuNum': i['VCpuInfo']['DefaultVCpus'],
-                    'memSize': i['MemoryInfo']['SizeInMiB'] / 1024,
-                    'netSpeed': i['NetworkInfo']['NetworkPerformance'],
-                })
+                result_list.append(InstanceTypeInfo(
+                    instance_type=ins_type,
+                    family=ins_family,
+                    family_desc=get_family_descode(ins_family),
+                    vcpu=i['VCpuInfo']['DefaultVCpus'],
+                    memory_gib=i['MemoryInfo']['SizeInMiB'] / 1024,
+                    network_speed=i['NetworkInfo']['NetworkPerformance'],
+                ))
             if 'NextToken' not in result:
                 break
             desc_args['NextToken'] = result['NextToken']

@@ -12478,9 +12478,6 @@
             "type": "string",
             "example": "rsa"
           },
-          "keyFile": {
-            "type": "string"
-          },
           "keyFingerprint": {
             "type": "string"
           },
@@ -13434,20 +13431,6 @@
         },
         "additionalProperties": false
       },
-      "SvrConfigOut": {
-        "type": "object",
-        "properties": {
-          "arch": {
-            "type": "string",
-            "example": "x86_64"
-          },
-          "os": {
-            "type": "string",
-            "example": "amzn2"
-          }
-        },
-        "additionalProperties": false
-      },
       "SvrSecGroupItem": {
         "type": "object",
         "properties": {
@@ -13469,7 +13452,8 @@
             "$ref": "#/components/schemas/SvrPropertyOut"
           },
           "svrConfig": {
-            "$ref": "#/components/schemas/SvrConfigOut"
+            "type": "object",
+            "additionalProperties": {}
           },
           "svrDisk": {
             "type": "object",

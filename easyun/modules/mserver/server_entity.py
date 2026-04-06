@@ -39,6 +39,30 @@ class SgAttachInfoIn(Schema):
     dcName = String(metadata={"example": "Easyun"})
 
 
+def _full_detail_to_response(d):
+    """ServerFullDetail dataclass → 前端嵌套结构"""
+    return {
+        'svrProperty': {
+            'instanceName': d.name, 'instanceType': d.instance_type,
+            'vCpu': d.vcpu, 'memory': d.memory_gib,
+            'privateIp': d.private_ip, 'publicIp': d.public_ip, 'isEip': d.is_eip,
+            'status': d.state, 'instanceId': d.id, 'launchTime': d.launch_time,
+            'privateIpv4Dns': d.private_dns, 'publicIpv4Dns': d.public_dns,
+            'platformDetails': d.platform, 'virtualization': d.virtualization,
+            'tenancy': d.tenancy, 'usageOperation': d.usage_operation,
+            'monitoring': d.monitoring, 'terminationProtection': d.termination_protection,
+            'amiId': d.ami_id, 'amiName': d.ami_name, 'amiPath': d.ami_path,
+            'keyPairName': d.key_pair_name, 'iamRole': d.iam_role,
+        },
+        'svrConfig': {'arch': d.arch, 'os': d.os_code},
+        'svrDisk': {'volumeIds': d.volume_ids},
+        'svrNetworking': {'privateIp': d.private_ip, 'publicIp': d.public_ip},
+        'svrSecurity': d.security_groups,
+        'svrTags': d.tags,
+        'svrConnect': {'userName': 'ec2-user', 'publicIp': d.public_ip},
+    }
+
+
 # --- Endpoints ---
 
 @bp.get('/detail/<svr_id>')
@@ -50,7 +74,7 @@ def get_server_detail(svr_id, parm):
     try:
         dc = get_datacenter(parm['dc'])
         svr = dc.get_server(svr_id)
-        detail = svr.get_detail()
+        detail = _full_detail_to_response(svr.get_detail())
         res = Result(detail, status_code=200)
         return res.make_resp()
     except Exception as e:

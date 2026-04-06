@@ -1,8 +1,7 @@
 # encoding: utf-8
 """
   @module:  Load Banalancer Module
-  @desc:    负载均衡器(ELB) 查询相关
-  @auth:    aleck
+  @desc:    负载均衡器(ELB) 查询相关API
 """
 
 from easyun.common.auth import auth_token
@@ -23,7 +22,7 @@ def list_elb_detail(parm):
     dcName = parm.get('dc')
     try:
         dc = get_datacenter(dcName)
-        elbList = dc.workload.list_all_loadbalancer()
+        elbList = dc.resource.list_all_loadbalancer()
 
         resp = Result(detail=elbList, status_code=200)
         return resp.make_resp()
@@ -43,7 +42,7 @@ def list_elb_brief(parm):
     dcName = parm.get('dc')
     try:
         dc = get_datacenter(dcName)
-        elbList = dc.workload.get_loadbalancer_list()
+        elbList = dc.resource.get_loadbalancer_list()
 
         resp = Result(detail=elbList, status_code=200)
         return resp.make_resp()

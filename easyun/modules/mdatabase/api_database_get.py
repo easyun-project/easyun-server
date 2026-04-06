@@ -2,7 +2,6 @@
 """
   @module:  Database Get Module
   @desc:    数据库相关信息GET API
-  @auth:    aleck
 """
 
 from easyun.common.auth import auth_token
@@ -22,7 +21,7 @@ def list_database_detail(parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        dbiList = dc.workload.list_all_dbinstance()
+        dbiList = dc.resource.list_all_dbinstance()
 
         resp = Result(detail=dbiList, status_code=200)
         return resp.make_resp()
@@ -42,7 +41,7 @@ def list_database_brief(parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        dbiList = dc.workload.get_dbinstance_list()
+        dbiList = dc.resource.get_dbinstance_list()
 
         resp = Result(detail=dbiList, status_code=200)
         return resp.make_resp()

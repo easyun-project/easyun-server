@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
   @module:  Datacenter SDK Module
-  @desc:    AWS SDK Boto3 VPC Client and Resource Wrapper.
-  @auth:    aleck
+  @desc:    AWS SDK Boto3 VPC Client and Resource Wrapper
 """
 
 from botocore.exceptions import ClientError
@@ -480,42 +479,41 @@ class DataCenter(object):
 
     def list_keypairs(self):
         """列出 datacenter 下所有 keypair"""
+        from easyun.providers.models import KeyPairInfo
         keys = self._client.describe_key_pairs(
             Filters=[self.tagFilter]
         ).get('KeyPairs', [])
         return [
-            {
-                'keyName': k['KeyName'],
-                'keyType': k['KeyType'],
-                'keyFingerprint': k['KeyFingerprint'],
-                'keyTags': [t for t in k.get('Tags', []) if t['Key'] != 'Flag'],
-            }
+            KeyPairInfo(
+                name=k['KeyName'],
+                key_type=k['KeyType'],
+                fingerprint=k['KeyFingerprint'],
+                tags=[t for t in k.get('Tags', []) if t['Key'] != 'Flag'],
+            )
             for k in keys
         ]
 
     def get_keypair(self, key_name):
         """获取单个 keypair 信息"""
+        from easyun.providers.models import KeyPairInfo
         kp = self._resource.KeyPair(key_name)
-        return {
-            'keyName': key_name,
-            'keyType': kp.key_type,
-            'keyFingerprint': kp.key_fingerprint,
-            'keyTags': [t for t in (kp.tags or []) if t['Key'] != 'Flag'],
-        }
+        return KeyPairInfo(
+            name=key_name,
+            key_type=kp.key_type,
+            fingerprint=kp.key_fingerprint,
+            tags=[t for t in (kp.tags or []) if t['Key'] != 'Flag'],
+        )
 
     def create_keypair(self, key_name, key_type='rsa'):
-        """创建 keypair，返回含 key_material"""
+        """创建 keypair，返回 (KeyPairInfo, key_material)"""
+        from easyun.providers.models import KeyPairInfo
         kp = self._resource.create_key_pair(
             KeyName=key_name,
             KeyType=key_type,
             TagSpecifications=[{'ResourceType': 'key-pair', 'Tags': [self.flagTag]}],
         )
-        return {
-            'keyName': key_name,
-            'keyType': key_type,
-            'keyFingerprint': kp.key_fingerprint,
-            'keyMaterial': kp.key_material,
-        }
+        info = KeyPairInfo(name=key_name, key_type=key_type, fingerprint=kp.key_fingerprint)
+        return info, kp.key_material
 
     def delete_keypair(self, key_name):
         """删除 keypair"""

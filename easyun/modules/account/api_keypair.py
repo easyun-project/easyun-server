@@ -17,6 +17,14 @@ from .schema import KeypairParms, KeypairOut, KeyPairDelIn
 from . import bp
 
 
+def _keypair_to_dict(kp, region=None):
+    """KeyPairInfo dataclass → 前端格式 dict（附加 keyRegion）"""
+    from dataclasses import asdict
+    d = asdict(kp)
+    d['keyRegion'] = region
+    return d
+
+
 @bp.get('/keypair')
 @bp.auth_required(auth_token)
 @bp.input(DcNameQuery, location='query', arg_name='parm')
@@ -26,9 +34,7 @@ def list_keypair(parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        keyList = dc.list_keypairs()
-        for k in keyList:
-            k['keyRegion'] = query_dc_region(dcName)
+        keyList = [_keypair_to_dict(k, query_dc_region(dcName)) for k in dc.list_keypairs()]
         resp = Result(detail=keyList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
@@ -45,9 +51,8 @@ def list_keypair_brief(parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        keyList = dc.list_keypairs()
         dcRegion = query_dc_region(dcName)
-        briefList = [{'keyName': k['keyName'], 'keyType': k['keyType'], 'keyRegion': dcRegion} for k in keyList]
+        briefList = [{'keyName': k.name, 'keyType': k.key_type, 'keyRegion': dcRegion} for k in dc.list_keypairs()]
         resp = Result(detail=briefList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
@@ -64,9 +69,8 @@ def get_keypair(key_name, parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        keyItem = dc.get_keypair(key_name)
-        keyItem['keyRegion'] = query_dc_region(dcName)
-        resp = Result(detail=keyItem, status_code=200)
+        kp = dc.get_keypair(key_name)
+        resp = Result(detail=_keypair_to_dict(kp, query_dc_region(dcName)), status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=8022)
@@ -84,14 +88,11 @@ def add_keypair(parm):
     keyType = parm.get('keyType', 'rsa')
     try:
         dc = get_datacenter(dcName)
-        result = dc.create_keypair(keyName, keyType)
-        # 将 key material 存入数据库
-        storeItem = KeyStore(name=keyName, dc_name=dcName, material=result['keyMaterial'])
+        kp_info, key_material = dc.create_keypair(keyName, keyType)
+        storeItem = KeyStore(name=keyName, dc_name=dcName, material=key_material)
         db.session.add(storeItem)
         db.session.commit()
-        result['keyRegion'] = query_dc_region(dcName)
-        del result['keyMaterial']
-        resp = Result(detail=result, status_code=200)
+        resp = Result(detail=_keypair_to_dict(kp_info, query_dc_region(dcName)), status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=8010)
@@ -129,9 +130,8 @@ def del_keypair(parm):
 @bp.input(DcNameQuery, location='query', arg_name='parm')
 def get_keystore(key_name, parm):
     '''获取指定的 keypair 文件下载'''
-    dcName = parm['dc']
     try:
-        storeItem = KeyStore.query.filter_by(name=key_name, dc_name=dcName).first()
+        storeItem = KeyStore.query.filter_by(name=key_name, dc_name=parm['dc']).first()
         keyMaterial = BytesIO(bytes(storeItem.get_material(), encoding='utf-8'))
         return send_file(keyMaterial, as_attachment=True, download_name=f"{storeItem.name}.{storeItem.format}")
     except Exception as ex:

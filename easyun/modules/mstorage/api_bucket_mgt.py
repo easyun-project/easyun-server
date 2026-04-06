@@ -2,7 +2,6 @@
 """
   @module:  Object Storage Bucket Management API
   @desc:    .
-  @auth:
 """
 
 from apiflask import APIBlueprint
@@ -26,7 +25,7 @@ def list_bkt_detail(parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        bucketList = dc.workload.list_all_bucket()
+        bucketList = dc.resource.list_all_bucket()
         response = Result(detail=bucketList, status_code=200)
         return response.make_resp()
     except Exception as ex:
@@ -46,7 +45,7 @@ def get_bkt_list(parm):
     dcName = parm['dc']
     try:
         dc = get_datacenter(dcName)
-        bucketList = dc.workload.get_bucket_list()
+        bucketList = dc.resource.get_bucket_list()
         response = Result(detail=bucketList, status_code=200)
         return response.make_resp()
     except Exception as ex:
@@ -91,7 +90,7 @@ def add_bucket_s3(parm):
     bucketOptions = parm['bucketOptions']
     try:
         dc = get_datacenter(dcName)
-        newBucket = dc.workload.create_bucket(bucketId, bucketOptions)
+        newBucket = dc.resource.create_bucket(bucketId, bucketOptions)
         resp = Result(
             detail={
                 'bucketId': newBucket.id,
