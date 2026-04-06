@@ -8,8 +8,7 @@
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.providers.aws import get_datacenter
-from easyun.providers.aws.resource import get_load_balancer
+from easyun.providers import get_datacenter
 from .schemas import ElbDetailItem, ElbBriefItem, ElbDetail
 from . import bp
 
@@ -64,7 +63,8 @@ def get_elb_detail(elb_id, parm):
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:
-        elb = get_load_balancer(elb_id, dcName)
+        dc = get_datacenter(dcName)
+        elb = dc.get_load_balancer(elb_id)
         elbDetail = elb.get_detail()
 
         response = Result(detail=elbDetail, status_code=200)

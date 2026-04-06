@@ -1359,6 +1359,29 @@
               }
             },
             "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/HTTPError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Authentication error"
           }
         },
         "tags": [
@@ -1373,7 +1396,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/server/disk": {
@@ -3681,6 +3709,29 @@
               }
             },
             "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/HTTPError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Authentication error"
           }
         },
         "tags": [
@@ -3695,7 +3746,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/storage/s3-region": {
@@ -4071,40 +4127,32 @@
             "schema": {
               "type": "string",
               "enum": [
-                "af-south-1",
-                "ap-east-1",
-                "ap-east-2",
-                "ap-northeast-1",
-                "ap-northeast-2",
-                "ap-northeast-3",
-                "ap-south-1",
-                "ap-south-2",
-                "ap-southeast-1",
-                "ap-southeast-2",
-                "ap-southeast-3",
-                "ap-southeast-4",
-                "ap-southeast-5",
-                "ap-southeast-6",
-                "ap-southeast-7",
-                "ca-central-1",
-                "ca-west-1",
-                "eu-central-1",
-                "eu-central-2",
-                "eu-north-1",
-                "eu-south-1",
-                "eu-south-2",
-                "eu-west-1",
-                "eu-west-2",
-                "eu-west-3",
-                "il-central-1",
-                "me-central-1",
-                "me-south-1",
-                "mx-central-1",
-                "sa-east-1",
                 "us-east-1",
                 "us-east-2",
                 "us-west-1",
-                "us-west-2"
+                "us-west-2",
+                "af-south-1",
+                "ap-east-1",
+                "ap-south-1",
+                "ap-northeast-3",
+                "ap-northeast-2",
+                "ap-southeast-1",
+                "ap-southeast-2",
+                "ap-southeast-3",
+                "ap-northeast-1",
+                "ca-central-1",
+                "eu-central-1",
+                "eu-west-1",
+                "eu-west-2",
+                "eu-south-1",
+                "eu-west-3",
+                "eu-north-1",
+                "me-south-1",
+                "sa-east-1",
+                "us-gov-east-1",
+                "us-gov-west-1",
+                "cn-north-1",
+                "cn-northwest-1"
               ],
               "example": "us-east-1"
             },
@@ -4202,7 +4250,7 @@
             "schema": {
               "type": "string",
               "minLength": 0,
-              "maxLength": 30,
+              "maxLength": 60,
               "example": "Easyun"
             },
             "required": true
@@ -5279,6 +5327,16 @@
               "type": "string"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -5304,6 +5362,29 @@
               }
             },
             "description": "Successful response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5395,79 +5476,6 @@
             "name": "family",
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "t2",
-                "t3",
-                "t3a",
-                "m4",
-                "m5",
-                "m5d",
-                "m5n",
-                "m5zn",
-                "m6i",
-                "m5a",
-                "m5ad",
-                "m6a",
-                "t4g",
-                "a1",
-                "m6g",
-                "m6gd",
-                "c4",
-                "c5",
-                "c6i",
-                "c5a",
-                "c5d",
-                "c5ad",
-                "c5n",
-                "c6g",
-                "c6gn",
-                "c6gd",
-                "c7g",
-                "r4",
-                "r5",
-                "r5d",
-                "r5a",
-                "r5ad",
-                "r5b",
-                "r5n",
-                "r5dn",
-                "r6i",
-                "r6g",
-                "r6gd",
-                "x1",
-                "x1e",
-                "z1d",
-                "x2idn",
-                "x2iedn",
-                "x2iezn",
-                "x2gd",
-                "x2g",
-                "d2",
-                "d3",
-                "d3en",
-                "h1",
-                "i3",
-                "i3en",
-                "i4i",
-                "is4gen",
-                "im4gn",
-                "p2",
-                "p3",
-                "p3dn",
-                "p4d",
-                "g3",
-                "g3s",
-                "g4dn",
-                "g4ad",
-                "g5",
-                "g5g",
-                "inf1",
-                "trn1",
-                "dl1",
-                "f1",
-                "vt1"
-              ],
               "example": "m5"
             },
             "required": true
@@ -5477,15 +5485,6 @@
             "name": "os",
             "schema": {
               "type": "string",
-              "enum": [
-                "amzn2",
-                "ubuntu",
-                "debian",
-                "linux",
-                "rhel",
-                "sles",
-                "windows"
-              ],
               "example": "linux"
             },
             "required": false
@@ -5586,6 +5585,16 @@
               "type": "string"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -5614,6 +5623,29 @@
               }
             },
             "description": "Successful response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5679,6 +5711,16 @@
             "name": "svr_id",
             "schema": {
               "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
             },
             "required": true
           }
@@ -5806,6 +5848,16 @@
             "name": "svr_id",
             "schema": {
               "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
             },
             "required": true
           }
@@ -6914,30 +6966,24 @@
         ]
       }
     },
-    "/api/v1/server/param/insfamily": {
+    "/api/v1/server/detail/{svr_id}": {
       "get": {
         "parameters": [
+          {
+            "in": "path",
+            "name": "svr_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
           {
             "in": "query",
             "name": "dc",
             "schema": {
               "type": "string",
               "minLength": 0,
-              "maxLength": 60,
-              "example": "Easyun"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "arch",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "x86_64",
-                "arm64"
-              ],
-              "example": "x86_64"
+              "maxLength": 30
             },
             "required": true
           }
@@ -6953,10 +6999,7 @@
                       "type": "string"
                     },
                     "detail": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/InsFamilyItem"
-                      }
+                      "$ref": "#/components/schemas/SvrEntityOut"
                     },
                     "status_code": {
                       "type": "integer"
@@ -6991,77 +7034,6 @@
               }
             },
             "description": "Validation error"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/HTTPError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Authentication error"
-          }
-        },
-        "tags": [
-          "\u670d\u52a1\u5668\u7ba1\u7406"
-        ],
-        "summary": "\u83b7\u53d6\u53ef\u7528\u7684Instance Family\u5217\u8868",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/server/detail/{svr_id}": {
-      "get": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "svr_id",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/SvrEntityOut"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Successful response"
           },
           "401": {
             "content": {
@@ -7323,6 +7295,16 @@
               "type": "string"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 30
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -7348,6 +7330,29 @@
               }
             },
             "description": "Successful response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7399,7 +7404,7 @@
         "tags": [
           "\u670d\u52a1\u5668\u7ba1\u7406"
         ],
-        "summary": "\u83b7\u53d6\u6307\u5b9a\u4e91\u670d\u52a1\u5668\u5b9e\u4f8b\u53c2\u6570 [\u6d4b\u8bd5]",
+        "summary": "\u83b7\u53d6\u6307\u5b9a\u4e91\u670d\u52a1\u5668\u5b9e\u4f8b\u53c2\u6570",
         "security": [
           {
             "BearerAuth": []
@@ -8141,79 +8146,6 @@
             "name": "family",
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "t2",
-                "t3",
-                "t3a",
-                "m4",
-                "m5",
-                "m5d",
-                "m5n",
-                "m5zn",
-                "m6i",
-                "m5a",
-                "m5ad",
-                "m6a",
-                "t4g",
-                "a1",
-                "m6g",
-                "m6gd",
-                "c4",
-                "c5",
-                "c6i",
-                "c5a",
-                "c5d",
-                "c5ad",
-                "c5n",
-                "c6g",
-                "c6gn",
-                "c6gd",
-                "c7g",
-                "r4",
-                "r5",
-                "r5d",
-                "r5a",
-                "r5ad",
-                "r5b",
-                "r5n",
-                "r5dn",
-                "r6i",
-                "r6g",
-                "r6gd",
-                "x1",
-                "x1e",
-                "z1d",
-                "x2idn",
-                "x2iedn",
-                "x2iezn",
-                "x2gd",
-                "x2g",
-                "d2",
-                "d3",
-                "d3en",
-                "h1",
-                "i3",
-                "i3en",
-                "i4i",
-                "is4gen",
-                "im4gn",
-                "p2",
-                "p3",
-                "p3dn",
-                "p4d",
-                "g3",
-                "g3s",
-                "g4dn",
-                "g4ad",
-                "g5",
-                "g5g",
-                "inf1",
-                "trn1",
-                "dl1",
-                "f1",
-                "vt1"
-              ],
               "example": "m5"
             },
             "required": true
@@ -9477,6 +9409,103 @@
           "\u6570\u636e\u4e2d\u5fc3\u7ba1\u7406.Securitygroup"
         ],
         "summary": "\u67e5\u770b SecurityGroup \u8be6\u7ec6\u4fe1\u606f",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/server/param/instype/family": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dc",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InsFamilyItem"
+                      }
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Successful response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "$ref": "#/components/schemas/HTTPError"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "task": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "description": "Authentication error"
+          }
+        },
+        "tags": [
+          "\u670d\u52a1\u5668\u7ba1\u7406"
+        ],
+        "summary": "\u83b7\u53d6\u53ef\u7528\u7684Instance Family\u5217\u8868",
         "security": [
           {
             "BearerAuth": []
@@ -11204,15 +11233,6 @@
             "type": "array",
             "items": {
               "type": "object",
-              "example": {
-                "DeviceName": "/dev/sda1",
-                "Ebs": {
-                  "DeleteOnTermination": true,
-                  "VolumeType": "gp2",
-                  "VolumeSize": 16,
-                  "Encrypted": false
-                }
-              },
               "additionalProperties": {}
             }
           }
@@ -11259,6 +11279,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -11729,6 +11753,10 @@
           "publicIp": {
             "type": "string",
             "example": "34.192.222.116"
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -11796,6 +11824,10 @@
           "svrName": {
             "type": "string",
             "example": "new_server_name"
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -11822,6 +11854,10 @@
           "volumeId": {
             "type": "string",
             "example": "vol-0fcb3e28f8687f74d"
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -11932,6 +11968,10 @@
               "stop",
               "restart"
             ]
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -11955,6 +11995,10 @@
           "ins_type": {
             "type": "string",
             "example": "t3.small"
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -12410,6 +12454,10 @@
           "secgroupId": {
             "type": "string",
             "example": "sg-0bb69bb599b303a1e"
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -12683,6 +12731,10 @@
               "enable",
               "disable"
             ]
+          },
+          "dcName": {
+            "type": "string",
+            "example": "Easyun"
           }
         },
         "required": [
@@ -13307,28 +13359,6 @@
         ],
         "additionalProperties": false
       },
-      "InsFamilyItem": {
-        "type": "object",
-        "properties": {
-          "catgName": {
-            "type": "string",
-            "example": "General Purpose"
-          },
-          "catdesCode": {
-            "type": "string",
-            "example": "general"
-          },
-          "familyName": {
-            "type": "string",
-            "example": "m5"
-          },
-          "familyDes": {
-            "type": "string",
-            "example": "General purpose"
-          }
-        },
-        "additionalProperties": false
-      },
       "SvrPropertyOut": {
         "type": "object",
         "properties": {
@@ -13926,6 +13956,28 @@
         "properties": {
           "sgBasic": {
             "$ref": "#/components/schemas/SecGroupBasic"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InsFamilyItem": {
+        "type": "object",
+        "properties": {
+          "catgName": {
+            "type": "string",
+            "example": "General Purpose"
+          },
+          "catdesCode": {
+            "type": "string",
+            "example": "general"
+          },
+          "familyName": {
+            "type": "string",
+            "example": "m5"
+          },
+          "familyDes": {
+            "type": "string",
+            "example": "General purpose"
           }
         },
         "additionalProperties": false

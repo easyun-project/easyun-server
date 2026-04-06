@@ -8,8 +8,7 @@
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.providers.aws import get_datacenter
-from easyun.providers.aws.resource import get_db_instance
+from easyun.providers import get_datacenter
 from .schemas import DbiDetailItem, DbiBriefItem
 from . import bp
 
@@ -63,7 +62,8 @@ def get_database_detail(rds_id, parm):
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:
-        dbi = get_db_instance(rds_id, dcName)
+        dc = get_datacenter(dcName)
+        dbi = dc.get_db_instance(rds_id)
         dbiDetail = dbi.get_detail()
 
         response = Result(detail=dbiDetail, status_code=200)

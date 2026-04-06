@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from easyun.providers.aws.session import get_easyun_resource
+from easyun.providers import get_datacenter
 from apiflask.fields import String, List, Nested, Boolean, Date
 from apiflask.validators import Length, OneOf
 from easyun.common.result import Result
@@ -99,7 +99,8 @@ def get_tabname(resource):
 def query_inventory(resource, dcName):
     '''Query inventory from Dynamodb table'''
     try:
-        resource_ddb = get_easyun_resource('dynamodb')
+        dc = get_datacenter(dcName)
+        resource_ddb = dc._session.resource('dynamodb')
         table = resource_ddb.Table(get_tabname(resource))
         inventory = table.get_item(
             Key={'dcName': dcName}

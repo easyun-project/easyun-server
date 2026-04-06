@@ -9,8 +9,7 @@ from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, RegionModel, MsgOut
-from easyun.providers import get_cloud
-from easyun.providers.aws import get_datacenter
+from easyun.providers import get_cloud, get_datacenter
 from .schemas import DataCenterBasic, DataCenterModel, RouteTableModel
 from . import bp
 

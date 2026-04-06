@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+  @module:
   @desc:    Route table management module API
   @LastEditors: aleck
 """
@@ -8,7 +9,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.providers.aws import get_datacenter, get_routetable
+from easyun.providers import get_datacenter
 from easyun.common.dc_utils import gen_dc_tag
 from .schemas import AddRouteTableParm, DelRouteTableParm, RouteTableBasic, RouteTableModel, RouteTableDetail, DcMsgOut
 
@@ -58,7 +59,8 @@ def get_routetable_detail(rtb_id, parm):
     '''获取指定 RouteTable 路由表详细信息'''
     dcName = parm['dc']
     try:
-        rtb = get_routetable(rtb_id, dcName)
+        dc = get_datacenter(dcName)
+        rtb = dc.get_routetable(rtb_id)
         rtbDetail = rtb.get_detail()
         resp = Result(detail=rtbDetail, status_code=200)
         return resp.make_resp()
@@ -76,7 +78,8 @@ def delete_routetable(parms):
     dcName = parms['dcName']
     rtbId = parms['rtbId']
     try:
-        rtb = get_routetable(rtbId, dcName)
+        dc = get_datacenter(dcName)
+        rtb = dc.get_routetable(rtbId)
         oprtRes = rtb.delete()
         resp = Result(detail=oprtRes, status_code=200)
         return resp.make_resp()

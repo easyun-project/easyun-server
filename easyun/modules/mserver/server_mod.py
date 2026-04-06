@@ -1,186 +1,95 @@
 # -*- coding: utf-8 -*-
 '''
-@Description: Server Management - Modify: Name, Instance type, 
-@LastEditors: 
+@Description: Server Management - Modify: Name, Instance type, Protection
 '''
-from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
 from apiflask import Schema
-from apiflask.fields import Integer, String, List, Dict, Boolean
+from apiflask.fields import String, List
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.dc_utils import query_dc_region
-from easyun.providers.aws.utils import get_server_name
+from easyun.common.schemas import DcNameQuery
+from easyun.providers import get_datacenter
 from .schemas import ModSvrNameParm, SvrTagNameItem, ModSvrProtectionParm, SvrProtectionOut, MsgOut
-from . import bp, REGION
-
+from . import bp
 
 
 @bp.get('/name/<svr_id>')
 @bp.auth_required(auth_token)
-# @input()
+@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SvrTagNameItem)
-def get_svr_name(svr_id):
+def get_svr_name(svr_id, parm):
     '''查询指定云服务器的名称'''
     try:
-        response = Result(
-            detail={
-                'svrId' : svr_id,
-                'tagName' : get_server_name(svr_id)
-            },
-            status_code=200
-            )
+        dc = get_datacenter(parm['dc'])
+        svr = dc.get_server(svr_id)
+        response = Result(detail={'svrId': svr_id, 'tagName': svr.tagName}, status_code=200)
         return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3101, http_status_code=400
-        )
+        response = Result(message=str(e), status_code=3101, http_status_code=400)
         response.err_resp()
 
 
-
 @bp.put('/name')
-# @auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.input(ModSvrNameParm, arg_name='parms')
 @bp.output(SvrTagNameItem(many=True))
 def update_svr_name(parms):
     '''修改指定云服务器名称'''
     try:
-        nameTag = {'Key': 'Name', 'Value': parms["svrName"]}
-
-        resource_ec2 = get_easyun_resource('ec2')
-
-        svrList = []
-        if len(parms['svrIds']) > 0:
-            svrList = resource_ec2.instances.filter(
-                InstanceIds=parms["svrIds"]
-            )
-            updateTags = svrList.create_tags(Tags = [nameTag] )
-
-        response = Result(
-            detail=[{
-                'svrId' : server.id,
-                'tagName' : next((tag['Value'] for tag in server.tags if tag["Key"] == 'Name'), None)
-                } for server in svrList],
-            status_code=200
-        )
+        dc = get_datacenter(parms.get('dcName', 'Easyun'))
+        results = []
+        for svr_id in parms.get('svrIds', []):
+            svr = dc.get_server(svr_id)
+            svr.set_name(parms['svrName'])
+            results.append({'svrId': svr_id, 'tagName': svr.tagName})
+        response = Result(detail=results, status_code=200)
         return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3102, http_status_code=400
-        )
-        response.err_resp()  
+        response = Result(message=str(e), status_code=3102, http_status_code=400)
+        response.err_resp()
 
-ModSvrNameParm
+
 @bp.put('/protection')
-# @auth_required(auth_token)
+@bp.auth_required(auth_token)
 @bp.input(ModSvrProtectionParm, arg_name='parms')
 @bp.output(SvrProtectionOut)
-# @output(SvrTagNameItem(many=True))
 def update_svr_protection(parms):
     '''修改指定云服务器protection'''
     try:
-        ec2 = get_easyun_resource('ec2')
+        dc = get_datacenter(parms.get('dcName', 'Easyun'))
+        value = parms['action'] == 'disable'
         successIds = []
-        if len(parms['svrIds']) > 0:
-            instances = ec2.instances.filter(
-                InstanceIds=parms["svrIds"],
-                Filters=[{'Name': 'instance-state-name', 'Values': ['stopped']}]
-                )
-            
-            value = True if parms['action'] == 'disable' else False
-            
-            for instance in instances:
-                # CLIENT = get_easyun_client('ec2')
-                # tmp = CLIENT.describe_instance_attribute(InstanceId = instance.id,Attribute = 'disableApiTermination')['DisableApiTermination']['Value']
-                # print(tmp)
-                ec2.Instance(instance.id).modify_attribute(
-                    DisableApiTermination={
-                        'Value': value 
-                    })
-                successIds.append(instance.id)
+        for svr_id in parms.get('svrIds', []):
+            svr = dc.get_server(svr_id)
+            if svr.svrObj.state['Name'] == 'stopped':
+                svr.set_protection(value)
+                successIds.append(svr_id)
         failedIds = list(set(parms['svrIds']) - set(successIds))
-        # print(successIds,failedIds)
-        response = Result(
-            # detail='{} update success'.format(successIds) + ',{} must be updated before stopping server'.format(failedIds) if failedIds else '',
-            detail={'success':successIds,
-            'failed':failedIds},
-            status_code=200
-        )
+        response = Result(detail={'success': successIds, 'failed': failedIds}, status_code=200)
         return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3102, http_status_code=400
-        )
-        response.err_resp()  
-
-
-
-
-    
-    # 2.查询相同架构下的Instance Types
-
-    # response = Result(
-    #     detail={'svr_ids':[i.InstanceId for i in update_result]},
-    #     status_code=3000
-    #     )
-    # return response.make_resp()
+        response = Result(message=str(e), status_code=3102, http_status_code=400)
+        response.err_resp()
 
 
 class ConfigIn(Schema):
-    svr_ids = List(         #云服务器ID
-        String(),
-        required=True, metadata={"example": ['i-01b565d505d5e0559']}
-    )
-    ins_type = String(
-        required=True, metadata={"example": 't3.small'}
-    )
+    svr_ids = List(String(), required=True, metadata={"example": ['i-01b565d505d5e0559']})
+    ins_type = String(required=True, metadata={"example": 't3.small'})
+    dcName = String(metadata={"example": "Easyun"})
 
 
 @bp.post('/config')
 @bp.auth_required(auth_token)
 @bp.input(ConfigIn, arg_name='new')
 @bp.output(MsgOut)
-# @output(UpdateOut)
 def update_config(new):
     '''修改指定云服务器实例配置'''
-    try: 
-        RESOURCE = get_easyun_resource('ec2', region_name=REGION)
-        ####有的实例是没有subnet_id的
-        servers = RESOURCE.instances.filter(
-            InstanceIds=new["svr_ids"]
-        )
-        # 判断服务器是否处于关机状态
-        for server in servers:
-            if server.state["Name"] != "stopped":
-                raise ValueError('Server must be stopped.')
-            else:
-                server.modify_attribute(
-                    InstanceType={
-                    'Value': new["ins_type"]
-                    }
-                )
-                response = Result(
-                    detail={'msg':'config success'},
-                    status_code=200
-                    )
-                return response.make_resp()
+    try:
+        dc = get_datacenter(new.get('dcName', 'Easyun'))
+        for svr_id in new['svr_ids']:
+            svr = dc.get_server(svr_id)
+            svr.set_instance_type(new['ins_type'])
+        response = Result(detail={'msg': 'config success'}, status_code=200)
+        return response.make_resp()
     except Exception as e:
-        response = Result(
-            message=str(e), status_code=3001, http_status_code=400
-        )
+        response = Result(message=str(e), status_code=3001, http_status_code=400)
         response.err_resp()
-
-
-# @bp.get('/instypes/<svr_id>')
-# @auth_required(auth_token)
-# # @input()
-# # @output()
-# def get_ins_types(svr_id):
-#     '''查询指定云服务器的实例配置'''
-#     RESOURCE = get_easyun_resource('ec2', region_name=REGION)
-#     # 1.查询云服务器的架构 x86-64bit / arm-64bit
-#     server = RESOURCE.Instance(svr_id)
-
-
-    
-    # 2.查询相同架构下的Instance Types

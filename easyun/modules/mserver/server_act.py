@@ -1,124 +1,67 @@
 # -*- coding: utf-8 -*-
-'''
-@Description: Server Management - action: start, restart, stop, delete; and get status
-@LastEditors: 
-'''
-from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
+"""
+  @module:
+  @desc: Server Management - action: start, restart, stop, delete
+"""
 from apiflask import Schema
-from apiflask.fields import Integer, String, List, Dict
-# EmptySchema removed in APIFlask 3.x, use {} instead
-from apiflask.validators import Length, OneOf
-from easyun import FLAG
+from apiflask.fields import String, List
+from apiflask.validators import OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
+from easyun.common.schemas import DcNameQuery
+from easyun.providers import get_datacenter
 from .schemas import SvrIdList, SvrOperateOut, SvrStateChangeItem
 from . import bp
 
 
 class OperateIn(Schema):
-    svr_ids = List(         #云服务器ID
-        String(),
-        required=True
-    )
-    action = String(
-        required=True, 
-        validate=OneOf(['start', 'stop', 'restart'])  #Operation TYPE
-        )   
-
-
+    svr_ids = List(String(), required=True)
+    action = String(required=True, validate=OneOf(['start', 'stop', 'restart']))
+    dcName = String(metadata={"example": "Easyun"})
 
 
 @bp.post('/action')
 @bp.auth_required(auth_token)
 @bp.input(OperateIn, arg_name='operate')
 @bp.output(SvrStateChangeItem(many=True))
-# @output(SvrOperateOut, description='Operation finished !')
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
-    # print(operate)
     try:
-        resource_ec2 = get_easyun_resource('ec2')
-        servers = resource_ec2.instances.filter(
-            InstanceIds=operate["svr_ids"]
-            )
-        operation_results = []
-        if operate["action"] == 'restart':
-            for server in servers:
-                if server.state['Name'] == "running":
-                    server.reboot()
-                else:
-                    raise ValueError('server state is not running')
-            operation_results = "restart server success"
-        else:
-            for server in servers:
-                # print(server)
-                if operate["action"] == 'start':
-                    operation_result = server.start()
-                elif operate["action"] == 'stop':
-                    operation_result = server.stop()
-                key = [i for i in operation_result.keys() if i !="ResponseMetadata"][0]
-                res = operation_result[key][0]
-                tmp = {
-                    'svrId':res.get('InstanceId'),
-                    'currState':res['CurrentState'].get('Name'),
-                    'preState':res['PreviousState'].get('Name')
-                }
-                operation_results.append(tmp)
-        print(operation_results)
-        resp = Result(
-            detail=operation_results,
-            status_code=200,
-        )
+        dc = get_datacenter(operate.get('dcName', 'Easyun'))
+        results = []
+        for svr_id in operate['svr_ids']:
+            svr = dc.get_server(svr_id)
+            if operate['action'] == 'start':
+                svr.start()
+                results.append({'svrId': svr_id, 'currState': 'pending', 'preState': 'stopped'})
+            elif operate['action'] == 'stop':
+                svr.stop()
+                results.append({'svrId': svr_id, 'currState': 'stopping', 'preState': 'running'})
+            elif operate['action'] == 'restart':
+                svr.reboot()
+                results.append({'svrId': svr_id, 'currState': 'rebooting', 'preState': 'running'})
+        resp = Result(detail=results, status_code=200)
         return resp.make_resp()
     except Exception as e:
-        resp = Result(
-            message=str(e), 
-            # message='{} server failed'.format(operate["action"]), 
-            status_code=3004,
-            http_status_code=400
-        )
+        resp = Result(message=str(e), status_code=3004, http_status_code=400)
         resp.err_resp()
-
 
 
 @bp.delete('')
 @bp.auth_required(auth_token)
 @bp.input(SvrIdList, arg_name='parm')
 @bp.output(SvrStateChangeItem(many=True))
-# @output(SvrOperateOut, description='Operation finished !')
 def delete_svr(parm):
     '''删除(Terminate)云服务器'''
     try:
-        resource_ec2 = get_easyun_resource('ec2')
-        servers = resource_ec2.instances.filter(
-            InstanceIds=parm["svrIds"],
-            # Filters=[
-            # {'Name': 'tag:Flag','Values': [FLAG]}
-            # ]            
-        )
+        dc = get_datacenter(parm.get('dcName', 'Easyun'))
         deleteList = []
-        for server in servers:
-            termResp = server.terminate()
-            # server.wait_until_terminated()
-            termInst = termResp.get('TerminatingInstances')[0]
-            tmp = {
-                'svrId':termInst.get('InstanceId'),
-                'currState':termInst['CurrentState'].get('Name'),
-                'preState':termInst['PreviousState'].get('Name')
-            }
-            deleteList.append(tmp)
-
-
-        resp = Result(
-            detail=deleteList,
-            status_code=200,
-        )
+        for svr_id in parm['svrIds']:
+            svr = dc.get_server(svr_id)
+            svr.delete()
+            deleteList.append({'svrId': svr_id, 'currState': 'shutting-down', 'preState': 'running'})
+        resp = Result(detail=deleteList, status_code=200)
         return resp.make_resp()
-
     except Exception:
-        resp = Result(
-            message='Delete server failed', 
-            status_code=3004, 
-            http_status_code=400
-        )
+        resp = Result(message='Delete server failed', status_code=3004, http_status_code=400)
         return resp.err_resp()

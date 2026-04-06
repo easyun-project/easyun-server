@@ -1,6 +1,6 @@
 [project]
 name = "easyun-server"
-version = "0.5.3"
+version = "0.6.0"
 description = "Easyun cloud management platform API server"
 requires-python = ">=3.12"
 dependencies = [

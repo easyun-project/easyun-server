@@ -10,7 +10,7 @@ from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
 from .schemas import AddIntGateway, AddNatGateway, GatewayModel, DcMsgOut
-from easyun.providers.aws import get_datacenter, get_int_gateway, get_nat_gateway
+from easyun.providers import get_datacenter
 
 
 bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')
@@ -99,7 +99,8 @@ def get_igw_detail(igw_id, parm):
     '''查看 Internet Gateway 详细信息'''
     dcName = parm['dc']
     try:
-        igw = get_int_gateway(igw_id, dcName)
+        dc = get_datacenter(dcName)
+        igw = dc.get_int_gateway(igw_id)
         igwDetail = igw.get_detail()
         resp = Result(detail=igwDetail, status_code=200)
         return resp.make_resp()
@@ -116,7 +117,8 @@ def get_natgw_detail(natgw_id, parm):
     '''查看 Internet Gateway 详细信息'''
     dcName = parm['dc']
     try:
-        natgw = get_nat_gateway(natgw_id, dcName)
+        dc = get_datacenter(dcName)
+        natgw = dc.get_nat_gateway(natgw_id)
         natDetail = natgw.get_detail()
         resp = Result(detail=natDetail, status_code=200)
         return resp.make_resp()

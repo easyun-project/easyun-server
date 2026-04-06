@@ -8,9 +8,8 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.providers.aws import get_datacenter
-from easyun.providers.aws.resource import get_st_volume, get_ec2_server
-from easyun.providers.aws.utils import get_disk_type
+from easyun.providers import get_datacenter
+
 from .schemas import StMsgOut, VolumeModel, VolumeBasic, VolumeDetail, AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
 
@@ -78,7 +77,8 @@ def get_volume_detail(volume_id, parm):
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:
-        vol = get_st_volume(dcName)
+        dc = get_datacenter(dcName)
+        vol = dc.get_volume(volume_id)
         volumeDetail = vol.get_detail(volume_id)
 
         response = Result(detail=volumeDetail, status_code=200)
@@ -99,19 +99,17 @@ def add_volume(parms):
     svrId = parms.pop('svrId')
     attachPath = parms.pop('attachPath')
     try:
+        dc = get_datacenter(dcName)
         # 如果传入了svrID，则从该server上获取相关属性
         if svrId:
-            thisSvr = get_ec2_server(svrId)
-            # 获取 server az属性
+            thisSvr = dc.get_server(svrId)
             volumeZone = thisSvr.svrObj.placement.get('AvailabilityZone')
-            # 以 server tagName 作为卷名前缀
-            diskType = get_disk_type(attachPath) if attachPath else 'disk'
+            diskType = dc.get_disk_type(attachPath) if attachPath else 'disk'
             tagName = '%s-%s' % (thisSvr.tagName, diskType)
         else:
             volumeZone = parms.get('azName')
             tagName = parms.get('tagName')
-        dc = get_datacenter(dcName)
-        newVolume = dc.workload.create_volume(
+        newVolume = dc.resource.create_volume(
             vol_type=parms['volumeType'],
             vol_size=parms['volumeSize'],
             vol_zone=volumeZone,
@@ -166,7 +164,8 @@ def del_volume(parm):
     try:
         deleteList = []
         for volumeId in parm['volumeIds']:
-            vol = get_st_volume(volumeId, parm.get('dcName'))
+            dc = get_datacenter(parm.get('dcName'))
+            vol = dc.get_volume(volumeId)
             if vol.volObj.state == 'available':
                 vol.delete()
                 deleteResult = {volumeId: 'success deleted'}
@@ -188,7 +187,8 @@ def del_volume(parm):
 def attach_server(parm):
     '''块存储关联云服务器'''
     try:
-        vol = get_st_volume(parm['volumeId'], parm.get('dcName'))
+        dc = get_datacenter(parm.get('dcName'))
+        vol = dc.get_volume(parm['volumeId'])
         if vol.volObj.state != 'available':
             resp = Result(message=f'Volume state is {vol.volObj.state}, must be available', status_code=5002, http_status_code=400)
             return resp.err_resp()
@@ -217,7 +217,8 @@ def attach_server(parm):
 def detach_server(parm):
     '''块存储分离云服务器(ec2)'''
     try:
-        vol = get_st_volume(parm['volumeId'], parm.get('dcName'))
+        dc = get_datacenter(parm.get('dcName'))
+        vol = dc.get_volume(parm['volumeId'])
         if vol.volObj.state != 'in-use':
             resp = Result(message=f'Volume state is {vol.volObj.state}, must be in-use', status_code=5003, http_status_code=400)
             return resp.err_resp()

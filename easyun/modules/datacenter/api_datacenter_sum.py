@@ -11,9 +11,7 @@ from easyun.common.models import Account
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
 from easyun.libs.utils import filter_list_by_value
-from easyun.providers.aws.utils import get_subnet_type
-from easyun.providers.aws.management.sdk_cost import CostExplorer, get_ce_region
-from easyun.providers.aws import get_datacenter
+from easyun.providers import get_datacenter
 from easyun.common.dc_utils import set_boto3_region
 from .schemas import DcSummaryBasicOut, DcResSummaryOut, DcCostSummaryOut
 from . import bp, logger
@@ -34,7 +32,7 @@ def get_vpc_summary(parm):
         )['Subnets']
         countList = [
             {
-                'subnetType': get_subnet_type(subnet['SubnetId']),
+                'subnetType': dc.get_subnet(subnet['SubnetId']).get_subnet_type(),
                 'azName': subnet['AvailabilityZone'],
             }
             for subnet in subnetList
@@ -119,11 +117,9 @@ def get_res_summary(parm):
 def get_cost_summary(parm):
     '''获取指定的数据中心成本及用量统计信息'''
     dcName = parm['dc']
-    thisAccount: Account = Account.query.first()
     try:
-        # 根据账号类型选择对应 api endpoint
-        ceRegion = get_ce_region(thisAccount.aws_type)
-        ce = CostExplorer(dcName, region=ceRegion)
+        dc = get_datacenter(dcName)
+        ce = dc.get_cost_summary()
 
         # get last month
         todayDate = date.today()

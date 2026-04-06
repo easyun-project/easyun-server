@@ -6,7 +6,6 @@
 
 from apiflask import APIBlueprint
 from easyun import log
-from easyun.providers.aws import SecurityGroup, Subnet, StaticIP
 
 
 # define api version

@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from easyun.providers.aws.session import get_easyun_client, get_easyun_resource
+from easyun.providers.aws.session import get_easyun_session
 from botocore.exceptions import ClientError
 from flask import current_app
 from easyun import log
@@ -15,9 +15,8 @@ from easyun.common.models import Datacenter, Account
 from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.libs.task_manager import run_async, get_task
-from easyun.providers.aws.management.sdk_quotas import get_quota_value
+from easyun.providers import get_account
 from easyun.common.dc_utils import set_boto3_region
-from easyun.providers.aws.management.sdk_tagging import ResGroupTagging
 from .schemas import (
     DefaultParmQuery,
     DefaultParmsOut,
@@ -55,7 +54,8 @@ def get_default_parms(parm):
             inputRegion = curr_account.get_region()
 
         # get az list
-        client_ec2 = get_easyun_client('ec2', region_name=inputRegion)
+        session = get_easyun_session()
+        client_ec2 = session.client('ec2', region_name=inputRegion)
         azs = client_ec2.describe_availability_zones()
         azList = [az['ZoneName'] for az in azs['AvailabilityZones']]
 
@@ -180,19 +180,21 @@ def create_dc_async(parm):
 
     # Check the prerequisites before create datacenter task
     try:
-        resource_ec2 = get_easyun_resource('ec2', region_name=dcRgeion)
+        session = get_easyun_session()
+        resource_ec2 = session.resource('ec2', region_name=dcRgeion)
 
         # Check if the DC Name is available
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
         if thisDC is not None:
             raise ValueError('DataCenter name already existed')
         # Check if VPC quota is enough
-        vpcQuota = get_quota_value('vpc', 'L-F678F1CE')
+        account = get_account()
+        vpcQuota = account.get_quota('vpc', 'L-F678F1CE', region=dcRgeion).get('quotaValue', 0)
         vpcIter = resource_ec2.vpcs.all()
         if len_iter(vpcIter) >= int(vpcQuota):
             raise ValueError('The VPCs per Region limit has been reached')
         # Check if EIP quota is enough
-        eipQuota = get_quota_value('ec2', 'L-0263D0A3')
+        eipQuota = account.get_quota('ec2', 'L-0263D0A3', region=dcRgeion).get('quotaValue', 0)
         eipIter = resource_ec2.vpc_addresses.all()
         if len_iter(eipIter) >= int(eipQuota):
             raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
@@ -232,7 +234,8 @@ def delete_dc_async(parm):
     # Check the prerequisites before create datacenter task
     try:
         dcRegion = set_boto3_region(dcName)
-        rgt = ResGroupTagging(dcName)
+        dc = get_datacenter(dcName)
+        rgt = dc.tagging
         # step 1: DC resource empty checking - instance
         serverNum = rgt.sum_resources('ec2:instance')
         if serverNum > 0:

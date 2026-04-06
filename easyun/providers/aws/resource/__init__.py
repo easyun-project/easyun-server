@@ -42,6 +42,94 @@ class Resource(object):
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
 
+    def list_all_server(self):
+        """列出 datacenter 下所有 server 详细信息"""
+        resource = self._session.resource('ec2')
+        client = resource.meta.client
+        try:
+            svrIterator = resource.instances.filter(Filters=[self.tagFilter])
+            svrList = []
+            for s in svrIterator:
+                nameTag = next((tag['Value'] for tag in (s.tags or []) if tag['Key'] == 'Name'), None)
+                volumeSize = sum(
+                    resource.Volume(d['Ebs']['VolumeId']).size
+                    for d in s.block_device_mappings
+                )
+                insInfo = client.describe_instance_types(InstanceTypes=[s.instance_type])
+                ramSize = insInfo['InstanceTypes'][0]['MemoryInfo']['SizeInMiB']
+                instDetail = client.describe_instances(InstanceIds=[s.id])
+                instRes = [j for i in instDetail['Reservations'] for j in i['Instances']][0]
+                association = instRes['NetworkInterfaces'][0].get('Association') if instRes.get('NetworkInterfaces') else None
+                try:
+                    osName = resource.Image(s.image_id).platform_details
+                except Exception:
+                    osName = 'unknown'
+                svrList.append({
+                    'svrId': s.id,
+                    'tagName': nameTag,
+                    'svrState': s.state['Name'],
+                    'insType': s.instance_type,
+                    'vpuNum': s.cpu_options['CoreCount'],
+                    'ramSize': ramSize / 1024,
+                    'volumeSize': volumeSize,
+                    'osName': osName,
+                    'azName': s.placement.get('AvailabilityZone'),
+                    'pubIp': s.public_ip_address,
+                    'priIp': s.private_ip_address,
+                    'isEip': bool(association and association.get('IpOwnerId') != 'amazon'),
+                })
+            return svrList
+        except Exception as ex:
+            raise ex
+
+    def list_server_brief(self):
+        """列出 datacenter 下所有 server 基础信息"""
+        resource = self._session.resource('ec2')
+        try:
+            svrIterator = resource.instances.filter(Filters=[self.tagFilter])
+            return [
+                {
+                    'svrId': s.id,
+                    'tagName': next((tag['Value'] for tag in (s.tags or []) if tag['Key'] == 'Name'), None),
+                    'svrState': s.state['Name'],
+                    'insType': s.instance_type,
+                    'azName': s.placement.get('AvailabilityZone'),
+                }
+                for s in svrIterator
+            ]
+        except Exception as ex:
+            raise ex
+
+
+    def create_server(self, parm):
+        """创建 EC2 实例"""
+        resource = self._session.resource('ec2')
+        flagTag = {'Key': 'Flag', 'Value': self.dcName}
+        nameTag = {'Key': 'Name', 'Value': parm['tagName']}
+        servers = resource.create_instances(
+            MaxCount=parm.get('svrNumber', 1),
+            MinCount=parm.get('svrNumber', 1),
+            ImageId=parm['ImageId'],
+            InstanceType=parm['InstanceType'],
+            SubnetId=parm['SubnetId'],
+            SecurityGroupIds=parm['SecurityGroupIds'],
+            KeyName=parm['KeyName'],
+            BlockDeviceMappings=parm['BlockDeviceMappings'],
+            TagSpecifications=[
+                {'ResourceType': 'instance', 'Tags': [flagTag, nameTag]},
+                {'ResourceType': 'volume', 'Tags': [flagTag, nameTag]},
+            ],
+        )
+        return [
+            {
+                'svrId': s.id,
+                'insTpye': s.instance_type,
+                'createTime': s.launch_time.isoformat(),
+                'svrState': s.state['Name'],
+                'priIp': s.private_ip_address,
+            }
+            for s in servers
+        ]
     def list_all_volume(self):
         resource = self._session.resource('ec2')
         try:
@@ -330,6 +418,28 @@ class Resource(object):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
+
+    def create_bucket_cc(self, bucket_id, region, options):
+        """通过 CloudControl 创建 S3 Bucket"""
+        client_cc = self._session.client('cloudcontrol', region_name=region)
+        desired_state = {
+            'bucketId': bucket_id,
+            'VersioningConfiguration': {'Status': 'Enabled' if options.get('isVersioning') else 'Suspended'},
+            'PublicAccessBlockConfiguration': {
+                'BlockPublicAcls': True, 'IgnorePublicAcls': True,
+                'BlockPublicPolicy': True, 'RestrictPublicBuckets': True,
+            },
+            'Tags': [self.flagTag],
+        }
+        if options.get('isEncryption'):
+            desired_state['BucketEncryption'] = {
+                'ServerSideEncryptionConfiguration': [{
+                    'BucketKeyEnabled': True,
+                    'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'},
+                }]
+            }
+        result = client_cc.create_resource(TypeName='AWS::S3::Bucket', DesiredState=str(desired_state))
+        return result['ProgressEvent']
     def create_volume(
         self, vol_type, vol_size, vol_zone,
         iops=None,

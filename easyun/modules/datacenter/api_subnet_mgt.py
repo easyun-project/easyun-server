@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+  @module:
   @desc:    DataCenter module mock API
   @LastEditors: aleck
 """
@@ -8,7 +9,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.schemas import DcNameQuery
 from easyun.common.result import Result
-from easyun.providers.aws import get_datacenter, get_subnet
+from easyun.providers import get_datacenter
 from .schemas import DcMsgOut, AddSubnetParm, DelSubnetParm, ModSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
 
 
@@ -57,7 +58,8 @@ def get_subnet_detail(subnet_id, parm):
     '''获取 指定subnet子网详细信息'''
     dcName = parm['dc']
     try:
-        subnet = get_subnet(subnet_id, dcName)
+        dc = get_datacenter(dcName)
+        subnet = dc.get_subnet(subnet_id)
         subnetDetail = subnet.get_detail()
         resp = Result(detail=subnetDetail, status_code=200)
         return resp.make_resp()
@@ -75,7 +77,8 @@ def delete_subnet(parms):
     dcName = parms['dcName']
     subnetId = parms['subnetId']
     try:
-        subnet = get_subnet(subnetId, dcName)
+        dc = get_datacenter(dcName)
+        subnet = dc.get_subnet(subnetId)
         oprtRes = subnet.delete()
         resp = Result(detail=oprtRes, status_code=200)
         return resp.make_resp()
@@ -114,7 +117,8 @@ def mod_subnet(parm):
     dcName = parm['dcName']
     subnetId = parm['subnetId']
     try:
-        subnet = get_subnet(subnetId, dcName)
+        dc = get_datacenter(dcName)
+        subnet = dc.get_subnet(subnetId)
         client = subnet._client
         isMapPublicIp = parm.get('isMapPublicIp')
         if isMapPublicIp is not None:

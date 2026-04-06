@@ -130,3 +130,5 @@ class StorageVolume(StorageVolumeBase):
             return
         except Exception as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    SYSTEM_DISK_PATHS = ['/dev/xvda', '/dev/sda1']

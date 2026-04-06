@@ -5,14 +5,11 @@
   @auth:
 """
 
-from easyun.providers.aws.session import get_easyun_client
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.providers.aws import get_datacenter
-from easyun.providers.aws.resource import get_st_bucket
-from easyun.providers.aws.resource.storage.sdk_bucket import vaildate_bucket_exist
+from easyun.providers import get_datacenter
 from .schemas import StMsgOut, BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail, BucketPropertyOut, BucketPermissionOut
 
 
@@ -68,7 +65,7 @@ def get_bkt_detail(bucket_id, parm):
     '''获取指定存储桶(Bucket)的详细信息'''
     dcName = parm['dc']
     try:
-        bkt = get_st_bucket(bucket_id, dcName)
+        bkt = dc.get_bucket(bucket_id)
         bucketDetail = bkt.get_detail()
         response = Result(
             detail=bucketDetail,
@@ -119,45 +116,10 @@ def add_bucket_cc(parm):
     bucketId = parm['bucketId']
     bktRegion = parm['bktRegion']
     dcName = parm['dcName']
-    flagTag = {'Key': 'Flag', 'Value': dcName}
-
-    desiredState = {
-        'bucketId': bucketId,
-        'VersioningConfiguration': {
-            'Status': 'Enabled' if parm['isVersioning'] else 'Suspended'
-        },
-        'PublicAccessBlockConfiguration': {
-            'BlockPublicAcls': True,
-            'IgnorePublicAcls': True,
-            'BlockPublicPolicy': True,
-            'RestrictPublicBuckets': True,
-        },
-        'Tags': [flagTag],
-    }
-    if parm['isEncryption']:
-        desiredState.update(
-            {
-                'BucketEncryption': {
-                    'ServerSideEncryptionConfiguration': [
-                        {
-                            'BucketKeyEnabled': parm['isEncryption'],
-                            'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'},
-                        }
-                    ]
-                }
-            }
-        )
     try:
-        # 调cloudtontro接口创建bucket
-        client_cc = get_easyun_client('cloudcontrol', region_name=bktRegion)
-        bucket = client_cc.create_resource(
-            TypeName='AWS::S3::Bucket', DesiredState=str(desiredState)
-        )
-        response = Result(
-            detail=bucket['ProgressEvent'],
-            # detail = {'bucketId' : bucket['ProgressEvent']['Identifier']},
-            status_code=200,
-        )
+        dc = get_datacenter(dcName)
+        result = dc.resource.create_bucket_cc(bucketId, bktRegion, parm)
+        response = Result(detail=result, status_code=200)
         return response.make_resp()
 
     except Exception as ex:
@@ -177,7 +139,7 @@ def delete_bucket(parm):
     dcName = parm['dcName']
     bucketId = parm['bucketId']
     try:
-        bkt = get_st_bucket(bucketId, dcName)
+        bkt = dc.get_bucket(bucketId)
         oprtRes = bkt.delete()
         resp = Result(detail=oprtRes, status_code=200)
         return resp.make_resp()
@@ -188,15 +150,18 @@ def delete_bucket(parm):
 
 @bp.put('/<bucket_id>/property')
 @bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='query')
 @bp.input(BucketPropertyParm, arg_name='parms')
 @bp.output(BucketPropertyOut)
-def modify_bucket_property(bucket_id, parms):
+def modify_bucket_property(bucket_id, query, parms):
     '''修改存储桶(S3 Bucket)属性'''
+    dcName = query.get('dc')
     isEncryption = parms.get('isEncryption')
     isVersioning = parms.get('isVersioning')
     oprtRes = {'bucketId': bucket_id}
     try:
-        bkt = get_st_bucket(bucket_id)        
+        dc = get_datacenter(dcName)
+        bkt = dc.get_bucket(bucket_id)        
         if isEncryption is not None and isEncryption is not bkt.get_bkt_encryption():
             bkt.set_default_encryption(isEncryption)
             oprtRes.update({'isEncryption': isEncryption})
@@ -212,14 +177,17 @@ def modify_bucket_property(bucket_id, parms):
 
 @bp.put('/<bucket_id>/permission')
 @bp.auth_required(auth_token)
+@bp.input(DcNameQuery, location='query', arg_name='query')
 @bp.input(BucketPublicParm, arg_name='parms')
 @bp.output(BucketPermissionOut)
-def modify_bucket_policy(bucket_id, parms):
+def modify_bucket_policy(bucket_id, query, parms):
     '''修改存储桶的Public Block Policy'''
+    dcName = query.get('dc')
     pubConfig = parms
     oprtRes = {'bucketId': bucket_id}
     try:
-        bkt = get_st_bucket(bucket_id)
+        dc = get_datacenter(dcName)
+        bkt = dc.get_bucket(bucket_id)
         bkt.set_public_access(pubConfig)
         oprtRes.update({'bucketPermission': bkt.get_public_status()})
         response = Result(detail=oprtRes, status_code=200)
@@ -238,7 +206,8 @@ def vaildate_bkt(parms):
     dcName = parms['dc']
     bucketId = parms['bkt']
     try:
-        if vaildate_bucket_exist(bucketId, dcName):
+        dc = get_datacenter(dcName)
+        if dc.validate_bucket_name(bucketId):
             isAvailable = False
         else:
             isAvailable = True
@@ -260,7 +229,7 @@ def vaildate_bkt(parms):
 #     dcName = parms['dc']
 #     bucketId = parms['bkt']
 #     try:
-#         bkt = get_st_bucket(bucketId, dcName)
+#         bkt = dc.get_bucket(bucketId)
 #         bucketDetail = bkt.get_detail()
 
 #         result = S3Client.get_public_access_block(Bucket=bucketId)[

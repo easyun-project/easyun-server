@@ -10,7 +10,10 @@ from apiflask import Schema
 from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Integer, Field
 from apiflask.validators import Length, OneOf, Regexp
 from easyun.common.schemas import TagItem
-from easyun.providers.aws.region import get_region_codes
+from easyun.providers import get_account
+
+_account = get_account()
+_region_codes = [r['regionCode'] for r in _account.list_regions()]
 
 
 # 定义获取DC默认值的query参数
@@ -18,7 +21,7 @@ class DefaultParmQuery(Schema):
     '''datacenter name for query parm'''
 
     dc = String(required=True, validate=Length(0, 30), metadata={"example": 'Easyun'})
-    region = String(validate=OneOf(get_region_codes()), metadata={"example": 'us-east-1'})
+    region = String(validate=OneOf(_region_codes), metadata={"example": 'us-east-1'})
 
 
 # 定义VPC 参数的格式

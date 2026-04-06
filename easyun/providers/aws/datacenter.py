@@ -15,6 +15,11 @@ from .resource.network.sdk_secgroup import SecurityGroup
 from .resource.network.sdk_staticip import StaticIP
 from .resource.network.sdk_gateway import InternetGateway, NatGateway
 from .resource import Resource
+from .resource.compute.sdk_server import EC2Server
+from .resource.storage.sdk_volume import StorageVolume
+from .resource.storage.sdk_bucket import StorageBucket
+from .resource.database.sdk_database import DBInstance
+from .resource.network.sdk_loadbalancer import LoadBalancer
 from .management.sdk_tagging import ResGroupTagging
 from .utils import get_subnet_type, get_eni_type, get_tag_name
 
@@ -32,6 +37,48 @@ class DataCenter(object):
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
         self.resource = Resource(dc_name)
         self.tagging = ResGroupTagging(dc_name)
+
+    # --- 资源获取 ---
+    def get_subnet(self, subnet_id):
+        return Subnet(subnet_id, self.dcName)
+
+    def get_routetable(self, rtb_id):
+        return RouteTable(rtb_id, self.dcName)
+
+    def get_secgroup(self, sg_id):
+        return SecurityGroup(sg_id, self.dcName)
+
+    def get_int_gateway(self, igw_id):
+        return InternetGateway(igw_id, self.dcName)
+
+    def get_nat_gateway(self, natgw_id):
+        return NatGateway(natgw_id, self.dcName)
+
+    def get_staticip(self, eip_id):
+        return StaticIP(eip_id, self.dcName)
+
+    def get_server(self, svr_id):
+        return EC2Server(svr_id, self.dcName)
+
+    def get_volume(self, volume_id):
+        return StorageVolume(volume_id, self.dcName)
+
+    def get_disk_type(self, attach_path):
+        return StorageVolume.get_disk_type(attach_path)
+
+    def get_bucket(self, bucket_id):
+        return StorageBucket(bucket_id, self.dcName)
+
+    def validate_bucket_name(self, bucket_id):
+        """检查 bucket 名称是否已存在"""
+        from .resource.storage.sdk_bucket import vaildate_bucket_exist
+        return vaildate_bucket_exist(bucket_id, self.dcName)
+
+    def get_db_instance(self, dbi_id):
+        return DBInstance(dbi_id, self.dcName)
+
+    def get_load_balancer(self, elb_id):
+        return LoadBalancer(elb_id, self.dcName)
 
     def get_azone_list(self):
         try:
@@ -402,3 +449,130 @@ class DataCenter(object):
             return NatGateway(self.dcName, newNat['NatGateway']['NatGatewayId'])
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    # --- 参数查询 ---
+
+    def list_images(self, arch=None, os_type=None):
+        return EC2Server.list_images(self._session, arch, os_type)
+
+    def list_instance_types(self, arch=None, family=None):
+        return EC2Server.list_instance_types(self._session, arch, family)
+
+    def list_instance_families(self):
+        from .resource.compute.ec2_instype import Instance_Family
+        return Instance_Family
+
+    def get_instance_pricing(self, instance_type, os_code=None):
+        from .management.sdk_pricing import AwsPricing
+        from easyun.common.models import Datacenter as DcModel
+        dc = DcModel.query.filter_by(name=self.dcName).first()
+        return AwsPricing().ec2_monthly_cost(dc.get_region(), instance_type, os_code)
+
+    def get_cost_summary(self, period='monthly'):
+        """获取费用汇总"""
+        from .management.sdk_cost import CostExplorer, get_ce_region
+        from easyun.common.models import Account
+        thisAccount = Account.query.first()
+        ceRegion = get_ce_region(thisAccount.aws_type)
+        return CostExplorer(self.dcName, region=ceRegion)
+
+    # --- KeyPair 管理 ---
+
+    def list_keypairs(self):
+        """列出 datacenter 下所有 keypair"""
+        keys = self._client.describe_key_pairs(
+            Filters=[self.tagFilter]
+        ).get('KeyPairs', [])
+        return [
+            {
+                'keyName': k['KeyName'],
+                'keyType': k['KeyType'],
+                'keyFingerprint': k['KeyFingerprint'],
+                'keyTags': [t for t in k.get('Tags', []) if t['Key'] != 'Flag'],
+            }
+            for k in keys
+        ]
+
+    def get_keypair(self, key_name):
+        """获取单个 keypair 信息"""
+        kp = self._resource.KeyPair(key_name)
+        return {
+            'keyName': key_name,
+            'keyType': kp.key_type,
+            'keyFingerprint': kp.key_fingerprint,
+            'keyTags': [t for t in (kp.tags or []) if t['Key'] != 'Flag'],
+        }
+
+    def create_keypair(self, key_name, key_type='rsa'):
+        """创建 keypair，返回含 key_material"""
+        kp = self._resource.create_key_pair(
+            KeyName=key_name,
+            KeyType=key_type,
+            TagSpecifications=[{'ResourceType': 'key-pair', 'Tags': [self.flagTag]}],
+        )
+        return {
+            'keyName': key_name,
+            'keyType': key_type,
+            'keyFingerprint': kp.key_fingerprint,
+            'keyMaterial': kp.key_material,
+        }
+
+    def delete_keypair(self, key_name):
+        """删除 keypair"""
+        self._client.delete_key_pair(KeyName=key_name)
+
+    # --- Dashboard 查询 ---
+
+    def get_region_info(self):
+        """获取当前 datacenter 所在 region 的信息"""
+        from .region import AWS_Regions
+        thisDC = Datacenter.query.filter_by(name=self.dcName).first()
+        dcRegion = thisDC.get_region()
+        regionDict = next((r for r in AWS_Regions if r['regionCode'] == dcRegion), None)
+        if regionDict:
+            return {
+                'icon': regionDict.get('countryCode'),
+                'name': regionDict.get('regionName', {}).get('eng'),
+            }
+        return {'icon': '', 'name': dcRegion}
+
+    def get_az_summary(self):
+        """获取各 AZ 的子网数量汇总"""
+        azs = self._client.describe_availability_zones()['AvailabilityZones']
+        regionInfo = self.get_region_info()
+        result = []
+        for az in azs:
+            azName = az['ZoneName']
+            subnets = self._client.describe_subnets(
+                Filters=[self.tagFilter, {'Name': 'availability-zone', 'Values': [azName]}]
+            ).get('Subnets', [])
+            subnetNum = len(subnets)
+            result.append({
+                'azName': azName,
+                'azStatus': 'running' if subnetNum else 'empty',
+                'subnetNum': subnetNum,
+                'dcRegion': regionInfo,
+            })
+        return result
+
+    def get_cloudwatch_alarms(self):
+        """获取 CloudWatch 告警汇总"""
+        cw = self._session.client('cloudwatch')
+        alarms = {'iaNum': 0, 'okNum': 0, 'isNum': 0}
+        alarm_map = {'OK': 'okNum', 'INSUFFICIENT_DATA': 'isNum', 'ALARM': 'iaNum'}
+        res = cw.describe_alarms()
+        for alarm_type in ['CompositeAlarms', 'MetricAlarms']:
+            for alarm in res.get(alarm_type, []):
+                key = alarm_map.get(alarm.get('StateValue'))
+                if key:
+                    alarms[key] += 1
+        return alarms
+
+    def get_cloudwatch_dashboards(self):
+        """获取 CloudWatch Dashboard 列表"""
+        cw = self._session.client('cloudwatch')
+        thisDC = Datacenter.query.filter_by(name=self.dcName).first()
+        region = thisDC.get_region()
+        prefix = f"https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name="
+        res = cw.list_dashboards()
+        return [{'title': d['DashboardName'], 'url': prefix + d['DashboardName']} for d in res.get('DashboardEntries', [])]

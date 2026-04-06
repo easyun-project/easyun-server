@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+  @module:
   @desc:    DataCenter module mock API
   @LastEditors: aleck
 """
@@ -8,7 +9,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery, DcNameParm
-from easyun.providers.aws import get_staticip, get_datacenter
+from easyun.providers import get_datacenter
 from .schemas import DcMsgOut, DelEipParm, StaticIPBasic, StaticIPModel, StaticIPDetail
 
 
@@ -81,7 +82,8 @@ def get_eip_detail(eip_id, parm):
     '''获取 指定静态IP(EIP)信息'''
     dcName = parm['dc']
     try:
-        eip = get_staticip(eip_id, dcName)
+        dc = get_datacenter(dcName)
+        eip = dc.get_staticip(eip_id)
         eipDetail = eip.get_detail()
         resp = Result(
             detail=eipDetail,
@@ -103,7 +105,8 @@ def delete_eip(parm):
     dcName = parm['dcName']
     eipId = parm['eipId']
     try:
-        eip = get_staticip(eipId, dcName)
+        dc = get_datacenter(dcName)
+        eip = dc.get_staticip(eipId)
         oprtRes = eip.delete()
         resp = Result(
             detail=oprtRes,

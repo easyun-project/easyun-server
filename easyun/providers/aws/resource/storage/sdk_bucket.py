@@ -372,6 +372,9 @@ class StorageBucket(StorageBucketBase):
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
+    def get_object(self, object_key):
+        return StorageObject(object_key, self.id)
+
 
 class StorageObject(object):
     def __init__(self, object_key, bucket_id):

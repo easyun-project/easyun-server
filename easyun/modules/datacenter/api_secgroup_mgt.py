@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+  @module:
   @desc:    DataCenter module mock API
   @LastEditors: aleck
 """
@@ -8,7 +9,7 @@ from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.schemas import DcNameQuery
-from easyun.providers.aws import get_datacenter, get_secgroup
+from easyun.providers import get_datacenter
 from .schemas import DcMsgOut, AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
 
 
@@ -78,7 +79,8 @@ def get_secgroup_detail(sg_id, parm):
     '''查看 SecurityGroup 详细信息'''
     dcName = parm['dc']
     try:
-        sg = get_secgroup(sg_id, dcName)
+        dc = get_datacenter(dcName)
+        sg = dc.get_secgroup(sg_id)
         sgDetail = sg.get_detail()
         resp = Result(detail=sgDetail, status_code=200)
         return resp.make_resp()
@@ -96,7 +98,8 @@ def delete_secgroup(parm):
     dcName = parm['dcName']
     sgId = parm['sgId']
     try:
-        sg = get_secgroup(sgId, dcName)
+        dc = get_datacenter(dcName)
+        sg = dc.get_secgroup(sgId)
         oprtRes = sg.delete()
         resp = Result(detail=oprtRes, status_code=200)
         return resp.make_resp()
@@ -113,8 +116,8 @@ def update_secgroup(parm):
     '''修改 SecurityGroup 【未完成】'''
     dcName = parm['dc']
     try:
-        sg = get_secgroup(dcName)
-        sgList = sg.get_secgroup_list()
+        dc = get_datacenter(dcName)
+        sgList = dc.list_all_secgroup()
         resp = Result(detail=sgList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
