@@ -8,7 +8,7 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, DcNameParm
+from easyun.common.schemas import DcNameQuery, get_dc_name, DcNameParm
 from easyun.providers import get_datacenter
 from .schemas import DcMsgOut, DelEipParm, StaticIPBasic, StaticIPModel, StaticIPDetail
 
@@ -18,11 +18,10 @@ bp = APIBlueprint('StaticIP', __name__, url_prefix='/staticip')
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='param')
 @bp.output(StaticIPModel(many=True), description='List all StaticIP')
 def list_eip_detail(param):
     '''获取 全部静态IP(EIP)信息'''
-    dcName = param['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         eipList = dc.list_all_staticip()
@@ -35,11 +34,10 @@ def list_eip_detail(param):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='param')
 @bp.output(StaticIPBasic(many=True), description='Get StaticIP brief List')
 def list_eip_brief(param):
     '''获取 全部静态IP列表(EIP)[仅基础字段]'''
-    dcName = param['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         eipList = dc.list_all_staticip()
@@ -55,9 +53,9 @@ def list_eip_brief(param):
 @bp.input(DcNameParm, arg_name='parm')
 # @output(DcResultOut, 201, description='add A new Datacenter')
 @bp.output(StaticIPModel)
-def add_eip(parm):
+def add_eip():
     '''新增 静态IP(EIP)'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     tagName = parm.get('tagName')
     try:
         dc = get_datacenter(dcName)
@@ -75,12 +73,11 @@ def add_eip(parm):
 
 @bp.get('/<eip_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 @bp.output(StaticIPDetail)
-def get_eip_detail(eip_id, parm):
+def get_eip_detail(eip_id):
     '''获取 指定静态IP(EIP)信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         eip = dc.get_staticip(eip_id)
@@ -100,9 +97,9 @@ def get_eip_detail(eip_id, parm):
 @bp.auth_required(auth_token)
 @bp.input(DelEipParm, arg_name='parm')
 @bp.output(DcMsgOut)
-def delete_eip(parm):
+def delete_eip():
     '''删除 指定静态IP(EIP)'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     eipId = parm['eipId']
     try:
         dc = get_datacenter(dcName)

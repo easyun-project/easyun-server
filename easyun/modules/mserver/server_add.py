@@ -5,6 +5,7 @@
 from apiflask import Schema
 from apiflask.fields import Integer, String, List, Dict
 from apiflask.validators import Length
+from easyun.common.schemas import get_dc_name
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.providers import get_datacenter
@@ -13,7 +14,6 @@ from . import bp
 
 
 class SvrParmIn(Schema):
-    dcName = String(required=True, metadata={"example": "Easyun"})
     tagName = String(required=True, validate=Length(0, 40), metadata={"example": "dev_server_1"})
     svrNumber = Integer(required=True, metadata={"example": 1})
     ImageId = String(required=True, metadata={"example": "ami-083654bd07b5da81d"})
@@ -28,11 +28,11 @@ class SvrParmIn(Schema):
 @bp.auth_required(auth_token)
 @bp.input(SvrParmIn, arg_name='parm')
 @bp.output(NewSvrItem(many=True))
-def add_server(parm):
+def add_server():
     '''新建云服务器(EC2)'''
     try:
-        dc = get_datacenter(parm['dcName'])
-        svrList = dc.resource.create_server(parm)
+        dc = get_datacenter(get_dc_name())
+        svrList = dc.resource.create_server()
         resp = Result(detail=svrList, status_code=200)
         return resp.make_resp()
     except Exception as ex:

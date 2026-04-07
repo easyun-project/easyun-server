@@ -21,7 +21,7 @@ def test_auth_flow(client):
     """Login returns a token."""
     resp = client.post('/api/v1/user/auth', json={
         'username': 'testuser',
-        'password': 'testpass',
+        'password': 'testpass123',
     })
     assert resp.status_code == 200
     data = resp.get_json()
@@ -33,7 +33,7 @@ def test_auth_reject_bad_password(client):
     """Bad password is rejected."""
     resp = client.post('/api/v1/user/auth', json={
         'username': 'testuser',
-        'password': 'wrongpass',
+        'password': 'wrongpass123',
     })
     assert resp.status_code in (400, 401, 422)
 

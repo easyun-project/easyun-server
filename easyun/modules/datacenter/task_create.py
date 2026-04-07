@@ -4,6 +4,7 @@
   @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
   @auth:    aleck
 """
+from easyun.common.schemas import get_dc_name
 from easyun.providers.aws.session import get_easyun_session
 from easyun.libs.utils import load_json_config
 from datetime import datetime
@@ -20,7 +21,7 @@ def create_dc_task(self, parm, user):
     :return {message,status_code,http_code:200}
     """
     # Datacenter basic attribute define
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     dcRgeion = parm['dcRegion']
     DryRun = False
     # Mandatory tag:Flag for all resource

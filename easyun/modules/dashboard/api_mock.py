@@ -12,7 +12,7 @@ from easyun.common.result import Result
 from . import bp
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 
 
 
@@ -20,9 +20,9 @@ from easyun.common.schemas import DcNameQuery
 # @auth_required(auth_token)
 # @input(DcNameQuery, location='query')
 # @auth_required(auth_token)
-# def graph_summary(parm):
+# def graph_summary():
 #     '''获取 IaaS资源 Summary信息[Mock]'''
-#     dcName = parm['dc']
+#     dcName = get_dc_name()
 #     summaryList = [
 #         {
 #             "type":"server",

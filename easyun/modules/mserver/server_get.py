@@ -5,7 +5,7 @@
 '''
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 from . import bp
 from .schemas import SvrDetailItem, SvrBriefItem
@@ -13,12 +13,11 @@ from .schemas import SvrDetailItem, SvrBriefItem
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SvrDetailItem(many=True))
-def list_server_detail(parm):
+def list_server_detail():
     '''获取数据中心全部云服务器信息'''
     try:
-        dc = get_datacenter(parm['dc'])
+        dc = get_datacenter(get_dc_name())
         resp = Result(detail=dc.resource.list_all_server(), status_code=200)
         return resp.make_resp()
     except Exception as ex:
@@ -28,12 +27,11 @@ def list_server_detail(parm):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SvrBriefItem(many=True))
-def list_server_brief(parm):
+def list_server_brief():
     '''获取数据中心全部云服务器列表[仅基础字段]'''
     try:
-        dc = get_datacenter(parm['dc'])
+        dc = get_datacenter(get_dc_name())
         resp = Result(detail=dc.resource.list_server_brief(), status_code=200)
         return resp.make_resp()
     except Exception as ex:

@@ -5,6 +5,7 @@
   @auth:    aleck
 """
 
+from easyun.common.schemas import get_dc_name
 from easyun.providers.aws.session import get_easyun_session
 from botocore.exceptions import ClientError
 from easyun import db
@@ -20,7 +21,7 @@ def delete_dc_task(self, parm, region):
     """
     try:
         # Datacenter basic attribute define
-        dcName = parm['dcName']
+        dcName = get_dc_name()
         session = get_easyun_session()
         resource_ec2 = session.resource('ec2', region_name=region)
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()

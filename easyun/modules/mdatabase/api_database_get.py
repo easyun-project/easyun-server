@@ -5,7 +5,7 @@
 """
 
 from easyun.common.auth import auth_token
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.common.result import Result
 from easyun.providers import get_datacenter
 from .schemas import DbiDetailItem, DbiBriefItem
@@ -14,11 +14,10 @@ from . import bp
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(DbiDetailItem(many=True))
-def list_database_detail(parm):
+def list_database_detail():
     '''获取数据中心全部数据库(RDS)信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         dbiList = dc.resource.list_all_dbinstance()
@@ -33,12 +32,11 @@ def list_database_detail(parm):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(DbiBriefItem(many=True))
 # @bp.output(SvrListOut, description='Get Servers list')
-def list_database_brief(parm):
+def list_database_brief():
     '''获取数据中心全部数据库(RDS)列表[仅基础字段]'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         dbiList = dc.resource.get_dbinstance_list()
@@ -53,11 +51,10 @@ def list_database_brief(parm):
 
 @bp.get('/<rds_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(DbiDetailItem)
-def get_database_detail(rds_id, parm):
+def get_database_detail(rds_id):
     '''获取指定数据库(RDS)详细信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:

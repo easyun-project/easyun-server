@@ -22,7 +22,7 @@ def app():
             _db.session.add(acct)
         if not User.query.first():
             user = User(username='testuser')
-            user.set_password('testpass')
+            user.set_password('testpass123')
             _db.session.add(user)
         _db.session.commit()
         yield app
@@ -40,7 +40,7 @@ def auth_token(client):
     """Get auth token for protected endpoints."""
     resp = client.post('/api/v1/user/auth', json={
         'username': 'testuser',
-        'password': 'testpass',
+        'password': 'testpass123',
     })
     data = resp.get_json()
     return data.get('detail', {}).get('token', '')

@@ -18,7 +18,7 @@ from . import bp
 @bp.auth_required(auth_token)
 @bp.input(RegionCodeQuery, location='query', arg_name='parm')
 @bp.output(QuotaItem(many=True))
-def get_region_quota(parm):
+def get_region_quota():
     '''获取指定region的资源配额'''
     thisRegion = parm['region']
     account = get_account()

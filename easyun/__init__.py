@@ -4,7 +4,7 @@
 @LastEditors:
 '''
 
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 
 import os
 import logging
@@ -72,6 +72,12 @@ def create_app(run_env=None):
 
     # 注册子模块blueprint
     register_blueprints(app)
+
+    # 从 X-Datacenter header 提取 dc scope
+    @app.before_request
+    def set_dc_context():
+        from flask import g, request
+        g.dc_name = request.headers.get('X-Datacenter')
 
     return app
 

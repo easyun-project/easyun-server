@@ -8,7 +8,7 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 from .schemas import DcMsgOut, AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
 
@@ -18,11 +18,10 @@ bp = APIBlueprint('SecurityGroup', __name__, url_prefix='/secgroup')
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SecGroupModel(many=True), description='List all SecurityGroups Resources')
-def list_secgroup_detail(parm):
+def list_secgroup_detail():
     '''获取数据中心全部SecurityGroup信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         sgList = dc.list_all_secgroup()
@@ -35,11 +34,10 @@ def list_secgroup_detail(parm):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SecGroupBasic(many=True), description='Get SecurityGroup brief list')
-def list_secgroup_brief(parm):
+def list_secgroup_brief():
     '''获取 全部SecurityGroup列表[仅基础字段]'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         sgList = dc.get_secgroup_list()
@@ -54,9 +52,9 @@ def list_secgroup_brief(parm):
 @bp.auth_required(auth_token)
 @bp.input(AddSecGroupParm, arg_name='parm')
 @bp.output(SecGroupModel)
-def create_secgroup(parm):
+def create_secgroup():
     '''新建 SecurityGroup'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     tgName = parm['tgName']
     tgDesc = parm['tgDesc']
     tagName = parm['tagName']
@@ -72,12 +70,11 @@ def create_secgroup(parm):
 
 @bp.get('/<sg_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 # @bp.output(SecGroupDetail)
 @bp.output(SecGroupDetail)
-def get_secgroup_detail(sg_id, parm):
+def get_secgroup_detail(sg_id):
     '''查看 SecurityGroup 详细信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         sg = dc.get_secgroup(sg_id)
@@ -93,9 +90,9 @@ def get_secgroup_detail(sg_id, parm):
 @bp.auth_required(auth_token)
 @bp.input(DelSecGroupParm, arg_name='parm')
 @bp.output(DcMsgOut)
-def delete_secgroup(parm):
+def delete_secgroup():
     '''删除 SecurityGroup'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     sgId = parm['sgId']
     try:
         dc = get_datacenter(dcName)
@@ -112,9 +109,9 @@ def delete_secgroup(parm):
 @bp.auth_required(auth_token)
 @bp.input(AddSecGroupParm, arg_name='parm')
 @bp.output(SecGroupModel)
-def update_secgroup(parm):
+def update_secgroup():
     '''修改 SecurityGroup 【未完成】'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         sgList = dc.list_all_secgroup()

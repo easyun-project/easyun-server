@@ -14,12 +14,11 @@ from . import bp
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ElbDetailItem(many=True))
 # @bp.output(ElbModel(many=True), description='All Elb list (detail)')
-def list_elb_detail(parm):
+def list_elb_detail():
     '''获取数据中心全部负载均衡器信息'''
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         elbList = dc.resource.list_all_loadbalancer()
@@ -34,12 +33,11 @@ def list_elb_detail(parm):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ElbBriefItem(many=True))
 # @bp.output(ElbBasic(many=True), description='All Elb list (brief)')
-def list_elb_brief(parm):
+def list_elb_brief():
     '''获取数据中心全部负载均衡器列表[仅基础字段]'''
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         elbList = dc.resource.get_loadbalancer_list()
@@ -54,11 +52,10 @@ def list_elb_brief(parm):
 
 @bp.get('/<elb_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ElbDetail)
-def get_elb_detail(elb_id, parm):
+def get_elb_detail(elb_id):
     '''获取指定负载均衡器(ELB)详细信息'''
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:

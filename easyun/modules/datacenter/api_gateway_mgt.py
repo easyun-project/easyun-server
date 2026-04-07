@@ -8,7 +8,7 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from .schemas import AddIntGateway, AddNatGateway, GatewayModel, DcMsgOut
 from easyun.providers import get_datacenter
 
@@ -18,12 +18,11 @@ bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')
 
 @bp.get('/internet')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='param')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 @bp.output(GatewayModel(many=True))
 def list_all_igw(param):
     '''获取全部Internet网关(igw)信息'''
-    dcName = param['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         eipList = dc.list_all_intgateway()
@@ -38,9 +37,9 @@ def list_all_igw(param):
 @bp.auth_required(auth_token)
 @bp.input(AddIntGateway, arg_name='parm')
 @bp.output(GatewayModel)
-def create_intgateway(parm):
+def create_intgateway():
     '''新建 Internet Gateway'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     tagName = parm['tagName']
     try:
         dc = get_datacenter(dcName)
@@ -54,12 +53,11 @@ def create_intgateway(parm):
 
 @bp.get('/nat')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='param')
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 @bp.output(GatewayModel(many=True))
 def list_all_natgw(param):
     '''获取全部NAT网关(natgw)信息'''
-    dcName = param['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         eipList = dc.list_all_natgateway()
@@ -74,9 +72,9 @@ def list_all_natgw(param):
 @bp.auth_required(auth_token)
 @bp.input(AddNatGateway, arg_name='parm')
 @bp.output(GatewayModel)
-def create_natgateway(parm):
+def create_natgateway():
     '''新建 NAT Gateway'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     connectType = parm['connectType']
     subnetId = parm['subnetId']
     allocationId = parm['allocationId']
@@ -93,11 +91,10 @@ def create_natgateway(parm):
 
 @bp.get('/internet/<igw_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(GatewayModel)
-def get_igw_detail(igw_id, parm):
+def get_igw_detail(igw_id):
     '''查看 Internet Gateway 详细信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         igw = dc.get_int_gateway(igw_id)
@@ -111,11 +108,10 @@ def get_igw_detail(igw_id, parm):
 
 @bp.get('/nat/<natgw_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(GatewayModel)
-def get_natgw_detail(natgw_id, parm):
+def get_natgw_detail(natgw_id):
     '''查看 Internet Gateway 详细信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         natgw = dc.get_nat_gateway(natgw_id)

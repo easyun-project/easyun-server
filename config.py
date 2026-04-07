@@ -47,6 +47,7 @@ class TestConfig(Config):
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    PROPAGATE_EXCEPTIONS = False
     FLASK_DEBUG = True
     SQLALCHEMY_ECHO = False
     PRESERVE_CONTEXT_ON_EXCEPTION = False

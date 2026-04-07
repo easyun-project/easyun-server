@@ -7,7 +7,7 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 from .schemas import StMsgOut, BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail, BucketPropertyOut, BucketPermissionOut
 
@@ -18,11 +18,10 @@ from . import api_object_mgt
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(BucketModel(many=True))
-def list_bkt_detail(parm):
+def list_bkt_detail():
     '''获取全部存储桶(Bucket)信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         bucketList = dc.resource.list_all_bucket()
@@ -38,11 +37,10 @@ def list_bkt_detail(parm):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(BucketBasic(many=True))
-def get_bkt_list(parm):
+def get_bkt_list():
     '''获取全部存储桶(Bucket)列表'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         bucketList = dc.resource.get_bucket_list()
@@ -58,11 +56,10 @@ def get_bkt_list(parm):
 
 @bp.get('/<bucket_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(BucketDetail)
-def get_bkt_detail(bucket_id, parm):
+def get_bkt_detail(bucket_id):
     '''获取指定存储桶(Bucket)的详细信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         bkt = dc.get_bucket(bucket_id)
         bucketDetail = bkt.get_detail()
@@ -83,9 +80,9 @@ def get_bkt_detail(bucket_id, parm):
 @bp.auth_required(auth_token)
 @bp.input(AddBucketParm, arg_name='parm')
 @bp.output(BucketBasic)
-def add_bucket_s3(parm):
+def add_bucket_s3():
     '''新增存储桶(S3 Bucket)'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     bucketId = parm['bucketId']
     bucketOptions = parm['bucketOptions']
     try:
@@ -110,14 +107,14 @@ def add_bucket_s3(parm):
 @bp.auth_required(auth_token)
 @bp.input(AddBucketParm, arg_name='parm')
 @bp.output(BucketBasic)
-def add_bucket_cc(parm):
+def add_bucket_cc():
     '''新增存储桶(S3 Bucket)[Cloudcontrol]'''
     bucketId = parm['bucketId']
     bktRegion = parm['bktRegion']
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
-        result = dc.resource.create_bucket_cc(bucketId, bktRegion, parm)
+        result = dc.resource.create_bucket_cc(bucketId, bktRegion)
         response = Result(detail=result, status_code=200)
         return response.make_resp()
 
@@ -133,9 +130,9 @@ def add_bucket_cc(parm):
 @bp.auth_required(auth_token)
 @bp.input(BucketIdParm, arg_name='parm')
 @bp.output(StMsgOut)
-def delete_bucket(parm):
+def delete_bucket():
     '''删除存储桶(S3 Bucket)'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     bucketId = parm['bucketId']
     try:
         bkt = dc.get_bucket(bucketId)
@@ -149,12 +146,11 @@ def delete_bucket(parm):
 
 @bp.put('/<bucket_id>/property')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='query')
 @bp.input(BucketPropertyParm, arg_name='parms')
 @bp.output(BucketPropertyOut)
-def modify_bucket_property(bucket_id, query, parms):
+def modify_bucket_property(bucket_id, parms):
     '''修改存储桶(S3 Bucket)属性'''
-    dcName = query.get('dc')
+    dcName = get_dc_name()
     isEncryption = parms.get('isEncryption')
     isVersioning = parms.get('isVersioning')
     oprtRes = {'bucketId': bucket_id}
@@ -176,12 +172,11 @@ def modify_bucket_property(bucket_id, query, parms):
 
 @bp.put('/<bucket_id>/permission')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='query')
 @bp.input(BucketPublicParm, arg_name='parms')
 @bp.output(BucketPermissionOut)
-def modify_bucket_policy(bucket_id, query, parms):
+def modify_bucket_policy(bucket_id, parms):
     '''修改存储桶的Public Block Policy'''
-    dcName = query.get('dc')
+    dcName = get_dc_name()
     pubConfig = parms
     oprtRes = {'bucketId': bucket_id}
     try:

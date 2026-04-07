@@ -7,7 +7,7 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 
 from .schemas import StMsgOut, VolumeModel, VolumeBasic, VolumeDetail, AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
@@ -22,11 +22,10 @@ SystemDisk = ['/dev/xvda', '/dev/sda1']
 
 @bp.get('')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(VolumeModel(many=True), description='All volume list (detail)')
-def list_volume_detail(parm):
+def list_volume_detail():
     '''获取数据中心全部块存储信息'''
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:
@@ -45,11 +44,10 @@ def list_volume_detail(parm):
 
 @bp.get('/list')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(VolumeBasic(many=True), description='All volume list (brief)')
-def list_volume_brief(parm):
+def list_volume_brief():
     '''获取数据中心全部块存储列表[仅基础字段]'''
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:
@@ -69,11 +67,10 @@ def list_volume_brief(parm):
 
 @bp.get('/<volume_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(VolumeDetail, description='A Volume Detail Info')
-def get_volume_detail(volume_id, parm):
+def get_volume_detail(volume_id):
     '''获取指定块存储(Volume)详细信息'''
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     # 设置 boto3 接口默认 region_name
     # dcRegion = set_boto3_region(dcName)
     try:
@@ -159,12 +156,12 @@ def add_volume(parms):
 @bp.auth_required(auth_token)
 @bp.input(DelVolumeParm, arg_name='parm')
 @bp.output(StMsgOut)
-def del_volume(parm):
+def del_volume():
     '''删除磁盘(EBS Volume)'''
     try:
         deleteList = []
         for volumeId in parm['volumeIds']:
-            dc = get_datacenter(parm['dcName'])
+            dc = get_datacenter(get_dc_name())
             vol = dc.get_volume(volumeId)
             if vol.volObj.state == 'available':
                 vol.delete()
@@ -184,10 +181,10 @@ def del_volume(parm):
 @bp.input(AttachVolParm, arg_name='parm')
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
-def attach_server(parm):
+def attach_server():
     '''块存储关联云服务器'''
     try:
-        dc = get_datacenter(parm['dcName'])
+        dc = get_datacenter(get_dc_name())
         vol = dc.get_volume(parm['volumeId'])
         if vol.volObj.state != 'available':
             resp = Result(message=f'Volume state is {vol.volObj.state}, must be available', status_code=5002, http_status_code=400)
@@ -214,10 +211,10 @@ def attach_server(parm):
 @bp.input(DetachVolParm, arg_name='parm')
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
-def detach_server(parm):
+def detach_server():
     '''块存储分离云服务器(ec2)'''
     try:
-        dc = get_datacenter(parm['dcName'])
+        dc = get_datacenter(get_dc_name())
         vol = dc.get_volume(parm['volumeId'])
         if vol.volObj.state != 'in-use':
             resp = Result(message=f'Volume state is {vol.volObj.state}, must be in-use', status_code=5003, http_status_code=400)

@@ -8,7 +8,7 @@ from apiflask.fields import String, List
 from apiflask.validators import OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 from .schemas import SvrIdList, SvrOperateOut, SvrStateChangeItem
 from . import bp
@@ -17,7 +17,6 @@ from . import bp
 class OperateIn(Schema):
     svr_ids = List(String(), required=True)
     action = String(required=True, validate=OneOf(['start', 'stop', 'restart']))
-    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 @bp.post('/action')
@@ -27,7 +26,7 @@ class OperateIn(Schema):
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
     try:
-        dc = get_datacenter(operate['dcName'])
+        dc = get_datacenter(get_dc_name())
         results = []
         for svr_id in operate['svr_ids']:
             svr = dc.get_server(svr_id)
@@ -54,7 +53,7 @@ def operate_svr(operate):
 def delete_svr(parm):
     '''删除(Terminate)云服务器'''
     try:
-        dc = get_datacenter(parm['dcName'])
+        dc = get_datacenter(get_dc_name())
         deleteList = []
         for svr_id in parm['svrIds']:
             svr = dc.get_server(svr_id)

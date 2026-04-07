@@ -6,6 +6,7 @@
 from apiflask import Schema
 from apiflask.fields import String
 from apiflask.validators import Length, OneOf
+from easyun.common.schemas import get_dc_name
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.providers import get_datacenter
@@ -48,9 +49,9 @@ def list_images(parms):
 @bp.auth_required(auth_token)
 @bp.input({'dc': String(required=True)}, location='query', arg_name='parm')
 @bp.output(InsFamilyItem(many=True))
-def list_ins_family(parm):
+def list_ins_family():
     '''获取可用的Instance Family列表'''
-    dc = get_datacenter(parm['dc'])
+    dc = get_datacenter(get_dc_name())
     resp = Result(detail=dc.list_instance_families(), status_code=200)
     return resp.make_resp()
 
@@ -65,10 +66,10 @@ class InsTypelsQuery(Schema):
 @bp.auth_required(auth_token)
 @bp.input(InsTypelsQuery, location='query', arg_name='parm')
 @bp.output(InsTypeBriefItem(many=True))
-def get_ins_type_list(parm):
+def get_ins_type_list():
     '''获取可用的Instance Types列表(不含成本)'''
     try:
-        dc = get_datacenter(parm['dc'])
+        dc = get_datacenter(get_dc_name())
         instypeList = dc.list_instance_types(arch=parm['arch'], family=parm['family'])
         resp = Result(detail=instypeList, message=f"{len(instypeList)},success", status_code=200)
         return resp.make_resp()
@@ -88,10 +89,10 @@ class InsTypeQuery(Schema):
 @bp.auth_required(auth_token)
 @bp.input(InsTypeQuery, location='query', arg_name='parm')
 @bp.output(InsTypeItem(many=True))
-def list_ins_types(parm):
+def list_ins_types():
     '''获取可用的Instance Types列表(含月度成本)'''
     try:
-        dc = get_datacenter(parm['dc'])
+        dc = get_datacenter(get_dc_name())
         instypeList = dc.list_instance_types(arch=parm['arch'], family=parm['family'])
         for t in instypeList:
             t.monthly_price = dc.get_instance_pricing(t.instance_type, parm.get('os'))

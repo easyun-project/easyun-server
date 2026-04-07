@@ -44,9 +44,8 @@ INVENTORY_TABLE = {
 
 @bp.get("/inventory/<resource>")
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(InventoryTypeItem(many=True))
-def get_inventory(resource, parm):
+def get_inventory(resource):
     '''获取数据中心资源明细(Inventory)'''
     if resource not in RESOURCE_NAME:
         resp = Result(
@@ -57,7 +56,7 @@ def get_inventory(resource, parm):
         )
         return resp.err_resp()
     #获取查询参数 ?dc=xxx ,默认值‘Easyun’
-    dcName = parm.get('dc')
+    dcName = get_dc_name()
     try:
         inventoryList = [
             query_inventory('server', dcName),

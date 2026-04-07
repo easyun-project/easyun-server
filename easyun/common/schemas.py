@@ -113,3 +113,16 @@ class TaskModel(Schema):
 
 class MsgOut(Schema):
     msg = String(metadata={"example": "operation success"})
+
+
+def get_dc_name():
+    """
+    获取当前请求的 datacenter 名称。
+    优先 X-Datacenter header, 兼容 query ?dc= 和 body dcName
+    """
+    from flask import g, request
+    return (
+        g.get('dc_name')
+        or request.args.get('dc')
+        or (request.get_json(silent=True) or {}).get('dcName')
+    )

@@ -6,7 +6,7 @@ from apiflask import Schema
 from apiflask.fields import String, List
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 from .schemas import ModSvrNameParm, SvrTagNameItem, ModSvrProtectionParm, SvrProtectionOut, MsgOut
 from . import bp
@@ -14,12 +14,11 @@ from . import bp
 
 @bp.get('/name/<svr_id>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(SvrTagNameItem)
-def get_svr_name(svr_id, parm):
+def get_svr_name(svr_id):
     '''查询指定云服务器的名称'''
     try:
-        dc = get_datacenter(parm['dc'])
+        dc = get_datacenter(get_dc_name())
         svr = dc.get_server(svr_id)
         response = Result(detail={'svrId': svr_id, 'tagName': svr.tagName}, status_code=200)
         return response.make_resp()
@@ -35,7 +34,7 @@ def get_svr_name(svr_id, parm):
 def update_svr_name(parms):
     '''修改指定云服务器名称'''
     try:
-        dc = get_datacenter(parms['dcName'])
+        dc = get_datacenter(get_dc_name())
         results = []
         for svr_id in parms.get('svrIds', []):
             svr = dc.get_server(svr_id)
@@ -55,7 +54,7 @@ def update_svr_name(parms):
 def update_svr_protection(parms):
     '''修改指定云服务器protection'''
     try:
-        dc = get_datacenter(parms['dcName'])
+        dc = get_datacenter(get_dc_name())
         value = parms['action'] == 'disable'
         successIds = []
         for svr_id in parms.get('svrIds', []):
@@ -74,7 +73,6 @@ def update_svr_protection(parms):
 class ConfigIn(Schema):
     svr_ids = List(String(), required=True, metadata={"example": ['i-01b565d505d5e0559']})
     ins_type = String(required=True, metadata={"example": 't3.small'})
-    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 @bp.post('/config')
@@ -84,7 +82,7 @@ class ConfigIn(Schema):
 def update_config(new):
     '''修改指定云服务器实例配置'''
     try:
-        dc = get_datacenter(new['dcName'])
+        dc = get_datacenter(get_dc_name())
         for svr_id in new['svr_ids']:
             svr = dc.get_server(svr_id)
             svr.set_instance_type(new['ins_type'])

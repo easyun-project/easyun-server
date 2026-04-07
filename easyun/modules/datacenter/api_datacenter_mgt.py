@@ -5,6 +5,7 @@
   @auth:    aleck
 """
 
+from easyun.common.schemas import get_dc_name
 from easyun.providers.aws.session import get_easyun_session
 from botocore.exceptions import ClientError
 from flask import current_app
@@ -34,9 +35,9 @@ from . import bp, logger
 @bp.auth_required(auth_token)
 @bp.input(DefaultParmQuery, location='query', arg_name='parm')
 @bp.output(DefaultParmsOut, description='Get DataCenter Parameters')
-def get_default_parms(parm):
+def get_default_parms():
     '''获取创建云数据中心默认参数'''
-    inputName = parm['dc']
+    inputName = get_dc_name()
     inputRegion = parm.get('region')
     try:
         # Check if the DC Name is available
@@ -173,9 +174,9 @@ def get_default_parms(parm):
 @bp.input(AddDataCenterParm, arg_name='parm')
 @log.api_error(logger)
 @bp.output(DcTaskOut)
-def create_dc_async(parm):
+def create_dc_async():
     '''创建 Datacenter 及基础资源[异步]'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     dcRgeion = parm['dcRegion']
 
     # Check the prerequisites before create datacenter task
@@ -227,9 +228,9 @@ def create_dc_async(parm):
 @bp.input(DelDataCenterParm, arg_name='parm')
 @log.api_error(logger)
 @bp.output(DcTaskOut)
-def delete_dc_async(parm):
+def delete_dc_async():
     '''删除 Datacenter 及基础资源[异步]'''
-    dcName = parm['dcName']
+    dcName = get_dc_name()
     isForceDel = parm.get('isForceDel')
     # Check the prerequisites before create datacenter task
     try:
@@ -294,7 +295,7 @@ def delete_dc_async(parm):
 @bp.auth_required(auth_token)
 @bp.input(TaskIdQuery, location='query', arg_name='parm')
 @bp.output(DataCenterModel)
-def get_task_result(parm):
+def get_task_result():
     '''获取异步任务执行结果'''
     task_id = parm['id'].replace('_', '-')
     try:

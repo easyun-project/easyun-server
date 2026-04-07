@@ -8,7 +8,7 @@
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, RegionModel, MsgOut
+from easyun.common.schemas import DcNameQuery, get_dc_name, RegionModel, MsgOut
 from easyun.providers import get_cloud, get_datacenter
 from .schemas import DataCenterBasic, DataCenterModel, RouteTableModel
 from . import bp
@@ -71,11 +71,10 @@ def list_aws_region():
 
 @bp.get('/region/zones')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(MsgOut)
-def get_available_zones(parm):
+def get_available_zones():
     '''获取可用的Region列表'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         azoneList = dc.get_azone_list()
@@ -90,11 +89,10 @@ def get_available_zones(parm):
 
 @bp.get('/routetable')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='param')
 @bp.output(RouteTableModel(many=True))
 def list_all_route(param):
     '''获取 全部路由表(route table)信息'''
-    dcName = param['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         rtbList = dc.list_all_routetable()

@@ -6,7 +6,7 @@
 
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.providers import get_datacenter
 
 from .schemas import ObjectKeyQuery, BucketIdQuery, ObjectContents
@@ -15,11 +15,10 @@ from .api_bucket_mgt import bp
 
 @bp.get('/<bucket_id>/object')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ObjectContents(many=True))
-def get_object_list(bucket_id, parm):
+def get_object_list(bucket_id):
     '''获取指定存储桶(Bucket)内所有对象文件列表'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         bkt = dc.get_bucket(bucket_id)
@@ -33,11 +32,10 @@ def get_object_list(bucket_id, parm):
 
 @bp.get('/<bucket_id>/<object_key>')
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ObjectContents)
-def get_object_detail(bucket_id, object_key, parm):
+def get_object_detail(bucket_id, object_key):
     '''获取指定存储桶(Bucket)内单个对象文件信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
     try:
         dc = get_datacenter(dcName)
         bkt = dc.get_bucket(bucket_id)

@@ -7,7 +7,7 @@
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
 from easyun.common.models import Datacenter
-from easyun.common.schemas import DcNameQuery
+from easyun.common.schemas import DcNameQuery, get_dc_name
 from easyun.libs.utils import filter_list_by_key
 from easyun.providers import get_datacenter
 from .api_inventory import query_inventory
@@ -17,11 +17,10 @@ from . import bp
 
 @bp.get("/summary/datacenter")
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(AzSummaryItem(many=True))
-def summary_dc(parm):
+def summary_dc():
     '''获取数据中心 Summary信息'''
-    dc = get_datacenter(parm['dc'])
+    dc = get_datacenter(get_dc_name())
     summaryList = dc.get_az_summary()
     resp = Result(detail=summaryList)
     return resp.make_resp()
@@ -29,12 +28,11 @@ def summary_dc(parm):
 
 @bp.get("/summary/health")
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(HealthSummaryOut)
-def summary_health(parm):
+def summary_health():
     '''获取健康状态 Summary信息'''
     try:
-        dc = get_datacenter(parm['dc'])
+        dc = get_datacenter(get_dc_name())
         alarms = dc.get_cloudwatch_alarms()
         dashboards = dc.get_cloudwatch_dashboards()
         summary_list = {"alarms": alarms, "dashboards": dashboards}
@@ -47,11 +45,10 @@ def summary_health(parm):
 
 @bp.get("/summary/resource")
 @bp.auth_required(auth_token)
-@bp.input(DcNameQuery, location='query', arg_name='parm')
 @bp.output(ResourceSumItem(many=True))
-def summary_resource(parm):
+def summary_resource():
     '''获取所有IaaS资源 Summary信息'''
-    dcName = parm['dc']
+    dcName = get_dc_name()
 
     serverList = query_inventory('server', dcName).get('data')
     stateList = filter_list_by_key(serverList, 'svrState')

@@ -285,18 +285,7 @@
     },
     "/api/v1/server": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -323,29 +312,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -574,18 +540,7 @@
     },
     "/api/v1/database": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -612,29 +567,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -1210,18 +1142,7 @@
     },
     "/api/v1/server/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -1248,29 +1169,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -1500,18 +1398,7 @@
     },
     "/api/v1/loadbalancer": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -1538,29 +1425,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -1884,18 +1748,7 @@
     },
     "/api/v1/database/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -1922,29 +1775,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -2117,18 +1947,7 @@
     },
     "/api/v1/storage/bucket": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -2155,29 +1974,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -2400,18 +2196,7 @@
     },
     "/api/v1/storage/volume": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -2438,29 +2223,6 @@
               }
             },
             "description": "All volume list (detail)"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -2939,18 +2701,7 @@
     },
     "/api/v1/account/keypair": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -2977,29 +2728,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -3287,18 +3015,7 @@
     },
     "/api/v1/datacenter/subnet": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -3325,29 +3042,6 @@
               }
             },
             "description": "List DataCenter Subnets Resources"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -3829,16 +3523,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -3864,29 +3548,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -3948,18 +3609,7 @@
     },
     "/api/v1/loadbalancer/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -3986,29 +3636,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -4463,18 +4090,7 @@
     },
     "/api/v1/datacenter/secgroup": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -4501,29 +4117,6 @@
               }
             },
             "description": "List all SecurityGroups Resources"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -4838,18 +4431,7 @@
     },
     "/api/v1/datacenter/staticip": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -4876,29 +4458,6 @@
               }
             },
             "description": "List all StaticIP"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5121,18 +4680,7 @@
     },
     "/api/v1/storage/bucket/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -5159,29 +4707,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5220,18 +4745,7 @@
     },
     "/api/v1/storage/volume/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -5258,29 +4772,6 @@
               }
             },
             "description": "All volume list (brief)"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5327,16 +4818,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -5362,29 +4843,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5585,16 +5043,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -5623,29 +5071,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -5711,16 +5136,6 @@
             "name": "svr_id",
             "schema": {
               "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
             },
             "required": true
           }
@@ -5850,16 +5265,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -5981,18 +5386,7 @@
     },
     "/api/v1/account/keypair/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -6019,29 +5413,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -6080,18 +5451,7 @@
     },
     "/api/v1/datacenter/routetable": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -6118,29 +5478,6 @@
               }
             },
             "description": "List DataCenter RouteTables Resources"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -6559,16 +5896,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -6594,29 +5921,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -6678,18 +5982,7 @@
     },
     "/api/v1/datacenter/subnet/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -6716,29 +6009,6 @@
               }
             },
             "description": "List DataCenter Subnets Resources"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -6777,18 +6047,7 @@
     },
     "/api/v1/datacenter/gateway/nat": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -6815,29 +6074,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -6976,16 +6212,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -7011,29 +6237,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7095,18 +6298,7 @@
     },
     "/api/v1/datacenter/region/zones": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -7130,29 +6322,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7191,18 +6360,7 @@
     },
     "/api/v1/datacenter/summary/cost": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -7226,29 +6384,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7295,16 +6430,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -7330,29 +6455,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7726,18 +6828,7 @@
     },
     "/api/v1/datacenter/summary/basic": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -7761,29 +6852,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7822,18 +6890,7 @@
     },
     "/api/v1/datacenter/secgroup/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -7860,29 +6917,6 @@
               }
             },
             "description": "Get SecurityGroup brief list"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -7921,18 +6955,7 @@
     },
     "/api/v1/datacenter/staticip/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -7959,29 +6982,6 @@
               }
             },
             "description": "Get StaticIP brief List"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -8020,18 +7020,7 @@
     },
     "/api/v1/dashboard/summary/health": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -8055,29 +7044,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -8425,18 +7391,7 @@
     },
     "/api/v1/datacenter/routetable/list": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -8463,29 +7418,6 @@
               }
             },
             "description": "List DataCenter RouteTables Resources"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -8532,16 +7464,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -8567,29 +7489,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -8659,16 +7558,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -8694,29 +7583,6 @@
               }
             },
             "description": "A Volume Detail Info"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -8778,18 +7644,7 @@
     },
     "/api/v1/dashboard/summary/resource": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -8816,29 +7671,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -8885,16 +7717,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -8920,29 +7742,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9004,18 +7803,7 @@
     },
     "/api/v1/datacenter/summary/resource": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -9039,29 +7827,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9100,18 +7865,7 @@
     },
     "/api/v1/datacenter/gateway/internet": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -9138,29 +7892,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9299,16 +8030,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -9334,29 +8055,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9523,16 +8221,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -9558,29 +8246,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9642,18 +8307,7 @@
     },
     "/api/v1/dashboard/summary/datacenter": {
       "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {
@@ -9680,29 +8334,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9749,16 +8380,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -9784,29 +8405,6 @@
               }
             },
             "description": "List DataCenter Subnets Resources"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -9876,16 +8474,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -9911,29 +8499,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -10003,16 +8568,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -10041,29 +8596,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -10133,16 +8665,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -10166,29 +8688,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -10258,16 +8757,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -10293,29 +8782,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -10385,16 +8851,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -10423,29 +8879,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -10513,16 +8946,6 @@
             "name": "bucket_id",
             "schema": {
               "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
             },
             "required": true
           }
@@ -10651,16 +9074,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -10686,29 +9099,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -10776,16 +9166,6 @@
             "name": "bucket_id",
             "schema": {
               "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
             },
             "required": true
           }
@@ -10922,16 +9302,6 @@
               "type": "string"
             },
             "required": true
-          },
-          {
-            "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30
-            },
-            "required": true
           }
         ],
         "responses": {
@@ -10957,29 +9327,6 @@
               }
             },
             "description": "Successful response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "detail": {
-                      "$ref": "#/components/schemas/ValidationError"
-                    },
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "task": {}
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "description": "Validation error"
           },
           "401": {
             "content": {
@@ -11192,10 +9539,6 @@
       "SvrParmIn": {
         "type": "object",
         "properties": {
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
-          },
           "tagName": {
             "type": "string",
             "minLength": 0,
@@ -11243,7 +9586,6 @@
           "InstanceType",
           "KeyName",
           "SubnetId",
-          "dcName",
           "svrNumber",
           "tagName"
         ],
@@ -11279,14 +9621,9 @@
             "items": {
               "type": "string"
             }
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
-          "dcName",
           "svrIds"
         ],
         "additionalProperties": false
@@ -11757,15 +10094,10 @@
           "publicIp": {
             "type": "string",
             "example": "34.192.222.116"
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
           "action",
-          "dcName",
           "publicIp",
           "svrId"
         ],
@@ -11829,14 +10161,9 @@
           "svrName": {
             "type": "string",
             "example": "new_server_name"
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
-          "dcName",
           "svrIds",
           "svrName"
         ],
@@ -11860,15 +10187,10 @@
           "volumeId": {
             "type": "string",
             "example": "vol-0fcb3e28f8687f74d"
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
           "action",
-          "dcName",
           "diskPath",
           "svrId",
           "volumeId"
@@ -11975,15 +10297,10 @@
               "stop",
               "restart"
             ]
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
           "action",
-          "dcName",
           "svr_ids"
         ],
         "additionalProperties": false
@@ -12003,14 +10320,9 @@
           "ins_type": {
             "type": "string",
             "example": "t3.small"
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
-          "dcName",
           "ins_type",
           "svr_ids"
         ],
@@ -12466,15 +10778,10 @@
           "secgroupId": {
             "type": "string",
             "example": "sg-0bb69bb599b303a1e"
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
           "action",
-          "dcName",
           "secgroupId",
           "svrId"
         ],
@@ -12741,15 +11048,10 @@
               "enable",
               "disable"
             ]
-          },
-          "dcName": {
-            "type": "string",
-            "example": "Easyun"
           }
         },
         "required": [
           "action",
-          "dcName",
           "svrIds"
         ],
         "additionalProperties": false
