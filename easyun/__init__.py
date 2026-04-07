@@ -26,7 +26,10 @@ FLAG = "Easyun"
 
 # extensions initialization
 db = SQLAlchemy()
-cors = CORS()
+cors = CORS(
+    allow_headers=['Authorization', 'Content-Type', 'X-Datacenter', 'region'],
+    expose_headers=['Content-Type'],
+)
 migrate = Migrate()
 log = EasyunLogging()
 
@@ -72,6 +75,14 @@ def create_app(run_env=None):
 
     # 注册子模块blueprint
     register_blueprints(app)
+
+    # 全局异常处理 — 确保 500 也返回 JSON + CORS header
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        from flask import jsonify
+        response = jsonify({'detail': None, 'message': str(e), 'status_code': 500})
+        response.status_code = 500
+        return response
 
     # 从 X-Datacenter header 提取 dc scope
     @app.before_request

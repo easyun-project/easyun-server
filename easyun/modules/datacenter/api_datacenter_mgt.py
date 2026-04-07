@@ -35,7 +35,7 @@ from . import bp, logger
 @bp.auth_required(auth_token)
 @bp.input(DefaultParmQuery, location='query', arg_name='parm')
 @bp.output(DefaultParmsOut, description='Get DataCenter Parameters')
-def get_default_parms():
+def get_default_parms(parm):
     '''获取创建云数据中心默认参数'''
     inputName = get_dc_name()
     inputRegion = parm.get('region')

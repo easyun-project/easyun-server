@@ -18,9 +18,8 @@ _region_codes = [r['regionCode'] for r in _account.list_regions()]
 
 # 定义获取DC默认值的query参数
 class DefaultParmQuery(Schema):
-    '''datacenter name for query parm'''
+    '''datacenter default parm query'''
 
-    dc = String(required=True, validate=Length(0, 30), metadata={"example": 'Easyun'})
     region = String(validate=OneOf(_region_codes), metadata={"example": 'us-east-1'})
 
 

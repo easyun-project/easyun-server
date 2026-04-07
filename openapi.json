@@ -3739,17 +3739,6 @@
         "parameters": [
           {
             "in": "query",
-            "name": "dc",
-            "schema": {
-              "type": "string",
-              "minLength": 0,
-              "maxLength": 30,
-              "example": "Easyun"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
             "name": "region",
             "schema": {
               "type": "string",
