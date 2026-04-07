@@ -12,17 +12,9 @@ from easyun.common.auth import auth_token
 from easyun.common.models import KeyStore
 from easyun.common.schemas import DcNameQuery
 from easyun.common.dc_utils import query_dc_region
-from easyun.providers import get_datacenter
+from easyun.providers import get_account
 from .schema import KeypairParms, KeypairOut, KeyPairDelIn
 from . import bp
-
-
-def _keypair_to_dict(kp, region=None):
-    """KeyPairInfo dataclass → 前端格式 dict（附加 keyRegion）"""
-    from dataclasses import asdict
-    d = asdict(kp)
-    d['keyRegion'] = region
-    return d
 
 
 @bp.get('/keypair')
@@ -32,9 +24,10 @@ def _keypair_to_dict(kp, region=None):
 def list_keypair(parm):
     '''获取指定数据中心的keypair信息'''
     dcName = parm['dc']
+    dcRegion = query_dc_region(dcName)
     try:
-        dc = get_datacenter(dcName)
-        keyList = [_keypair_to_dict(k, query_dc_region(dcName)) for k in dc.list_keypairs()]
+        account = get_account()
+        keyList = account.list_keypairs(region=dcRegion, dc_name=dcName)
         resp = Result(detail=keyList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
@@ -49,11 +42,11 @@ def list_keypair(parm):
 def list_keypair_brief(parm):
     '''获取指定数据中心的keypair列表[仅基础字段]'''
     dcName = parm['dc']
+    dcRegion = query_dc_region(dcName)
     try:
-        dc = get_datacenter(dcName)
-        dcRegion = query_dc_region(dcName)
-        briefList = [{'keyName': k.name, 'keyType': k.key_type, 'keyRegion': dcRegion} for k in dc.list_keypairs()]
-        resp = Result(detail=briefList, status_code=200)
+        account = get_account()
+        keyList = account.list_keypairs(region=dcRegion, dc_name=dcName)
+        resp = Result(detail=keyList, status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=8022)
@@ -66,11 +59,11 @@ def list_keypair_brief(parm):
 @bp.output(KeypairOut)
 def get_keypair(key_name, parm):
     '''获取指定的keypair信息'''
-    dcName = parm['dc']
+    dcRegion = query_dc_region(parm['dc'])
     try:
-        dc = get_datacenter(dcName)
-        kp = dc.get_keypair(key_name)
-        resp = Result(detail=_keypair_to_dict(kp, query_dc_region(dcName)), status_code=200)
+        account = get_account()
+        kp = account.get_keypair(key_name, region=dcRegion)
+        resp = Result(detail=kp, status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=8022)
@@ -86,13 +79,14 @@ def add_keypair(parm):
     dcName = parm['dcName']
     keyName = parm['keyName']
     keyType = parm.get('keyType', 'rsa')
+    dcRegion = query_dc_region(dcName)
     try:
-        dc = get_datacenter(dcName)
-        kp_info, key_material = dc.create_keypair(keyName, keyType)
+        account = get_account()
+        kp_info, key_material = account.create_keypair(keyName, keyType, region=dcRegion, dc_name=dcName)
         storeItem = KeyStore(name=keyName, dc_name=dcName, material=key_material)
         db.session.add(storeItem)
         db.session.commit()
-        resp = Result(detail=_keypair_to_dict(kp_info, query_dc_region(dcName)), status_code=200)
+        resp = Result(detail=kp_info, status_code=200)
         return resp.make_resp()
     except Exception as ex:
         resp = Result(message=str(ex), status_code=8010)
@@ -107,9 +101,10 @@ def del_keypair(parm):
     '''从指定数据中心删除keypair'''
     dcName = parm['dcName']
     keyName = parm['keyName']
+    dcRegion = query_dc_region(dcName)
     try:
-        dc = get_datacenter(dcName)
-        dc.delete_keypair(keyName)
+        account = get_account()
+        account.delete_keypair(keyName, region=dcRegion)
     except Exception as ex:
         resp = Result(message=str(ex), status_code=8011)
         return resp.err_resp()

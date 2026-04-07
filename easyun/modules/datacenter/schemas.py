@@ -177,13 +177,13 @@ Schemas for Datacenter APIs
 
 # 定义api返回数据格式
 class DataCenterBasic(Schema):
-    dcName = String(metadata={"example": 'Easyun'})
+    dcName = String(required=True, metadata={"example": 'Easyun'})
     regionCode = String(metadata={"example": 'us-east-1'})
     vpcID = String(metadata={"example": 'vpc-057f0e3d715c24147'})
 
 
 class DataCenterModel(Schema):
-    dcName = String(metadata={"example": 'Easyun'})
+    dcName = String(required=True, metadata={"example": 'Easyun'})
     regionCode = String(metadata={"example": 'us-east-1'})
     vpcID = String(metadata={"example": 'vpc-057f0e3d715c24147'})
     cidrBlock = String(metadata={"example": '10.10.0.0/16'})

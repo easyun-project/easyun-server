@@ -164,7 +164,7 @@ def del_volume(parm):
     try:
         deleteList = []
         for volumeId in parm['volumeIds']:
-            dc = get_datacenter(parm.get('dcName'))
+            dc = get_datacenter(parm['dcName'])
             vol = dc.get_volume(volumeId)
             if vol.volObj.state == 'available':
                 vol.delete()
@@ -187,7 +187,7 @@ def del_volume(parm):
 def attach_server(parm):
     '''块存储关联云服务器'''
     try:
-        dc = get_datacenter(parm.get('dcName'))
+        dc = get_datacenter(parm['dcName'])
         vol = dc.get_volume(parm['volumeId'])
         if vol.volObj.state != 'available':
             resp = Result(message=f'Volume state is {vol.volObj.state}, must be available', status_code=5002, http_status_code=400)
@@ -217,7 +217,7 @@ def attach_server(parm):
 def detach_server(parm):
     '''块存储分离云服务器(ec2)'''
     try:
-        dc = get_datacenter(parm.get('dcName'))
+        dc = get_datacenter(parm['dcName'])
         vol = dc.get_volume(parm['volumeId'])
         if vol.volObj.state != 'in-use':
             resp = Result(message=f'Volume state is {vol.volObj.state}, must be in-use', status_code=5003, http_status_code=400)

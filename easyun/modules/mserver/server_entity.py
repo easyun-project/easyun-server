@@ -22,21 +22,21 @@ class DiskInfoIn(Schema):
     svrId = String(required=True, metadata={"example": 'i-0d05b7bda069b8c1d'})
     diskPath = String(required=True, metadata={"example": '/dev/sdf'})
     volumeId = String(required=True, metadata={"example": 'vol-0fcb3e28f8687f74d'})
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 class EipAttachInfoIn(Schema):
     action = String(required=True, validate=OneOf(['attach', 'detach']), metadata={"example": 'attach'})
     svrId = String(required=True, metadata={"example": 'i-0d05b7bda069b8c1d'})
     publicIp = String(required=True, metadata={"example": '34.192.222.116'})
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 class SgAttachInfoIn(Schema):
     action = String(required=True, validate=OneOf(['attach', 'detach']), metadata={"example": 'attach'})
     svrId = String(required=True, metadata={"example": 'i-0d05b7bda069b8c1d'})
     secgroupId = String(required=True, metadata={"example": 'sg-0bb69bb599b303a1e'})
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 def _full_detail_to_response(d):
@@ -105,7 +105,7 @@ def get_ins_types(svr_id, parm):
 def attach_disk(param):
     '''云服务器关联与解绑磁盘(volume)'''
     try:
-        dc = get_datacenter(param.get('dcName', 'Easyun'))
+        dc = get_datacenter(param['dcName'])
         svr = dc.get_server(param['svrId'])
         if param['action'] == 'attach':
             svr.attach_disk(param['volumeId'], param['diskPath'])
@@ -127,7 +127,7 @@ def attach_disk(param):
 def attach_eip(param):
     '''云服务器关联和解绑静态IP(eip)'''
     try:
-        dc = get_datacenter(param.get('dcName', 'Easyun'))
+        dc = get_datacenter(param['dcName'])
         svr = dc.get_server(param['svrId'])
         if param['action'] == 'attach':
             svr.attach_eip(param['publicIp'])
@@ -149,7 +149,7 @@ def attach_eip(param):
 def attach_secgroup(param):
     '''云服务器关联和解绑安全组(secgroup)'''
     try:
-        dc = get_datacenter(param.get('dcName', 'Easyun'))
+        dc = get_datacenter(param['dcName'])
         svr = dc.get_server(param['svrId'])
         if param['action'] == 'attach':
             svr.attach_secgroup(param['secgroupId'])

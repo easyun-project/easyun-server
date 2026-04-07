@@ -35,7 +35,7 @@ def get_svr_name(svr_id, parm):
 def update_svr_name(parms):
     '''修改指定云服务器名称'''
     try:
-        dc = get_datacenter(parms.get('dcName', 'Easyun'))
+        dc = get_datacenter(parms['dcName'])
         results = []
         for svr_id in parms.get('svrIds', []):
             svr = dc.get_server(svr_id)
@@ -55,7 +55,7 @@ def update_svr_name(parms):
 def update_svr_protection(parms):
     '''修改指定云服务器protection'''
     try:
-        dc = get_datacenter(parms.get('dcName', 'Easyun'))
+        dc = get_datacenter(parms['dcName'])
         value = parms['action'] == 'disable'
         successIds = []
         for svr_id in parms.get('svrIds', []):
@@ -74,7 +74,7 @@ def update_svr_protection(parms):
 class ConfigIn(Schema):
     svr_ids = List(String(), required=True, metadata={"example": ['i-01b565d505d5e0559']})
     ins_type = String(required=True, metadata={"example": 't3.small'})
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 @bp.post('/config')
@@ -84,7 +84,7 @@ class ConfigIn(Schema):
 def update_config(new):
     '''修改指定云服务器实例配置'''
     try:
-        dc = get_datacenter(new.get('dcName', 'Easyun'))
+        dc = get_datacenter(new['dcName'])
         for svr_id in new['svr_ids']:
             svr = dc.get_server(svr_id)
             svr.set_instance_type(new['ins_type'])

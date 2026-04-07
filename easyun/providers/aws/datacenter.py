@@ -475,50 +475,6 @@ class DataCenter(object):
         ceRegion = get_ce_region(thisAccount.aws_type)
         return CostExplorer(self.dcName, region=ceRegion)
 
-    # --- KeyPair 管理 ---
-
-    def list_keypairs(self):
-        """列出 datacenter 下所有 keypair"""
-        from easyun.providers.models import KeyPairInfo
-        keys = self._client.describe_key_pairs(
-            Filters=[self.tagFilter]
-        ).get('KeyPairs', [])
-        return [
-            KeyPairInfo(
-                name=k['KeyName'],
-                key_type=k['KeyType'],
-                fingerprint=k['KeyFingerprint'],
-                tags=[t for t in k.get('Tags', []) if t['Key'] != 'Flag'],
-            )
-            for k in keys
-        ]
-
-    def get_keypair(self, key_name):
-        """获取单个 keypair 信息"""
-        from easyun.providers.models import KeyPairInfo
-        kp = self._resource.KeyPair(key_name)
-        return KeyPairInfo(
-            name=key_name,
-            key_type=kp.key_type,
-            fingerprint=kp.key_fingerprint,
-            tags=[t for t in (kp.tags or []) if t['Key'] != 'Flag'],
-        )
-
-    def create_keypair(self, key_name, key_type='rsa'):
-        """创建 keypair，返回 (KeyPairInfo, key_material)"""
-        from easyun.providers.models import KeyPairInfo
-        kp = self._resource.create_key_pair(
-            KeyName=key_name,
-            KeyType=key_type,
-            TagSpecifications=[{'ResourceType': 'key-pair', 'Tags': [self.flagTag]}],
-        )
-        info = KeyPairInfo(name=key_name, key_type=key_type, fingerprint=kp.key_fingerprint)
-        return info, kp.key_material
-
-    def delete_keypair(self, key_name):
-        """删除 keypair"""
-        self._client.delete_key_pair(KeyName=key_name)
-
     # --- Dashboard 查询 ---
 
     def get_region_info(self):

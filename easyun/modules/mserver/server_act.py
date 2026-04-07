@@ -17,7 +17,7 @@ from . import bp
 class OperateIn(Schema):
     svr_ids = List(String(), required=True)
     action = String(required=True, validate=OneOf(['start', 'stop', 'restart']))
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 @bp.post('/action')
@@ -27,7 +27,7 @@ class OperateIn(Schema):
 def operate_svr(operate):
     '''启动/停止/重启 云服务器'''
     try:
-        dc = get_datacenter(operate.get('dcName', 'Easyun'))
+        dc = get_datacenter(operate['dcName'])
         results = []
         for svr_id in operate['svr_ids']:
             svr = dc.get_server(svr_id)
@@ -54,7 +54,7 @@ def operate_svr(operate):
 def delete_svr(parm):
     '''删除(Terminate)云服务器'''
     try:
-        dc = get_datacenter(parm.get('dcName', 'Easyun'))
+        dc = get_datacenter(parm['dcName'])
         deleteList = []
         for svr_id in parm['svrIds']:
             svr = dc.get_server(svr_id)

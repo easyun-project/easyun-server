@@ -11286,6 +11286,7 @@
           }
         },
         "required": [
+          "dcName",
           "svrIds"
         ],
         "additionalProperties": false
@@ -11446,6 +11447,9 @@
             "example": "567812345678"
           }
         },
+        "required": [
+          "dcName"
+        ],
         "additionalProperties": false
       },
       "DcTaskOut": {
@@ -11761,6 +11765,7 @@
         },
         "required": [
           "action",
+          "dcName",
           "publicIp",
           "svrId"
         ],
@@ -11831,6 +11836,7 @@
           }
         },
         "required": [
+          "dcName",
           "svrIds",
           "svrName"
         ],
@@ -11862,6 +11868,7 @@
         },
         "required": [
           "action",
+          "dcName",
           "diskPath",
           "svrId",
           "volumeId"
@@ -11976,6 +11983,7 @@
         },
         "required": [
           "action",
+          "dcName",
           "svr_ids"
         ],
         "additionalProperties": false
@@ -12002,6 +12010,7 @@
           }
         },
         "required": [
+          "dcName",
           "ins_type",
           "svr_ids"
         ],
@@ -12434,6 +12443,9 @@
             "example": "vpc-057f0e3d715c24147"
           }
         },
+        "required": [
+          "dcName"
+        ],
         "additionalProperties": false
       },
       "SgAttachInfoIn": {
@@ -12462,6 +12474,7 @@
         },
         "required": [
           "action",
+          "dcName",
           "secgroupId",
           "svrId"
         ],
@@ -12736,6 +12749,7 @@
         },
         "required": [
           "action",
+          "dcName",
           "svrIds"
         ],
         "additionalProperties": false

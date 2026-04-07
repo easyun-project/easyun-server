@@ -22,7 +22,7 @@ class ModSvrNameParm(Schema):
         String(), required=True, metadata={"example": ['i-0e5250487e0fec039', 'i-0dfc0232b2f4f8ab9']}
     )
     svrName = String(required=True, metadata={"example": 'new_server_name'})  # 云服务器新Name
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 class ModSvrProtectionParm(Schema):
@@ -32,14 +32,14 @@ class ModSvrProtectionParm(Schema):
     action = String(
         required=True, validate=OneOf(['enable', 'disable'])  # Operation TYPE
     )
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 class SvrIdList(Schema):
     svrIds = List(  # 云服务器ID
         String(), required=True, metadata={"example": ['i-0e5250487e0fec039', 'i-0dfc0232b2f4f8ab9']}
     )
-    dcName = String(metadata={"example": "Easyun"})
+    dcName = String(required=True, metadata={"example": "Easyun"})
 
 
 # 定义api返回格式 Schema，以Out结尾
