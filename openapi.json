@@ -2,7 +2,7 @@
   "info": {
     "description": "\nEasyun api docs:\n* Swagger docs path: /api/docs\n    ",
     "title": "APIFlask",
-    "version": "0.1.0"
+    "version": "0.6.2"
   },
   "tags": [
     {

@@ -42,7 +42,7 @@ def create_app(run_env=None):
     if run_env is None:
         run_env = os.getenv("FLASK_CONFIG", 'dev')
 
-    app = APIFlask(__name__, docs_path='/api/docs')
+    app = APIFlask(__name__, docs_path='/api/docs', version=__version__)
     app.config.from_object(env_config[run_env])
     # schema for generic response
     app.config['BASE_RESPONSE_SCHEMA'] = BaseResponseSchema
