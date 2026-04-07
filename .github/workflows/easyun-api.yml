@@ -26,7 +26,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["sudo -u ec2-user bash -c \"cd /home/ec2-user/easyun-server && git pull origin master && test -f .env || cp .env.example .env && /home/ec2-user/.local/bin/uv sync\" && cp /home/ec2-user/easyun-server/deployment/easyun.service /etc/systemd/system/ && systemctl daemon-reload && systemctl restart easyun"]' \
+            --parameters 'commands=["sudo -u ec2-user bash -c \"cd /home/ec2-user/easyun-server && git pull origin master && find . -name __pycache__ -exec rm -rf {} + && test -f .env || cp .env.example .env && /home/ec2-user/.local/bin/uv sync\" && cp /home/ec2-user/easyun-server/deployment/easyun.service /etc/systemd/system/ && systemctl daemon-reload && systemctl restart easyun"]' \
             --comment "GitHub Actions deploy ${{ github.sha }}" \
             --output text \
             --query "Command.CommandId")
