@@ -15,7 +15,7 @@ from . import bp
 
 
 class OperateIn(Schema):
-    svr_ids = List(String(), required=True)
+    svrIds = List(String(), required=True)
     action = String(required=True, validate=OneOf(['start', 'stop', 'restart']))
 
 
@@ -28,7 +28,7 @@ def operate_svr(operate):
     try:
         dc = get_datacenter(get_dc_name())
         results = []
-        for svr_id in operate['svr_ids']:
+        for svr_id in operate['svrIds']:
             svr = dc.get_server(svr_id)
             if operate['action'] == 'start':
                 svr.start()

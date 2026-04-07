@@ -42,23 +42,23 @@ class KeypairOut(Schema):
 
 class CreateSSHKeySchema(Schema):
     region = String(metadata={"example": "us-east-1"})
-    key_name = String(metadata={"example": "easyun-dev-key"})
+    keyName = String(metadata={"example": "easyun-dev-key"})
 
 
 class AWSAccountInfo(Schema):
-    account_id = String()
-    aws_type = String()
+    accountId = String()
+    awsType = String()
     role = String()
 
 
 class SSHKeysOutputSchema(Schema):
     id = Integer()
     region = String()
-    name = String(data_key='key_name')
+    name = String(data_key='keyName')
 
 
 class FreeTierQuery(Schema):
-    account_id = String(metadata={"example": '567820211120'})
+    accountId = String(metadata={"example": '567820211120'})
 
 
 class FreeTierParm(Schema):

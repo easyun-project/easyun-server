@@ -6625,7 +6625,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "account_id",
+            "name": "accountId",
             "schema": {
               "type": "string",
               "example": "567820211120"
@@ -7207,7 +7207,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "account_id",
+            "name": "accountId",
             "schema": {
               "type": "string",
               "example": "567820211120"
@@ -10284,7 +10284,7 @@
       "OperateIn": {
         "type": "object",
         "properties": {
-          "svr_ids": {
+          "svrIds": {
             "type": "array",
             "items": {
               "type": "string"
@@ -10301,14 +10301,14 @@
         },
         "required": [
           "action",
-          "svr_ids"
+          "svrIds"
         ],
         "additionalProperties": false
       },
       "ConfigIn": {
         "type": "object",
         "properties": {
-          "svr_ids": {
+          "svrIds": {
             "type": "array",
             "example": [
               "i-01b565d505d5e0559"
@@ -10317,14 +10317,14 @@
               "type": "string"
             }
           },
-          "ins_type": {
+          "insType": {
             "type": "string",
             "example": "t3.small"
           }
         },
         "required": [
-          "ins_type",
-          "svr_ids"
+          "insType",
+          "svrIds"
         ],
         "additionalProperties": false
       },

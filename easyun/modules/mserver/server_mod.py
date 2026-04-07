@@ -71,8 +71,8 @@ def update_svr_protection(parms):
 
 
 class ConfigIn(Schema):
-    svr_ids = List(String(), required=True, metadata={"example": ['i-01b565d505d5e0559']})
-    ins_type = String(required=True, metadata={"example": 't3.small'})
+    svrIds = List(String(), required=True, metadata={"example": ['i-01b565d505d5e0559']})
+    insType = String(required=True, metadata={"example": 't3.small'})
 
 
 @bp.post('/config')
@@ -83,9 +83,9 @@ def update_config(new):
     '''修改指定云服务器实例配置'''
     try:
         dc = get_datacenter(get_dc_name())
-        for svr_id in new['svr_ids']:
+        for svr_id in new['svrIds']:
             svr = dc.get_server(svr_id)
-            svr.set_instance_type(new['ins_type'])
+            svr.set_instance_type(new['insType'])
         response = Result(detail={'msg': 'config success'}, status_code=200)
         return response.make_resp()
     except Exception as e:

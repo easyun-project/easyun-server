@@ -34,7 +34,7 @@ class TestServerEndpoints:
 
     def test_server_action_valid_schema(self, client, auth_token):
         resp = client.post('/api/v1/server/action',
-                           json={'svr_ids': ['i-fake'], 'action': 'stop'},
+                           json={'svrIds': ['i-fake'], 'action': 'stop'},
                            headers=_auth_headers(auth_token))
         assert resp.status_code != 422
 
