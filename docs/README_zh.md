@@ -50,7 +50,7 @@ run:
 $ uv run python run.py
 ```
 
-API docs: http://127.0.0.1:6660/api/docs
+API docs: http://127.0.0.1:8443/api/docs
 
 ### 常用命令
 

@@ -100,15 +100,15 @@ def list_key():
     keypairList = [
             {
             'keyName' : 'key_easyun_dev1',
-            'pemUrl' : 'http://127.0.0.1:6660/download/keyname01',
+            'pemUrl' : 'http://127.0.0.1:8443/download/keyname01',
             },
             {
             'keyName' : 'key_easyun_user1',
-            'pemUrl' : 'http://127.0.0.1:6660/download/keyname02',
+            'pemUrl' : 'http://127.0.0.1:8443/download/keyname02',
             },
             {
             'keyName' : 'key_easyun_user2',
-            'pemUrl' : 'http://127.0.0.1:6660/download/keyname03',
+            'pemUrl' : 'http://127.0.0.1:8443/download/keyname03',
             },
     ]
     
@@ -125,7 +125,7 @@ def add_key(data):
     resp = Result(
         detail={
             'keyName' : data['keyName'],
-            'pemUrl' : 'http://127.0.0.1:6660/download/'+data['keyName']
+            'pemUrl' : 'http://127.0.0.1:8443/download/'+data['keyName']
         }
     )
     return resp.make_resp()
