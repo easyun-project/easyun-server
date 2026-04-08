@@ -5,7 +5,7 @@
 """
 
 from botocore.exceptions import ClientError
-from easyun.providers.base import StorageVolumeBase
+from easyun.cloud.base import StorageVolumeBase
 from easyun.libs.utils import load_json_config
 from ...session import get_easyun_session
 from ...utils import get_server_name
@@ -14,7 +14,7 @@ from ...utils import get_server_name
 # 定义系统盘路径
 SystemDisk = ['/dev/xvda', '/dev/sda1']
 # 定义Volume types
-VolumeTypes = load_json_config('aws_ebs_types')
+VolumeTypes = load_json_config('aws_ebs_types', 'easyun/cloud/aws/config')
 
 
 class StorageVolume(StorageVolumeBase):

@@ -75,7 +75,7 @@ def get_file_type(object_key):
             return f'{suffix.upper()} File'
 
 
-from easyun.providers.base import StorageBucketBase
+from easyun.cloud.base import StorageBucketBase
 
 class StorageBucket(StorageBucketBase):
     def __init__(self, bucket_id, dc_name=None):

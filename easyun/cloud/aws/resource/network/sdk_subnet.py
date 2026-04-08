@@ -9,7 +9,7 @@ from easyun.libs.utils import len_iter
 from ...session import get_easyun_session
 
 
-from easyun.providers.base import SubnetBase
+from easyun.cloud.base import SubnetBase
 
 class Subnet(SubnetBase):
     def __init__(self, sub_id, dc_name=None):

@@ -5,14 +5,14 @@
 """
 
 from easyun.libs.utils import load_json_config
-from easyun.providers.aws.management.sdk_pricing import AwsPricing
+from easyun.cloud.aws.management.sdk_pricing import AwsPricing
 
 
 # 获取 windows ami 列表
-AMI_Windows = load_json_config('aws_ec2_ami').get('windows')
+AMI_Windows = load_json_config('aws_ec2_ami', 'easyun/cloud/aws/config').get('windows')
 
 # 获取 linux ami 列表
-AMI_Linux = load_json_config('aws_ec2_ami').get('linux')
+AMI_Linux = load_json_config('aws_ec2_ami', 'easyun/cloud/aws/config').get('linux')
 
 # 全部受支持的 AMI Operating System 列表
 OperatingSystemALL = AwsPricing().get_attribute_values('AmazonEC2', 'operatingSystem')

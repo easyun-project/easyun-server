@@ -8,8 +8,8 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, get_dc_name
-from easyun.providers import get_datacenter
+from easyun.common.schemas import get_dc_name
+from easyun.cloud import get_datacenter
 from .schemas import DcMsgOut, AddSecGroupParm, DelSecGroupParm, SecGroupDetail, SecGroupBasic, SecGroupModel
 
 
@@ -52,7 +52,7 @@ def list_secgroup_brief():
 @bp.auth_required(auth_token)
 @bp.input(AddSecGroupParm, arg_name='parm')
 @bp.output(SecGroupModel)
-def create_secgroup():
+def create_secgroup(parm):
     '''新建 SecurityGroup'''
     dcName = get_dc_name()
     tgName = parm['tgName']
@@ -90,7 +90,7 @@ def get_secgroup_detail(sg_id):
 @bp.auth_required(auth_token)
 @bp.input(DelSecGroupParm, arg_name='parm')
 @bp.output(DcMsgOut)
-def delete_secgroup():
+def delete_secgroup(parm):
     '''删除 SecurityGroup'''
     dcName = get_dc_name()
     sgId = parm['sgId']
@@ -109,7 +109,7 @@ def delete_secgroup():
 @bp.auth_required(auth_token)
 @bp.input(AddSecGroupParm, arg_name='parm')
 @bp.output(SecGroupModel)
-def update_secgroup():
+def update_secgroup(parm):
     '''修改 SecurityGroup 【未完成】'''
     dcName = get_dc_name()
     try:

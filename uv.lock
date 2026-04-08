@@ -208,7 +208,7 @@ wheels = [
 
 [[package]]
 name = "easyun-server"
-version = "0.6.2"
+version = "0.6.3"
 source = { editable = "." }
 dependencies = [
     { name = "apiflask" },

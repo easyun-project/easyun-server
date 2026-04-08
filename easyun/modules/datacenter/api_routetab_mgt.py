@@ -7,9 +7,9 @@
 
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
-from easyun.common.schemas import DcNameQuery, get_dc_name
+from easyun.common.schemas import get_dc_name
 from easyun.common.result import Result
-from easyun.providers import get_datacenter
+from easyun.cloud import get_datacenter
 from easyun.common.dc_utils import gen_dc_tag
 from .schemas import AddRouteTableParm, DelRouteTableParm, RouteTableBasic, RouteTableModel, RouteTableDetail, DcMsgOut
 

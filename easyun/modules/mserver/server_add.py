@@ -8,7 +8,7 @@ from apiflask.validators import Length
 from easyun.common.schemas import get_dc_name
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.providers import get_datacenter
+from easyun.cloud import get_datacenter
 from .schemas import NewSvrItem
 from . import bp
 
@@ -28,7 +28,7 @@ class SvrParmIn(Schema):
 @bp.auth_required(auth_token)
 @bp.input(SvrParmIn, arg_name='parm')
 @bp.output(NewSvrItem(many=True))
-def add_server():
+def add_server(parm):
     '''新建云服务器(EC2)'''
     try:
         dc = get_datacenter(get_dc_name())

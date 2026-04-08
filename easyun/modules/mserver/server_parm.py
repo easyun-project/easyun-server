@@ -9,13 +9,12 @@ from apiflask.validators import Length, OneOf
 from easyun.common.schemas import get_dc_name
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.providers import get_datacenter
+from easyun.cloud import get_datacenter
 from .schemas import ImageItem, InsFamilyItem, InsTypeItem, InsTypeBriefItem
 from . import bp
 
 
 class ImageQuery(Schema):
-    dc = String(required=True, validate=Length(0, 60), metadata={"example": 'Easyun'})
     arch = String(required=True, validate=OneOf(['x86_64', 'arm64']), metadata={"example": "x86_64"})
     os = String(required=True, validate=OneOf(['windows', 'linux']), metadata={"example": "linux"})
 
@@ -36,7 +35,7 @@ def _image_to_dict(img):
 def list_images(parms):
     '''获取可用的AMI列表(包含 System Disk信息)'''
     try:
-        dc = get_datacenter(parms['dc'])
+        dc = get_datacenter(get_dc_name())
         imgList = [_image_to_dict(i) for i in dc.list_images(arch=parms['arch'], os_type=parms['os'])]
         resp = Result(detail=imgList, message=f"{len(imgList)},success", status_code=200)
         return resp.make_resp()
@@ -47,7 +46,6 @@ def list_images(parms):
 
 @bp.get('/param/instype/family')
 @bp.auth_required(auth_token)
-@bp.input({'dc': String(required=True)}, location='query', arg_name='parm')
 @bp.output(InsFamilyItem(many=True))
 def list_ins_family():
     '''获取可用的Instance Family列表'''
@@ -57,7 +55,6 @@ def list_ins_family():
 
 
 class InsTypelsQuery(Schema):
-    dc = String(required=True, validate=Length(0, 60), metadata={"example": 'Easyun'})
     arch = String(required=True, validate=OneOf(['x86_64', 'arm64']), metadata={"example": "x86_64"})
     family = String(required=True, metadata={"example": "m5"})
 
@@ -66,7 +63,7 @@ class InsTypelsQuery(Schema):
 @bp.auth_required(auth_token)
 @bp.input(InsTypelsQuery, location='query', arg_name='parm')
 @bp.output(InsTypeBriefItem(many=True))
-def get_ins_type_list():
+def get_ins_type_list(parm):
     '''获取可用的Instance Types列表(不含成本)'''
     try:
         dc = get_datacenter(get_dc_name())
@@ -79,7 +76,6 @@ def get_ins_type_list():
 
 
 class InsTypeQuery(Schema):
-    dc = String(required=True, validate=Length(0, 60), metadata={"example": 'Easyun'})
     arch = String(required=True, validate=OneOf(['x86_64', 'arm64']), metadata={"example": "x86_64"})
     family = String(required=True, metadata={"example": "m5"})
     os = String(required=False, metadata={"example": "linux"})
@@ -89,7 +85,7 @@ class InsTypeQuery(Schema):
 @bp.auth_required(auth_token)
 @bp.input(InsTypeQuery, location='query', arg_name='parm')
 @bp.output(InsTypeItem(many=True))
-def list_ins_types():
+def list_ins_types(parm):
     '''获取可用的Instance Types列表(含月度成本)'''
     try:
         dc = get_datacenter(get_dc_name())

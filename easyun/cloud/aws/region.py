@@ -9,7 +9,7 @@ from easyun.libs.utils import load_json_config
 
 
 '''AWS Region 列表 (26)'''
-AWS_Regions = load_json_config('aws_region')
+AWS_Regions = load_json_config('aws_region', 'easyun/cloud/aws/config')
 
 
 def get_region_codes(account_type='global'):

@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from ...session import get_easyun_session
 
 
-from easyun.providers.base import DatabaseInstanceBase
+from easyun.cloud.base import DatabaseInstanceBase
 
 class DBInstance(DatabaseInstanceBase):
     def __init__(self, dbi_id, dc_name=None):

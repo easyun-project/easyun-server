@@ -10,7 +10,7 @@ from apiflask import Schema
 from apiflask.fields import String, List, Dict, DateTime, Boolean, Nested, Integer, Field
 from apiflask.validators import Length, OneOf, Regexp
 from easyun.common.schemas import TagItem
-from easyun.providers import get_account
+from easyun.cloud import get_account
 
 _account = get_account()
 _region_codes = [r['regionCode'] for r in _account.list_regions()]
@@ -68,6 +68,7 @@ class AddDataCenterParm(Schema):
         required=True,
         validate=[Regexp(DATACENTER_NANE_PATTERN), Length(3, 60)], metadata={"example": "Easyun"}  # Datacenter name
     )
+    accountId = String(metadata={"example": "567820211120"})  # 可选，默认取第一个账号
     dcRegion = String(required=True, validate=Length(0, 20), metadata={"example": "us-east-1"})
 
     dcVPC = Nested(

@@ -5,7 +5,7 @@
   @auth:    aleck
 """
 
-from easyun.providers.aws.session import get_easyun_session
+from easyun.cloud.aws.session import get_easyun_session
 
 
 # 定义系统盘路径

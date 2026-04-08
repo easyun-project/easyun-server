@@ -2,413 +2,161 @@
 """
   @module:  DataCenter Task
   @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
-  @auth:    aleck
 """
-from easyun.common.schemas import get_dc_name
-from easyun.providers.aws.session import get_easyun_session
+from easyun.cloud import create_datacenter
 from easyun.libs.utils import load_json_config
-from datetime import datetime
-from easyun import db
-from easyun.common.models import Datacenter, Account
-from easyun.common.dc_utils import gen_dc_tag
+from easyun.common.models import Account
 from . import logger
 
 
 def create_dc_task(self, parm, user):
-    """
-    创建 DataCenter 异步任务
-    按步骤进行，步骤失败直接返回
-    :return {message,status_code,http_code:200}
-    """
-    # Datacenter basic attribute define
-    dcName = get_dc_name()
-    dcRgeion = parm['dcRegion']
-    DryRun = False
-    # Mandatory tag:Flag for all resource
-    flagTag = gen_dc_tag(dcName)
+    """创建 DataCenter 异步任务"""
+    dcName = parm['dcName']
+    dcRegion = parm['dcRegion']
 
-    # boto3.setup_default_session(region_name = dcRgeion )
-    session = get_easyun_session()
-    resource_ec2 = session.resource('ec2', region_name=dcRgeion)
-
-    # Step 0:  Check the prerequisites for creating new datacenter
-    # 移到任务执行前检测
-    # when prerequisites check Ok
     logger.info(self.id)
     self.update_state(state='STARTED', meta={'current': 1, 'total': 100})
 
-    # Step 1: create easyun vpc, including:
-    # 1* main route table
-    # 1* default security group
-    # 1* default Network ACLs
-    try:
-        nameTag = {"Key": "Name", "Value": "VPC-" + dcName}
-        vpc = resource_ec2.create_vpc(
-            CidrBlock=parm['dcVPC']['cidrBlock'],
-            TagSpecifications=[{'ResourceType': 'vpc', "Tags": [flagTag, nameTag]}],
-        )
-        stage = f"[VPC] {vpc.id} created"
+    def progress(pct, stage):
         logger.info(stage)
-        self.update_state(
-            state='PROGRESS', meta={'current': 5, 'total': 100, 'stage': stage}
-        )
-    except Exception as ex:
-        logger.error('[VPC]' + str(ex))
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
-        return {'message': str(ex), 'status_code': 2010}
+        self.update_state(state='PROGRESS', meta={'current': pct, 'total': 100, 'stage': stage})
 
-    # step 2: Write VPC metadata to local database
+    # Step 1: 创建 DataCenter 逻辑容器（写 DB）
     try:
-        curr_account: Account = Account.query.first()
-        newDC = Datacenter(
-            name=dcName,
-            cloud='AWS',
-            account_id=curr_account.account_id,
-            region=dcRgeion,
-            vpc_id=vpc.id,
-            create_date=datetime.utcnow(),
-            create_user=user,
-        )
-        db.session.add(newDC)
-        db.session.commit()
-
-        stage = f"[DataCenter] {newDC.name} metadata updated"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 10, 'total': 100, 'stage': stage})
+        accountId = parm.get('accountId') or Account.query.first().account_id
+        dc = create_datacenter(name=dcName, region=dcRegion, account_id=accountId, user=user)
+        progress(5, f"[DataCenter] {dcName} created")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2020}
 
-    # step 3: create Internet Gateway
+    # Step 2: 创建 VPC
     try:
-        nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['gwName']}
-        igw = resource_ec2.create_internet_gateway(
-            DryRun=DryRun,
-            TagSpecifications=[
-                {'ResourceType': 'internet-gateway', 'Tags': [flagTag, nameTag]}
-            ],
-        )
-        # waiter = client_ec2.get_waiter('internet_gateway_exists')
-        # waiter.wait(InternetGatewayIds=[igw.id])
-        # got Error：ValueError: Waiter does not exist: internet_gateway_exists
-        stage = f"[InternetGateway] {igw.id} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 15, 'total': 100, 'stage': stage})
-        # and Attach the igw to vpc
-        igw.attach_to_vpc(DryRun=DryRun, VpcId=vpc.id)
-        stage = f"[InternetGateway] {igw.id} attached to {vpc.id}"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 20, 'total': 100, 'stage': stage})
+        vpc = dc.create_vpc(parm['dcVPC']['cidrBlock'])
+        progress(10, f"[VPC] {vpc.id} created")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
+        logger.error('[VPC]' + str(ex))
+        return {'message': str(ex), 'status_code': 2010}
+
+    # Step 3: create Internet Gateway
+    try:
+        igw = dc.create_int_gateway(tag_name=parm['pubSubnet1']['gwName'])
+        progress(15, f"[InternetGateway] {igw.id} created")
+        dc.attach_igw(igw.id)
+        progress(20, f"[InternetGateway] {igw.id} attached to {vpc.id}")
+    except Exception as ex:
         return {'message': str(ex), 'status_code': 2030}
 
-    # step 4: create 2x Public Subnets
+    # Step 4: create 2x Public Subnets
     try:
-        nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['tagName']}
-        pubsbn1 = resource_ec2.create_subnet(
-            CidrBlock=parm['pubSubnet1']['cidrBlock'],
-            AvailabilityZone=parm['pubSubnet1']['azName'],
-            VpcId=vpc.id,
-            TagSpecifications=[{'ResourceType': 'subnet', 'Tags': [flagTag, nameTag]}],
-        )
-        stage = f"[Subnet] {pubsbn1.id} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 25, 'total': 100, 'stage': stage})
-
-        nameTag = {"Key": "Name", "Value": parm['pubSubnet2']['tagName']}
-        pubsbn2 = resource_ec2.create_subnet(
-            CidrBlock=parm['pubSubnet2']['cidrBlock'],
-            AvailabilityZone=parm['pubSubnet2']['azName'],
-            VpcId=vpc.id,
-            TagSpecifications=[{'ResourceType': 'subnet', 'Tags': [flagTag, nameTag]}],
-        )
-        stage = f"[Subnet] {pubsbn2.id} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 30, 'total': 100, 'stage': stage})
-
+        pubsbn1 = dc.create_subnet(parm['pubSubnet1']['cidrBlock'], parm['pubSubnet1']['azName'], parm['pubSubnet1']['tagName'])
+        progress(25, f"[Subnet] {pubsbn1.id} created")
+        pubsbn2 = dc.create_subnet(parm['pubSubnet2']['cidrBlock'], parm['pubSubnet2']['azName'], parm['pubSubnet2']['tagName'])
+        progress(30, f"[Subnet] {pubsbn2.id} created")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2040}
 
-    # step 5: update main route table （as route-igw）
+    # Step 5: update main route table (route to IGW)
     try:
-        nameTag = {"Key": "Name", "Value": parm['pubSubnet1']['routeTable']}
-        rtbs = vpc.route_tables.all()
-        for rtb in rtbs:
+        for rtb in vpc.route_tables.all():
             if rtb.associations_attribute[0]['Main']:
-                # 添加tag:Name
-                rtb.create_tags(Tags=[flagTag, nameTag])
-                # 添加到 igw的路由
-                irt = rtb.create_route(
-                    DestinationCidrBlock='0.0.0.0/0',
-                    GatewayId=igw.id
-                    #             NatGatewayId='string',
-                    #             NetworkInterfaceId='string',
-                )
-                stage = f"[RouteTable] {irt.destination_cidr_block} created"
-                logger.info(stage)
-                self.update_state(state='PROGRESS', meta={'current': 35, 'total': 100, 'stage': stage})
-                # associate the route table with the pub subnets 1
-                rtb.associate_with_subnet(DryRun=DryRun, SubnetId=pubsbn1.id)
-                # associate the route table with the pub subnets 2
-                rtb.associate_with_subnet(DryRun=DryRun, SubnetId=pubsbn2.id)
+                rtb.create_tags(Tags=[{'Key': 'Flag', 'Value': dcName}, {'Key': 'Name', 'Value': parm['pubSubnet1']['routeTable']}])
+                dc.add_route(rtb.id, '0.0.0.0/0', gateway_id=igw.id)
+                dc.associate_subnet_to_rtb(rtb.id, pubsbn1.id)
+                dc.associate_subnet_to_rtb(rtb.id, pubsbn2.id)
                 break
-
-        self.update_state(state='PROGRESS', meta={'current': 40, 'total': 100})
+        progress(40, "[RouteTable] public route configured")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2050}
 
-    # step 6: create 2x Private Subnets
+    # Step 6: create 2x Private Subnets
     try:
-        nameTag = {"Key": "Name", "Value": parm['priSubnet1']['tagName']}
-        prisbn1 = resource_ec2.create_subnet(
-            CidrBlock=parm['priSubnet1']['cidrBlock'],
-            AvailabilityZone=parm['priSubnet1']['azName'],
-            VpcId=vpc.id,
-            TagSpecifications=[{'ResourceType': 'subnet', 'Tags': [flagTag, nameTag]}],
-        )
-        stage = f"[Subnet] {prisbn1.id} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 45, 'total': 100, 'stage': stage})
-
-        nameTag = {"Key": "Name", "Value": parm['priSubnet2']['tagName']}
-        prisbn2 = resource_ec2.create_subnet(
-            CidrBlock=parm['priSubnet2']['cidrBlock'],
-            AvailabilityZone=parm['priSubnet2']['azName'],
-            VpcId=vpc.id,
-            TagSpecifications=[{'ResourceType': 'subnet', 'Tags': [flagTag, nameTag]}],
-        )
-        stage = f"[Subnet] {prisbn2.id} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 50, 'total': 100, 'stage': stage})
+        prisbn1 = dc.create_subnet(parm['priSubnet1']['cidrBlock'], parm['priSubnet1']['azName'], parm['priSubnet1']['tagName'])
+        progress(45, f"[Subnet] {prisbn1.id} created")
+        prisbn2 = dc.create_subnet(parm['priSubnet2']['cidrBlock'], parm['priSubnet2']['azName'], parm['priSubnet2']['tagName'])
+        progress(50, f"[Subnet] {prisbn2.id} created")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2060}
 
-    # step 7 & 8: create NAT Gateway (optional)
+    # Step 7 & 8: NAT Gateway (optional)
     if parm.get('createNatGW'):
-        # 7-1: Allocate EIP for NAT Gateway
         try:
-            nameTag = {"Key": "Name", "Value": dcName.lower() + "-natgw-eip"}
-            eip = resource_ec2.meta.client.allocate_address(
-                Domain='vpc',
-                TagSpecifications=[
-                    {'ResourceType': 'elastic-ip', "Tags": [flagTag, nameTag]}
-                ],
-            )
-            stage = f"[StaticIP] {eip['PublicIp']} created"
-            logger.info(stage)
-            self.update_state(state='PROGRESS', meta={'current': 55, 'total': 100, 'stage': stage})
-
+            eip = dc.create_staticip(tag_name=dcName.lower() + "-natgw-eip")
+            progress(55, f"[StaticIP] {eip.id} created")
         except Exception as ex:
-            self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
             return {'message': str(ex), 'status_code': 2071}
 
-        # 7-2: create nat gateway
         try:
-            nameTag = {"Key": "Name", "Value": parm['priSubnet1']['gwName']}
-            natgw = resource_ec2.meta.client.create_nat_gateway(
-                DryRun=DryRun,
-                ConnectivityType='public',
-                AllocationId=eip['AllocationId'],
-                SubnetId=pubsbn1.id,
-                TagSpecifications=[
-                    {'ResourceType': 'natgateway', "Tags": [flagTag, nameTag]}
-                ],
-            )
-            natgwID = natgw['NatGateway']['NatGatewayId']
-            stage = f"[NatGateway] {natgwID} creating"
-            logger.info(stage)
-            self.update_state(state='PROGRESS', meta={'current': 65, 'total': 100, 'stage': stage})
-
-            # waite natgw created
-            waiter = resource_ec2.meta.client.get_waiter('nat_gateway_available')
-            waiter.wait(NatGatewayIds=[natgwID])
-
-            stage = f"[NatGateway] {natgwID} created"
-            logger.info(stage)
-            self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'stage': stage})
-
+            natgw = dc.create_nat_gateway('public', pubsbn1.id, eip.eipObj['AllocationId'], tag_name=parm['priSubnet1']['gwName'])
+            progress(65, f"[NatGateway] {natgw.id} creating")
+            # wait for NAT gateway
+            dc.wait_nat_gateway_available(natgw.id)
+            progress(70, f"[NatGateway] {natgw.id} created")
         except Exception as ex:
             return {'message': str(ex), 'status_code': 2070}
 
-        # step 8: create NAT route table and route to natgw
-        # 8-1 create route table for natgw
         try:
-            nameTag = {"Key": "Name", "Value": parm['priSubnet1']['routeTable']}
-            nrtb = vpc.create_route_table(
-                TagSpecifications=[
-                    {'ResourceType': 'route-table', "Tags": [flagTag, nameTag]}
-                ]
-            )
-            # add a route to natgw
-            nrt = nrtb.create_route(
-                DestinationCidrBlock='0.0.0.0/0',
-                # GatewayId= igw.id,
-                NatGatewayId=natgwID
-                #             NetworkInterfaceId='string',
-            )
-            stage = f"[Route] {nrt.destination_cidr_block} created"
-            logger.info(stage)
-            self.update_state(state='PROGRESS', meta={'current': 75, 'total': 100, 'stage': stage})
-            # associate the route table with the pri subnets 1
-            nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn1.id)
-            # associate the route table with the pri subnets 2
-            nrtb.associate_with_subnet(DryRun=DryRun, SubnetId=prisbn2.id)
-            self.update_state(state='PROGRESS', meta={'current': 80, 'total': 100})
-
+            nrtb = dc.create_routetable(tag_name=parm['priSubnet1']['routeTable'])
+            dc.add_route(nrtb.id, '0.0.0.0/0', nat_gateway_id=natgw.id)
+            dc.associate_subnet_to_rtb(nrtb.id, prisbn1.id)
+            dc.associate_subnet_to_rtb(nrtb.id, prisbn2.id)
+            progress(80, "[RouteTable] private route configured")
         except Exception as ex:
-            self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
             return {'message': str(ex), 'status_code': 2080}
     else:
-        self.update_state(state='PROGRESS', meta={'current': 80, 'total': 100, 'stage': 'Skip NatGateway'})
+        progress(80, "Skip NatGateway")
 
-    # step 9: update and create Security Groups
-    secgroupParms = load_json_config('aws_default_parms').get('secgroup')
-    webPerm = secgroupParms.get('webPerm')
-    dbPerm = secgroupParms.get('dbPerm')
+    # Step 9: Security Groups
+    secgroupParms = load_json_config('aws_default_parms', 'easyun/cloud/aws/config').get('secgroup')
 
-    # 9-1: update default security group
+    # 9-1: update default SG
     try:
-        nameTag = {"Key": "Name", "Value": parm['securityGroup0']['tagName']}
-        basePerm = check_perm(parm['securityGroup0'])
+        basePerm = _check_perm(parm['securityGroup0'])
         for sg in vpc.security_groups.all():
             if sg.group_name == 'default':
-                # 添加tag:Name
-                sg.create_tags(Tags=[flagTag, nameTag])
-                # 更新default sg inbound规则
-                sg.authorize_ingress(
-                    IpPermissions=basePerm,
-                )
+                sg.create_tags(Tags=[{'Key': 'Flag', 'Value': dcName}, {'Key': 'Name', 'Value': parm['securityGroup0']['tagName']}])
+                sg.authorize_ingress(IpPermissions=basePerm)
                 break
-        stage = f"[SecurityGroup] {sg.group_name} updated"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 85, 'total': 100, 'stage': stage})
-
+        progress(85, f"[SecurityGroup] default updated")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2091}
 
-    # 9-2: create webapp security group
+    # 9-2: create webapp SG
     try:
-        nameTag = {"Key": "Name", "Value": parm['securityGroup1']['tagName']}
-        basePerm = check_perm(parm['securityGroup1'])
-        sgWeb = resource_ec2.create_security_group(
-            GroupName=nameTag['Value'],
-            Description='allow http access to web server',
-            VpcId=vpc.id,
-            TagSpecifications=[
-                {'ResourceType': 'security-group', "Tags": [flagTag, nameTag]}
-            ],
-        )
-        # 更新sgWeb inbound规则
-        webPerm.extend(basePerm)
-        sgWeb.authorize_ingress(
-            #         SourceSecurityGroupName='string',
-            #         SourceSecurityGroupOwnerId='string'
-            IpPermissions=webPerm
-        )
-        stage = f"[SecurityGroup] {sgWeb.group_name} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 90, 'total': 100, 'stage': stage})
+        sgWeb = dc.create_secgroup(parm['securityGroup1']['tagName'], 'allow http access to web server', parm['securityGroup1']['tagName'])
+        webPerm = secgroupParms.get('webPerm', []) + _check_perm(parm['securityGroup1'])
+        sgWeb.sgObj.authorize_ingress(IpPermissions=webPerm)
+        progress(90, f"[SecurityGroup] {sgWeb.sgObj.group_name} created")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2092}
 
-    # 9-3: create database security group
+    # 9-3: create database SG
     try:
-        nameTag = {"Key": "Name", "Value": parm['securityGroup2']['tagName']}
-        basePerm = check_perm(parm['securityGroup2'])
-        sgDb = resource_ec2.create_security_group(
-            GroupName=nameTag['Value'],
-            Description='allow tcp access to database server',
-            VpcId=vpc.id,
-            TagSpecifications=[
-                {'ResourceType': 'security-group', "Tags": [flagTag, nameTag]}
-            ],
-        )
-        # 更新sgWeb inbound规则
-        dbPerm.extend(basePerm)
-        sgDb.authorize_ingress(
-            #         SourceSecurityGroupName='string',
-            #         SourceSecurityGroupOwnerId='string'
-            IpPermissions=dbPerm
-        )
-        stage = f"[SecurityGroup] {sgWeb.group_name} created"
-        logger.info(stage)
-        self.update_state(state='PROGRESS', meta={'current': 95, 'total': 100, 'stage': stage})
-
+        sgDb = dc.create_secgroup(parm['securityGroup2']['tagName'], 'allow tcp access to database server', parm['securityGroup2']['tagName'])
+        dbPerm = secgroupParms.get('dbPerm', []) + _check_perm(parm['securityGroup2'])
+        sgDb.sgObj.authorize_ingress(IpPermissions=dbPerm)
+        progress(95, f"[SecurityGroup] {sgDb.sgObj.group_name} created")
     except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
         return {'message': str(ex), 'status_code': 2093}
 
-    # step 10: Update Datacenter name list to DynamoDB
-    try:
-        # 待实现
-        stage = f"[DataCenter] {newDC.name} created successfully !"
-        logger.info(stage)
-        self.update_state(
-            state='SUCCESS', meta={'current': 100, 'total': 100, 'stage': stage}
-        )
-
-        return {
-            'detail': {
-                'dcName': newDC.name,
-                'regionCode': newDC.region,
-                'vpcId': newDC.vpc_id,
-                # 'cidrBlock' : vpc.cidr_block,
-                'createDate': newDC.create_date,
-                'createUser': newDC.create_user,
-                'accountId': newDC.account_id
-            }
+    # Step 10: done
+    stage = f"[DataCenter] {dcName} created successfully !"
+    logger.info(stage)
+    self.update_state(state='SUCCESS', meta={'current': 100, 'total': 100, 'stage': stage})
+    return {
+        'detail': {
+            'dcName': dcName, 'regionCode': dcRegion,
+            'vpcId': dc.vpcId, 'createUser': user, 'accountId': accountId,
         }
-
-    except Exception as ex:
-        self.update_state(state='FAILURE', meta={'current': 100, 'total': 100})
-        return {'message': str(ex), 'status_code': 2099}
+    }
 
 
-def check_perm(sg):
-    '''根據勾選狀態匹配SecGroup IP規則'''
-    sgpermList = []
-    if sg["enableRDP"]:
-        sgpermList.append(
-            {
-                'IpProtocol': 'tcp',
-                'FromPort': 3389,
-                'ToPort': 3389,
-                # 'Ipv6Ranges': [],
-                # 'PrefixListIds': [],
-                # 'UserIdGroupPairs': [],
-                'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-            }
-        )
-
-    if sg["enableSSH"]:
-        sgpermList.append(
-            {
-                'IpProtocol': 'tcp',
-                'FromPort': 22,
-                'ToPort': 22,
-                # 'Ipv6Ranges': [],
-                # 'PrefixListIds': [],
-                # 'UserIdGroupPairs': [],
-                'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-            }
-        )
-
-    if sg["enablePing"]:
-        sgpermList.append(
-            {
-                'IpProtocol': 'icmp',
-                'FromPort': 8,
-                'ToPort': -1,
-                # 'Ipv6Ranges': [],
-                # 'PrefixListIds': [],
-                # 'UserIdGroupPairs': [],
-                'IpRanges': [{'CidrIp': '0.0.0.0/0'}],
-            }
-        )
-    return sgpermList
+def _check_perm(sg):
+    """根据勾选状态匹配 SecGroup IP 规则"""
+    perms = []
+    if sg.get('enableRDP'):
+        perms.append({'IpProtocol': 'tcp', 'FromPort': 3389, 'ToPort': 3389, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]})
+    if sg.get('enableSSH'):
+        perms.append({'IpProtocol': 'tcp', 'FromPort': 22, 'ToPort': 22, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]})
+    if sg.get('enablePing'):
+        perms.append({'IpProtocol': 'icmp', 'FromPort': 8, 'ToPort': -1, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]})
+    return perms

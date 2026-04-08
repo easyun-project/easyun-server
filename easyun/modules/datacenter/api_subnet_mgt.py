@@ -7,9 +7,9 @@
 
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
-from easyun.common.schemas import DcNameQuery, get_dc_name
+from easyun.common.schemas import get_dc_name
 from easyun.common.result import Result
-from easyun.providers import get_datacenter
+from easyun.cloud import get_datacenter
 from .schemas import DcMsgOut, AddSubnetParm, DelSubnetParm, ModSubnetParm, SubnetBasic, SubnetModel, SubnetDetail
 
 
@@ -109,7 +109,7 @@ def add_subnet(parms):
 @bp.auth_required(auth_token)
 @bp.input(ModSubnetParm, arg_name='parm')
 @bp.output(SubnetModel)
-def mod_subnet():
+def mod_subnet(parm):
     '''修改数据中心 Subnet 属性'''
     dcName = get_dc_name()
     subnetId = parm['subnetId']

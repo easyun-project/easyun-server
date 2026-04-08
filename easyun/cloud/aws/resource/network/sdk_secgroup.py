@@ -19,7 +19,7 @@ TagEasyunSecurityGroup = [
 ]
 
 
-from easyun.providers.base import SecurityGroupBase
+from easyun.cloud.base import SecurityGroupBase
 
 class SecurityGroup(SecurityGroupBase):
     def __init__(self, sg_id, dc_name=None):

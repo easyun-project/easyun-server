@@ -9,8 +9,8 @@ from apiflask.fields import String
 from apiflask.validators import OneOf
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, get_dc_name, TagItem
-from easyun.providers import get_datacenter
+from easyun.common.schemas import get_dc_name, TagItem
+from easyun.cloud import get_datacenter
 from .schemas import SvrEntityOut, SvrInstypeParam, MsgOut
 from . import bp
 

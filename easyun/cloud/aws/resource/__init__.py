@@ -12,7 +12,7 @@ from .storage.sdk_bucket import StorageBucket, query_bucket_flag
 from .database.sdk_database import DBInstance
 from .network.sdk_loadbalancer import LoadBalancer
 from ..session import get_easyun_session
-from easyun.providers.aws.utils import get_server_name
+from easyun.cloud.aws.utils import get_server_name
 
 
 def get_ec2_server(svr_id, dc_name):
@@ -44,7 +44,7 @@ class Resource(object):
 
     def list_all_server(self):
         """列出 datacenter 下所有 server 详细信息"""
-        from easyun.providers.models import ServerDetail
+        from easyun.cloud.models import ServerDetail
         resource = self._session.resource('ec2')
         client = resource.meta.client
         try:
@@ -85,7 +85,7 @@ class Resource(object):
 
     def list_server_brief(self):
         """列出 datacenter 下所有 server 基础信息"""
-        from easyun.providers.models import ServerBrief
+        from easyun.cloud.models import ServerBrief
         resource = self._session.resource('ec2')
         try:
             svrIterator = resource.instances.filter(Filters=[self.tagFilter])
@@ -133,7 +133,7 @@ class Resource(object):
             for s in servers
         ]
     def list_all_volume(self):
-        from easyun.providers.models import VolumeDetail
+        from easyun.cloud.models import VolumeDetail
         resource = self._session.resource('ec2')
         try:
             volIterator = resource.volumes.filter(Filters=[self.tagFilter])
@@ -165,7 +165,7 @@ class Resource(object):
             raise ex
 
     def get_volume_list(self):
-        from easyun.providers.models import VolumeBrief
+        from easyun.cloud.models import VolumeBrief
         resource = self._session.resource('ec2')
         try:
             volIterator = resource.volumes.filter(Filters=[self.tagFilter])
@@ -184,7 +184,7 @@ class Resource(object):
             raise ex
 
     def list_all_bucket(self):
-        from easyun.providers.models import BucketDetail
+        from easyun.cloud.models import BucketDetail
         s3 = self._session.resource('s3')
         try:
             bucketList = []
@@ -202,7 +202,7 @@ class Resource(object):
             raise ex
 
     def get_bucket_list(self):
-        from easyun.providers.models import BucketBrief
+        from easyun.cloud.models import BucketBrief
         s3 = self._session.resource('s3')
         try:
             bucketList = []
@@ -218,7 +218,7 @@ class Resource(object):
             raise ex
 
     def list_all_dbinstance(self):
-        from easyun.providers.models import DBInstanceDetail
+        from easyun.cloud.models import DBInstanceDetail
         client = self._session.client('rds')
         try:
             dbis = client.describe_db_instances()['DBInstances']
@@ -238,7 +238,7 @@ class Resource(object):
             raise ex
 
     def get_dbinstance_list(self):
-        from easyun.providers.models import DBInstanceBrief
+        from easyun.cloud.models import DBInstanceBrief
         client = self._session.client('rds')
         try:
             dbis = client.describe_db_instances()['DBInstances']
@@ -256,7 +256,7 @@ class Resource(object):
             raise ex
 
     def list_all_loadbalancer(self):
-        from easyun.providers.models import LoadBalancerDetail
+        from easyun.cloud.models import LoadBalancerDetail
         client = self._session.client('elbv2')
         try:
             elbs = client.describe_load_balancers()['LoadBalancers']
@@ -276,7 +276,7 @@ class Resource(object):
             raise ex
 
     def get_loadbalancer_list(self):
-        from easyun.providers.models import LoadBalancerBrief
+        from easyun.cloud.models import LoadBalancerBrief
         client = self._session.client('elbv2')
         try:
             elbs = client.describe_load_balancers()['LoadBalancers']

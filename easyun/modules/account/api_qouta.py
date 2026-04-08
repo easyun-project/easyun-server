@@ -6,25 +6,25 @@
 
 from easyun.common.auth import auth_token
 from easyun.common.models import Datacenter
-from easyun.common.schemas import RegionCodeQuery, MsgOut
+from easyun.common.schemas import MsgOut
 from easyun.common.result import Result
 from easyun.libs.utils import load_json_config
-from easyun.providers import get_account
+from easyun.cloud import get_account
 from .schema import QuotaItem
 from . import bp
 
 
 @bp.get('/quota')
 @bp.auth_required(auth_token)
-@bp.input(RegionCodeQuery, location='query', arg_name='parm')
 @bp.output(QuotaItem(many=True))
 def get_region_quota():
     '''获取指定region的资源配额'''
-    thisRegion = parm['region']
+    from flask import request
+    thisRegion = request.headers.get('X-Region')
     account = get_account()
 
     dcList = [dc.name for dc in Datacenter.query.filter_by(region=thisRegion)]
-    serviceCodes = load_json_config('aws_quota_codes')
+    serviceCodes = load_json_config('aws_quota_codes', 'easyun/cloud/aws/config')
 
     vpcQuotaCodes = [q['quotaCode'] for q in serviceCodes['vpcQuotaCodes']]
     networkQuotas = account.get_quotas('vpc', vpcQuotaCodes, region=thisRegion)

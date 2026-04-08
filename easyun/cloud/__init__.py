@@ -9,21 +9,21 @@ from easyun.common.models import Account, Datacenter
 # Provider registry — 新增 provider 时在这里注册
 _PROVIDERS = {
     'aws': {
-        'cloud_class': 'easyun.providers.aws.AWSCloud',
-        'datacenter_class': 'easyun.providers.aws.datacenter.DataCenter',
-        'account_class': 'easyun.providers.aws.account.AWSAccount',
-        'deploy_env_func': 'easyun.providers.aws.get_aws_deploy_env',
+        'cloud_class': 'easyun.cloud.aws.AWSCloud',
+        'datacenter_class': 'easyun.cloud.aws.datacenter.DataCenter',
+        'account_class': 'easyun.cloud.aws.account.AWSAccount',
+        'deploy_env_func': 'easyun.cloud.aws.get_aws_deploy_env',
     },
     # 'azure': {
-    #     'cloud_class': 'easyun.providers.azure.AzureCloud',
-    #     'datacenter_class': 'easyun.providers.azure.datacenter.DataCenter',
-    #     'deploy_env_func': 'easyun.providers.azure.get_azure_deploy_env',
+    #     'cloud_class': 'easyun.cloud.azure.AzureCloud',
+    #     'datacenter_class': 'easyun.cloud.azure.datacenter.DataCenter',
+    #     'deploy_env_func': 'easyun.cloud.azure.get_azure_deploy_env',
     # },
 }
 
 
 def _import(dotted_path):
-    """动态导入：'easyun.providers.aws.AWSCloud' → AWSCloud 类"""
+    """动态导入：'easyun.cloud.aws.AWSCloud' → AWSCloud 类"""
     module_path, attr_name = dotted_path.rsplit('.', 1)
     from importlib import import_module
     module = import_module(module_path)
@@ -80,3 +80,14 @@ def get_deploy_env(provider='aws'):
         raise NotImplementedError(f'Provider {provider} not supported')
     func = _import(_PROVIDERS[provider]['deploy_env_func'])
     return func()
+
+
+def create_datacenter(name, region, account_id, user=None, provider=None):
+    """创建新的 DataCenter 逻辑容器"""
+    if provider is None:
+        account = Account.query.filter_by(account_id=account_id).first()
+        provider = account.cloud.lower() if account else 'aws'
+    if provider not in _PROVIDERS:
+        raise NotImplementedError(f'Provider {provider} not supported')
+    cls = _import(_PROVIDERS[provider]['datacenter_class'])
+    return cls.create(name=name, region=region, account_id=account_id, user=user)

@@ -80,9 +80,10 @@ class TestAccountEndpoints:
         resp = client.get('/api/v1/account/keypair', headers=_auth_headers(auth_token))
         assert resp.status_code != 422
 
-    def test_quota_requires_region(self, client, auth_token):
-        resp = client.get('/api/v1/account/quota', headers=_auth_headers(auth_token))
-        assert resp.status_code == 422
+    def test_quota_with_region_header(self, client, auth_token):
+        resp = client.get('/api/v1/account/quota',
+                          headers={**_auth_headers(auth_token), 'X-Region': 'us-east-1'})
+        assert resp.status_code not in (401, 404, 405)
 
 
 class TestResponseFormat:

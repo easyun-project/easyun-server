@@ -4,7 +4,7 @@
   @desc:    AWS account-level operations (quota, pricing, regions)
 """
 
-from easyun.providers.base import CloudAccountBase
+from easyun.cloud.base import CloudAccountBase
 from .session import get_easyun_session
 
 
@@ -35,7 +35,7 @@ class AWSAccount(CloudAccountBase):
 
     def list_keypairs(self, region=None, dc_name=None):
         """列出指定 region 下的 keypair"""
-        from easyun.providers.models import KeyPairInfo
+        from easyun.cloud.models import KeyPairInfo
         session = get_easyun_session(dc_name)
         client = session.client('ec2', region_name=region)
         filters = [{'Name': 'tag:Flag', 'Values': [dc_name]}] if dc_name else []
@@ -50,7 +50,7 @@ class AWSAccount(CloudAccountBase):
         ]
 
     def get_keypair(self, key_name, region=None):
-        from easyun.providers.models import KeyPairInfo
+        from easyun.cloud.models import KeyPairInfo
         session = get_easyun_session()
         resource = session.resource('ec2', region_name=region)
         kp = resource.KeyPair(key_name)
@@ -62,7 +62,7 @@ class AWSAccount(CloudAccountBase):
 
     def create_keypair(self, key_name, key_type='rsa', region=None, dc_name=None):
         """创建 keypair，返回 (KeyPairInfo, key_material)"""
-        from easyun.providers.models import KeyPairInfo
+        from easyun.cloud.models import KeyPairInfo
         session = get_easyun_session()
         resource = session.resource('ec2', region_name=region)
         tags = [{'Key': 'Flag', 'Value': dc_name}] if dc_name else []
@@ -77,3 +77,22 @@ class AWSAccount(CloudAccountBase):
         session = get_easyun_session()
         client = session.client('ec2', region_name=region)
         client.delete_key_pair(KeyName=key_name)
+
+    def list_availability_zones(self, region=None):
+        """列出指定 region 的可用区"""
+        session = get_easyun_session()
+        client = session.client('ec2', region_name=region)
+        azs = client.describe_availability_zones()['AvailabilityZones']
+        return [az['ZoneName'] for az in azs]
+
+    def count_vpcs(self, region=None):
+        """统计指定 region 的 VPC 数量"""
+        session = get_easyun_session()
+        resource = session.resource('ec2', region_name=region)
+        return sum(1 for _ in resource.vpcs.all())
+
+    def count_eips(self, region=None):
+        """统计指定 region 的 EIP 数量"""
+        session = get_easyun_session()
+        resource = session.resource('ec2', region_name=region)
+        return sum(1 for _ in resource.vpc_addresses.all())

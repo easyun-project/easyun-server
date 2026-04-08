@@ -7,8 +7,8 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, get_dc_name
-from easyun.providers import get_datacenter
+from easyun.common.schemas import get_dc_name
+from easyun.cloud import get_datacenter
 
 from .schemas import StMsgOut, VolumeModel, VolumeBasic, VolumeDetail, AddVolumeParm, DelVolumeParm, AttachVolParm, DetachVolParm
 
@@ -156,7 +156,7 @@ def add_volume(parms):
 @bp.auth_required(auth_token)
 @bp.input(DelVolumeParm, arg_name='parm')
 @bp.output(StMsgOut)
-def del_volume():
+def del_volume(parm):
     '''删除磁盘(EBS Volume)'''
     try:
         deleteList = []
@@ -181,7 +181,7 @@ def del_volume():
 @bp.input(AttachVolParm, arg_name='parm')
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
-def attach_server():
+def attach_server(parm):
     '''块存储关联云服务器'''
     try:
         dc = get_datacenter(get_dc_name())
@@ -211,7 +211,7 @@ def attach_server():
 @bp.input(DetachVolParm, arg_name='parm')
 @bp.auth_required(auth_token)
 @bp.output(StMsgOut)
-def detach_server():
+def detach_server(parm):
     '''块存储分离云服务器(ec2)'''
     try:
         dc = get_datacenter(get_dc_name())

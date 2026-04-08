@@ -11,7 +11,6 @@ from easyun.common.schemas import TagItem
 
 
 class BucketIdQuery(Schema):
-    dc = String(required=True, metadata={"example": 'Easyun'})
     bkt = String(required=True, validate=Length(0, 30), metadata={"example": 'bktexample17'})
 
 

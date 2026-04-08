@@ -4,7 +4,7 @@
 @LastEditors:
 '''
 
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 
 import os
 import logging
@@ -27,7 +27,7 @@ FLAG = "Easyun"
 # extensions initialization
 db = SQLAlchemy()
 cors = CORS(
-    allow_headers=['Authorization', 'Content-Type', 'X-Datacenter', 'region'],
+    allow_headers=['Authorization', 'Content-Type', 'X-Datacenter', 'X-Region'],
     expose_headers=['Content-Type'],
 )
 migrate = Migrate()
@@ -117,7 +117,7 @@ def register_extensions(app: APIFlask):
 def register_cloud_account(app: APIFlask):
     """注册后端服务器部署的云账号信息"""
     from easyun.common.models import Account
-    from easyun.providers import get_deploy_env
+    from easyun.cloud import get_deploy_env
 
     # 获取 AWS云环境信息
     cloudEvn = get_deploy_env()

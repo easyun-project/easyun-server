@@ -30,7 +30,7 @@ Easyun api docs:
     # openapi.servers
     SERVERS = [
         {'name': 'Development Server', 'url': 'http://127.0.0.1:8443'},
-        {'name': 'Testing Server', 'url': 'http://35.76.66.98:8443'},
+        {'name': 'Testing Server', 'url': 'http://52.69.25.161:8443'},
     ]
 
     # openapi.externalDocs

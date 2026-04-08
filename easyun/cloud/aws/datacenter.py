@@ -30,12 +30,26 @@ class DataCenter(object):
         self._resource = self._session.resource('ec2')
         self._client = self._resource.meta.client
         self.dcName = dc_name
-        self.vpcId = thisDC.vpc_id
-        self.vpc = self._resource.Vpc(self.vpcId)
+        self.vpcId = thisDC.vpc_id if thisDC else None
+        self.vpc = self._resource.Vpc(self.vpcId) if self.vpcId else None
         self.tagFilter = {'Name': 'tag:Flag', 'Values': [dc_name]}
         self.flagTag = {'Key': 'Flag', "Value": dc_name}
         self.resource = Resource(dc_name)
         self.tagging = ResGroupTagging(dc_name)
+
+    @classmethod
+    def create(cls, name, region, account_id, user=None):
+        """创建 DataCenter 逻辑容器（写 DB），返回实例"""
+        from easyun import db
+        from datetime import datetime
+        dc_record = Datacenter(
+            name=name, cloud='AWS', account_id=account_id,
+            region=region, vpc_id=None,
+            create_date=datetime.utcnow(), create_user=user,
+        )
+        db.session.add(dc_record)
+        db.session.commit()
+        return cls(name)
 
     # --- 资源获取 ---
     def get_subnet(self, subnet_id):
@@ -429,7 +443,7 @@ class DataCenter(object):
                     }
                 ],
             )
-            return InternetGateway(self.dcName, newIgw.id)
+            return InternetGateway(newIgw.id, self.dcName)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
 
@@ -445,9 +459,132 @@ class DataCenter(object):
                     {'ResourceType': 'natgateway', "Tags": [self.flagTag, nameTag]}
                 ],
             )
-            return NatGateway(self.dcName, newNat['NatGateway']['NatGatewayId'])
+            return NatGateway(newNat['NatGateway']['NatGatewayId'], self.dcName)
         except ClientError as ex:
             return '%s: %s' % (self.__class__.__name__, str(ex))
+
+    # --- VPC 生命周期 ---
+
+    def create_vpc(self, cidr_block):
+        """创建 VPC 并绑定到当前 DataCenter"""
+        from easyun import db
+        vpc = self._resource.create_vpc(
+            CidrBlock=cidr_block,
+            TagSpecifications=[{'ResourceType': 'vpc', 'Tags': [self.flagTag, {'Key': 'Name', 'Value': 'VPC-' + self.dcName}]}],
+        )
+        vpc.wait_until_available()
+        vpc.modify_attribute(EnableDnsSupport={'Value': True})
+        vpc.modify_attribute(EnableDnsHostnames={'Value': True})
+        # 更新 DB 和实例状态
+        dc_record = Datacenter.query.filter_by(name=self.dcName).first()
+        dc_record.vpc_id = vpc.id
+        db.session.commit()
+        self.vpcId = vpc.id
+        self.vpc = vpc
+        return vpc
+
+    def attach_igw(self, igw_id):
+        """将 IGW 关联到 VPC"""
+        self.vpc.attach_internet_gateway(InternetGatewayId=igw_id)
+
+    def add_route(self, route_table_id, dest_cidr, gateway_id=None, nat_gateway_id=None):
+        """向路由表添加路由"""
+        rt = self._resource.RouteTable(route_table_id)
+        kwargs = {'DestinationCidrBlock': dest_cidr}
+        if gateway_id:
+            kwargs['GatewayId'] = gateway_id
+        if nat_gateway_id:
+            kwargs['NatGatewayId'] = nat_gateway_id
+        rt.create_route(**kwargs)
+
+    def associate_subnet_to_rtb(self, route_table_id, subnet_id):
+        """将子网关联到路由表"""
+        rt = self._resource.RouteTable(route_table_id)
+        rt.associate_with_subnet(SubnetId=subnet_id)
+
+    def delete_nat_gateways(self):
+        """删除 VPC 下所有 NAT Gateway（等待完成）"""
+        natgws = self._client.describe_nat_gateways(
+            Filters=[{'Name': 'tag:Flag', 'Values': [self.dcName]}]
+        ).get('NatGateways', [])
+        ids = []
+        for ng in natgws:
+            if ng.get('State') != 'deleted':
+                self._client.delete_nat_gateway(NatGatewayId=ng['NatGatewayId'])
+                ids.append(ng['NatGatewayId'])
+        if ids:
+            self._client.get_waiter('nat_gateway_deleted').wait(NatGatewayIds=ids)
+        return ids
+
+    def delete_network_acls(self):
+        """删除非默认 Network ACL"""
+        ids = []
+        for acl in self.vpc.network_acls.all():
+            if not acl.is_default:
+                ids.append(acl.id)
+                acl.delete()
+        return ids
+
+    def delete_security_groups(self):
+        """删除非默认安全组"""
+        ids = []
+        for sg in self.vpc.security_groups.all():
+            if sg.group_name != 'default':
+                ids.append(sg.id)
+                sg.delete()
+        return ids
+
+    def release_static_ips(self):
+        """释放所有 EIP"""
+        ids = []
+        for addr in self._client.describe_addresses(
+            Filters=[{'Name': 'tag:Flag', 'Values': [self.dcName]}]
+        ).get('Addresses', []):
+            if addr.get('AssociationId'):
+                self._client.disassociate_address(AssociationId=addr['AssociationId'])
+            self._client.release_address(AllocationId=addr['AllocationId'])
+            ids.append(addr['AllocationId'])
+        return ids
+
+    def delete_subnets(self):
+        """删除所有子网及其网络接口"""
+        ids = []
+        for subnet in self.vpc.subnets.all():
+            ids.append(subnet.id)
+            for eni in subnet.network_interfaces.all():
+                eni.delete()
+            subnet.delete()
+        return ids
+
+    def delete_route_tables(self):
+        """删除非 main 路由表"""
+        ids = []
+        for rt in self.vpc.route_tables.all():
+            if not any(a.get('Main') for a in rt.associations_attribute):
+                ids.append(rt.id)
+                rt.delete()
+        return ids
+
+    def delete_internet_gateways(self):
+        """分离并删除 IGW"""
+        ids = []
+        for igw in self.vpc.internet_gateways.all():
+            self.vpc.detach_internet_gateway(InternetGatewayId=igw.id)
+            ids.append(igw.id)
+            igw.delete()
+        return ids
+
+    def delete_vpc(self):
+        """删除 VPC"""
+        self.vpc.delete()
+
+    def delete_metadata(self):
+        """删除数据库记录"""
+        from easyun import db
+        dc_record = Datacenter.query.filter_by(name=self.dcName).first()
+        if dc_record:
+            db.session.delete(dc_record)
+            db.session.commit()
 
     # --- 参数查询 ---
 
@@ -530,3 +667,7 @@ class DataCenter(object):
         prefix = f"https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name="
         res = cw.list_dashboards()
         return [{'title': d['DashboardName'], 'url': prefix + d['DashboardName']} for d in res.get('DashboardEntries', [])]
+
+    def wait_nat_gateway_available(self, natgw_id):
+        """等待 NAT Gateway 可用"""
+        self._client.get_waiter('nat_gateway_available').wait(NatGatewayIds=[natgw_id])

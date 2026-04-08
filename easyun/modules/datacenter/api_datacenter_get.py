@@ -8,8 +8,8 @@
 from easyun.common.auth import auth_token
 from easyun.common.models import Account
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, get_dc_name, RegionModel, MsgOut
-from easyun.providers import get_cloud, get_datacenter
+from easyun.common.schemas import get_dc_name, RegionModel, MsgOut
+from easyun.cloud import get_cloud, get_datacenter, get_account
 from .schemas import DataCenterBasic, DataCenterModel, RouteTableModel
 from . import bp
 
@@ -56,14 +56,13 @@ def list_datacenter_brief():
 def list_aws_region():
     '''获取可用的Region列表'''
     try:
-        thisAccount: Account = Account.query.first()
-        cloud = get_cloud(thisAccount.account_id, thisAccount.aws_type)
-
-        regionList = cloud.get_region_list('ec2')
-
+        account = get_account()
+        regionList = [
+            {'regionCode': r['regionCode'], 'regionName': r['regionName'].get('eng'), 'countryCode': r['countryCode']}
+            for r in account.list_regions()
+        ]
         resp = Result(detail=regionList, status_code=200)
         return resp.make_resp()
-
     except Exception as ex:
         response = Result(message=str(ex), status_code=2005)
         response.err_resp()
@@ -90,7 +89,7 @@ def get_available_zones():
 @bp.get('/routetable')
 @bp.auth_required(auth_token)
 @bp.output(RouteTableModel(many=True))
-def list_all_route(param):
+def list_all_route():
     '''获取 全部路由表(route table)信息'''
     dcName = get_dc_name()
     try:

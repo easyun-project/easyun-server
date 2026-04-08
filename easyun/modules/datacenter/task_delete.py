@@ -1,258 +1,106 @@
 # -*- coding: utf-8 -*-
 """
-  @module:  DataCenter Task
-  @desc:    create datacenter tasks including add new vpc, subnet, securitygroup, etc.
-  @auth:    aleck
+  @module:  DataCenter Task - Delete
+  @desc:    delete datacenter and all associated resources
 """
 
-from easyun.common.schemas import get_dc_name
-from easyun.providers.aws.session import get_easyun_session
+from easyun.cloud import get_datacenter
 from botocore.exceptions import ClientError
-from easyun import db
-from easyun.common.models import Datacenter
 from . import logger
 
 
 def delete_dc_task(self, parm, region):
-    """
-    删除 DataCenter 异步任务
-    按步骤进行，步骤失败直接返回
-    :return {message,status_code,http_code:200}
-    """
+    """删除 DataCenter 异步任务"""
     try:
-        # Datacenter basic attribute define
-        dcName = get_dc_name()
-        session = get_easyun_session()
-        resource_ec2 = session.resource('ec2', region_name=region)
-        thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
-        thisVPC = resource_ec2.Vpc(thisDC.vpc_id)
+        dcName = parm['dcName']
+        dc = get_datacenter(dcName)
+
+        def progress(pct, stage):
+            logger.info(stage)
+            self.update_state(state='PROGRESS', meta={'current': pct, 'total': 100, 'stage': stage})
+
+        # 检查 VPC 是否存在
         try:
-            # 'State': 'pending'|'available'
-            vpcState = thisVPC.state
+            vpcState = dc.vpc.state
         except ClientError:
             vpcState = None
-            stage = f"[VPC] {thisDC.vpc_id}  does not exist."
-            logger.info(stage)
-            self.update_state(
-                state='PROGRESS', meta={'current': 80, 'total': 100, 'stage': stage}
-            )
+            progress(80, f"[VPC] {dc.vpcId} does not exist")
 
         if vpcState == 'available':
-            # Step 0:  Check the prerequisites for deleting a datacenter
-            # when prerequisites check Ok
-            logger.info(self.id)
             self.update_state(state='STARTED', meta={'current': 1, 'total': 100})
 
-            # Step 1: delete NAT Gateway in the VPC
+            # Step 1: NAT Gateways
             try:
-                natgwList = []
-                natgws = resource_ec2.meta.client.describe_nat_gateways(
-                    Filters=[
-                        {'Name': 'tag:Flag', 'Values': [dcName]},
-                    ]
-                )['NatGateways']
-                for natgw in natgws:
-                    if natgw.get('State') != 'deleted':
-                        delNatGw = resource_ec2.meta.client.delete_nat_gateway(
-                            NatGatewayId=natgw['NatGatewayId']
-                        )['NatGatewayId']
-
-                    stage = f"[NatGateway] {natgw['NatGatewayId']} deleting ..."
-                    logger.info(stage)
-                    self.update_state(
-                        state='PROGRESS', meta={'current': 5, 'total': 100, 'stage': stage}
-                    )
-
-                    # waite natgw deleted
-                    waiter = resource_ec2.meta.client.get_waiter('nat_gateway_deleted')
-                    waiter.wait(NatGatewayIds=[natgw['NatGatewayId']])
-
-                    natgwList.append(delNatGw)
-
-                stage = f"[NatGateway] {natgwList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 15, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.delete_nat_gateways()
+                progress(15, f"[NatGateway] {ids} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2110,
-                    # 'http_status_code': 400,
-                }
+                return {'message': str(ex), 'status_code': 2110}
 
-            # You must detach or delete all gateways and resources that are associated with the VPC before you can delete it.
-            # Step 2: delete all network_acls associated with the VPC (except the default one)
+            # Step 2: Network ACLs
             try:
-                aclList = []
-                for netacl in thisVPC.network_acls.all():
-                    if not netacl.is_default:
-                        aclList.append(netacl.id)
-                        netacl.delete()
-
-                stage = f"[NetworkACL] {aclList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 25, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.delete_network_acls()
+                progress(25, f"[NetworkACL] {ids} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2110,
-                }
+                return {'message': str(ex), 'status_code': 2110}
 
-            # Step 3: delete all security groups associated with the VPC (except the default one)
+            # Step 3: Security Groups
             try:
-                sgList = []
-                for sg in thisVPC.security_groups.all():
-                    if sg.group_name != 'default':
-                        sgList.append(sg.id)
-                        sg.delete()
-
-                stage = f"[SecurityGroup] {sgList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 35, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.delete_security_groups()
+                progress(35, f"[SecurityGroup] {ids} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2120,
-                }
+                return {'message': str(ex), 'status_code': 2120}
 
-            # Step 4: delete all eip associated with the datacenter
+            # Step 4: Static IPs
             try:
-                eipList = []
-
-                stage = f"[StaticIP] {eipList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 40, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.release_static_ips()
+                progress(40, f"[StaticIP] {ids} released")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2130,
-                }
+                return {'message': str(ex), 'status_code': 2130}
 
-            # Step 5: delete requested_vpc_peering_connections associated with the VPC
-
-            # Step 5: delete all subnets and network_interfaces associated with the VPC
+            # Step 5: Subnets
             try:
-                subnetList = []
-                for subnet in thisVPC.subnets.all():
-                    subnetList.append(subnet.id)
-                    for interface in subnet.network_interfaces.all():
-                        interface.delete()
-                    subnet.delete()
-
-                stage = f"[Subnet] {subnetList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 50, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.delete_subnets()
+                progress(50, f"[Subnet] {ids} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2150,
-                }
+                return {'message': str(ex), 'status_code': 2150}
 
-            # Step 6: delete all route tables associated with the VPC (except the default one)
+            # Step 6: Route Tables
             try:
-                rtbList = []
-                for rtb in thisVPC.route_tables.all():
-                    assList = [a['Main'] for a in rtb.associations_attribute]
-                    if True not in assList:
-                        # 自动创建的main route table随vpc一起删
-                        rtbList.append(rtb.id)
-                        rtb.delete()
-
-                stage = f"[RouteTable] {rtbList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 60, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.delete_route_tables()
+                progress(60, f"[RouteTable] {ids} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2160,
-                }
+                return {'message': str(ex), 'status_code': 2160}
 
-            # Step 7: delete internet_gateways associated with the VPC
+            # Step 7: Internet Gateways
             try:
-                igwList = []
-                for igw in thisVPC.internet_gateways.all():
-                    thisVPC.detach_internet_gateway(InternetGatewayId=igw.id)
-                    igwList.append(igw.id)
-                    igw.delete()
-
-                stage = f"[InternetGateway] {igwList} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 70, 'total': 100, 'stage': stage}
-                )
-
+                ids = dc.delete_internet_gateways()
+                progress(70, f"[InternetGateway] {ids} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2170,
-                }
+                return {'message': str(ex), 'status_code': 2170}
 
-            # Step 8: delete  easyun vpc, including:
+            # Step 8: VPC
             try:
-                thisVPC.delete()
-                stage = f"[VPC] {thisVPC.id} deleted"
-                logger.info(stage)
-                self.update_state(
-                    state='PROGRESS', meta={'current': 80, 'total': 100, 'stage': stage}
-                )
-
+                dc.delete_vpc()
+                progress(80, f"[VPC] {dc.vpcId} deleted")
             except Exception as ex:
-                return {
-                    'message': str(ex),
-                    'status_code': 2180,
-                }
+                return {'message': str(ex), 'status_code': 2180}
 
-        # step 9: Update local Datacenter metadata
+        # Step 9: DB metadata
         try:
-            # curr_user = user
-            db.session.delete(thisDC)
-            db.session.commit()
-
-            stage = f"[DataCenter]' {thisDC.name} metadata updated."
-            logger.info(stage)
-            self.update_state(
-                state='PROGRESS', meta={'current': 95, 'total': 100, 'stage': stage}
-            )
-
+            dc.delete_metadata()
+            progress(95, f"[DataCenter] {dcName} metadata deleted")
         except Exception as ex:
-            return {'message': str(ex), 'status_code': 2190, 'http_status_code': 400}
+            return {'message': str(ex), 'status_code': 2190}
 
-        # step 10: Delete Datacenter name list from DynamoDB
-        try:
-            # 待实现
-            stage = f"[DataCenter]' {thisDC.name} deleted successfully !"
-            logger.info(stage)
-            self.update_state(
-                state='SUCCESS', meta={'current': 100, 'total': 100, 'stage': stage}
-            )
-
-        except Exception as ex:
-            return {'message': str(ex), 'status_code': 2191, 'http_status_code': 400}
-
+        # Done
+        stage = f"[DataCenter] {dcName} deleted successfully !"
+        logger.info(stage)
+        self.update_state(state='SUCCESS', meta={'current': 100, 'total': 100, 'stage': stage})
         return {
             'detail': {
-                'dcName': thisDC.name,
-                'regionCode': thisDC.region,
-                'vpcId': thisDC.vpc_id,
-                'accountId': thisDC.account_id,
+                'dcName': dcName, 'regionCode': dc.dcName,
+                'vpcId': dc.vpcId,
             }
         }
     except Exception as ex:
-        return {'message': str(ex), 'status_code': 2199, 'http_status_code': 400}
+        return {'message': str(ex), 'status_code': 2199}

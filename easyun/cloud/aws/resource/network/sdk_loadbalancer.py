@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from ...session import get_easyun_session
 
 
-from easyun.providers.base import LoadBalancerBase
+from easyun.cloud.base import LoadBalancerBase
 
 class LoadBalancer(LoadBalancerBase):
     def __init__(self, elb_id, dc_name=None):

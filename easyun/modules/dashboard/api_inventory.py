@@ -5,13 +5,13 @@
   @auth:    aleck
 """
 
-from easyun.providers import get_datacenter
+from easyun.cloud import get_datacenter
 from apiflask.fields import String, List, Nested, Boolean, Date
 from apiflask.validators import Length, OneOf
 from easyun.common.result import Result
+from easyun.common.schemas import get_dc_name
 from easyun.common.auth import auth_token
 from easyun.common.models import Account, Datacenter
-from easyun.common.schemas import DcNameQuery
 from .schemas import InventoryTypeItem
 from . import bp, DeployRegion
 

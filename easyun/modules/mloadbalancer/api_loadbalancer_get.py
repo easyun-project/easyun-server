@@ -6,8 +6,8 @@
 
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery
-from easyun.providers import get_datacenter
+from easyun.common.schemas import get_dc_name
+from easyun.cloud import get_datacenter
 from .schemas import ElbDetailItem, ElbBriefItem, ElbDetail
 from . import bp
 

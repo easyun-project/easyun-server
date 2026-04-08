@@ -6,7 +6,7 @@
 
 from botocore.exceptions import ClientError
 from ...session import get_easyun_session
-from easyun.providers.base import ComputeInstanceBase
+from easyun.cloud.base import ComputeInstanceBase
 
 
 class EC2Server(ComputeInstanceBase):
@@ -52,7 +52,7 @@ class EC2Server(ComputeInstanceBase):
 
             association = inst_res.get('NetworkInterfaces', [{}])[0].get('Association') if inst_res.get('NetworkInterfaces') else None
 
-            from easyun.providers.models import ServerFullDetail
+            from easyun.cloud.models import ServerFullDetail
             return ServerFullDetail(
                 id=self.id,
                 name=self.tagName,
@@ -170,7 +170,7 @@ class EC2Server(ComputeInstanceBase):
     @classmethod
     def list_images(cls, session, arch=None, os_type=None):
         """列出可用 AMI 列表"""
-        from easyun.providers.models import ImageInfo
+        from easyun.cloud.models import ImageInfo
         from .ec2_ami import AMI_Windows, AMI_Linux
         amiList = AMI_Windows.get(arch, []) if os_type == 'windows' else AMI_Linux.get(arch, [])
         if not amiList:
@@ -201,7 +201,7 @@ class EC2Server(ComputeInstanceBase):
     @classmethod
     def list_instance_types(cls, session, arch=None, family=None):
         """列出可用实例规格"""
-        from easyun.providers.models import InstanceTypeInfo
+        from easyun.cloud.models import InstanceTypeInfo
         from .ec2_instype import get_family_descode
         client = session.client('ec2')
         filters = [

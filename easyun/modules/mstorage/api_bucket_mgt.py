@@ -7,8 +7,8 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, get_dc_name
-from easyun.providers import get_datacenter
+from easyun.common.schemas import get_dc_name
+from easyun.cloud import get_datacenter
 from .schemas import StMsgOut, BucketBasic, BucketModel, AddBucketParm, BucketPropertyParm, BucketPublicParm, BucketIdQuery, BucketIdParm, BucketDetail, BucketPropertyOut, BucketPermissionOut
 
 
@@ -80,7 +80,7 @@ def get_bkt_detail(bucket_id):
 @bp.auth_required(auth_token)
 @bp.input(AddBucketParm, arg_name='parm')
 @bp.output(BucketBasic)
-def add_bucket_s3():
+def add_bucket_s3(parm):
     '''新增存储桶(S3 Bucket)'''
     dcName = get_dc_name()
     bucketId = parm['bucketId']
@@ -107,7 +107,7 @@ def add_bucket_s3():
 @bp.auth_required(auth_token)
 @bp.input(AddBucketParm, arg_name='parm')
 @bp.output(BucketBasic)
-def add_bucket_cc():
+def add_bucket_cc(parm):
     '''新增存储桶(S3 Bucket)[Cloudcontrol]'''
     bucketId = parm['bucketId']
     bktRegion = parm['bktRegion']
@@ -130,7 +130,7 @@ def add_bucket_cc():
 @bp.auth_required(auth_token)
 @bp.input(BucketIdParm, arg_name='parm')
 @bp.output(StMsgOut)
-def delete_bucket():
+def delete_bucket(parm):
     '''删除存储桶(S3 Bucket)'''
     dcName = get_dc_name()
     bucketId = parm['bucketId']
@@ -197,7 +197,7 @@ def modify_bucket_policy(bucket_id, parms):
 @bp.output(StMsgOut)
 def vaildate_bkt(parms):
     '''查询存储桶名称全局范围是否可用'''
-    dcName = parms['dc']
+    dcName = get_dc_name()
     bucketId = parms['bkt']
     try:
         dc = get_datacenter(dcName)
@@ -220,7 +220,7 @@ def vaildate_bkt(parms):
 # @bp.input(BucketIdQuery, location='query')
 # def get_bkt_public_block(parms):
 #     '''获取Bucket Public Block Policy信息'''
-#     dcName = parms['dc']
+#     dcName = get_dc_name()
 #     bucketId = parms['bkt']
 #     try:
 #         bkt = dc.get_bucket(bucketId)

@@ -5,11 +5,11 @@
 """
 
 from easyun.libs.utils import load_json_config
-from easyun.providers.aws.management.sdk_pricing import AwsPricing
+from easyun.cloud.aws.management.sdk_pricing import AwsPricing
 
 
 # 获取 EC2 Instance Family 列表
-Instance_Family = load_json_config('aws_ec2_family')
+Instance_Family = load_json_config('aws_ec2_family', 'easyun/cloud/aws/config')
 
 '''全部受支持的Instance Tpye列表'''
 InstanceTypeALL = AwsPricing().get_attribute_values('AmazonEC2', 'instanceType')

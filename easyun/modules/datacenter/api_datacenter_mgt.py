@@ -5,8 +5,6 @@
   @auth:    aleck
 """
 
-from easyun.common.schemas import get_dc_name
-from easyun.providers.aws.session import get_easyun_session
 from botocore.exceptions import ClientError
 from flask import current_app
 from easyun import log
@@ -16,7 +14,7 @@ from easyun.common.models import Datacenter, Account
 from easyun.common.schemas import TaskIdQuery
 from easyun.libs.utils import len_iter
 from easyun.libs.task_manager import run_async, get_task
-from easyun.providers import get_account
+from easyun.cloud import get_account, get_datacenter
 from easyun.common.dc_utils import set_boto3_region
 from .schemas import (
     DefaultParmQuery,
@@ -33,12 +31,12 @@ from . import bp, logger
 
 @bp.get('/default')
 @bp.auth_required(auth_token)
-@bp.input(DefaultParmQuery, location='query', arg_name='parm')
 @bp.output(DefaultParmsOut, description='Get DataCenter Parameters')
-def get_default_parms(parm):
+def get_default_parms():
     '''获取创建云数据中心默认参数'''
-    inputName = get_dc_name()
-    inputRegion = parm.get('region')
+    from flask import request
+    inputName = request.args.get('dcName') or request.headers.get('X-Datacenter') or 'NewDC'
+    inputRegion = request.headers.get('X-Region')
     try:
         # Check if the DC Name is available
         thisDC: Datacenter = Datacenter.query.filter_by(name=inputName).first()
@@ -55,10 +53,8 @@ def get_default_parms(parm):
             inputRegion = curr_account.get_region()
 
         # get az list
-        session = get_easyun_session()
-        client_ec2 = session.client('ec2', region_name=inputRegion)
-        azs = client_ec2.describe_availability_zones()
-        azList = [az['ZoneName'] for az in azs['AvailabilityZones']]
+        account = get_account()
+        azList = account.list_availability_zones(region=inputRegion)
 
         # define default vpc parameters
         defaultVPC = {
@@ -174,16 +170,14 @@ def get_default_parms(parm):
 @bp.input(AddDataCenterParm, arg_name='parm')
 @log.api_error(logger)
 @bp.output(DcTaskOut)
-def create_dc_async():
+def create_dc_async(parm):
     '''创建 Datacenter 及基础资源[异步]'''
-    dcName = get_dc_name()
+    dcName = parm['dcName']
     dcRgeion = parm['dcRegion']
+    accountId = parm.get('accountId') or Account.query.first().account_id
 
     # Check the prerequisites before create datacenter task
     try:
-        session = get_easyun_session()
-        resource_ec2 = session.resource('ec2', region_name=dcRgeion)
-
         # Check if the DC Name is available
         thisDC: Datacenter = Datacenter.query.filter_by(name=dcName).first()
         if thisDC is not None:
@@ -191,14 +185,13 @@ def create_dc_async():
         # Check if VPC quota is enough
         account = get_account()
         vpcQuota = account.get_quota('vpc', 'L-F678F1CE', region=dcRgeion).get('quotaValue', 0)
-        vpcIter = resource_ec2.vpcs.all()
-        if len_iter(vpcIter) >= int(vpcQuota):
+        if account.count_vpcs(region=dcRgeion) >= int(vpcQuota):
             raise ValueError('The VPCs per Region limit has been reached')
-        # Check if EIP quota is enough
-        eipQuota = account.get_quota('ec2', 'L-0263D0A3', region=dcRgeion).get('quotaValue', 0)
-        eipIter = resource_ec2.vpc_addresses.all()
-        if len_iter(eipIter) >= int(eipQuota):
-            raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
+        # Check if EIP quota is enough (only when creating NAT Gateway)
+        if parm.get('createNatGW'):
+            eipQuota = account.get_quota('ec2', 'L-0263D0A3', region=dcRgeion).get('quotaValue', 0)
+            if account.count_eips(region=dcRgeion) >= int(eipQuota):
+                raise ValueError('The EC2-VPC Elastic IPs limit has been reached')
 
     except Exception as ex:
         logger.error('[DataCenter]' + str(ex))
@@ -228,9 +221,9 @@ def create_dc_async():
 @bp.input(DelDataCenterParm, arg_name='parm')
 @log.api_error(logger)
 @bp.output(DcTaskOut)
-def delete_dc_async():
+def delete_dc_async(parm):
     '''删除 Datacenter 及基础资源[异步]'''
-    dcName = get_dc_name()
+    dcName = parm['dcName']
     isForceDel = parm.get('isForceDel')
     # Check the prerequisites before create datacenter task
     try:
@@ -295,7 +288,7 @@ def delete_dc_async():
 @bp.auth_required(auth_token)
 @bp.input(TaskIdQuery, location='query', arg_name='parm')
 @bp.output(DataCenterModel)
-def get_task_result():
+def get_task_result(parm):
     '''获取异步任务执行结果'''
     task_id = parm['id'].replace('_', '-')
     try:

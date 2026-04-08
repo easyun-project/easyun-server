@@ -10,9 +10,9 @@ from easyun import db
 from easyun.common.result import Result
 from easyun.common.auth import auth_token
 from easyun.common.models import KeyStore
-from easyun.common.schemas import DcNameQuery, get_dc_name
+from easyun.common.schemas import get_dc_name
 from easyun.common.dc_utils import query_dc_region
-from easyun.providers import get_account
+from easyun.cloud import get_account
 from .schema import KeypairParms, KeypairOut, KeyPairDelIn
 from . import bp
 
@@ -71,7 +71,7 @@ def get_keypair(key_name):
 @bp.auth_required(auth_token)
 @bp.input(KeypairParms, arg_name='parm')
 @bp.output(KeypairOut)
-def add_keypair():
+def add_keypair(parm):
     '''为指定数据中心添加keypair'''
     dcName = get_dc_name()
     keyName = parm['keyName']
@@ -94,7 +94,7 @@ def add_keypair():
 @bp.auth_required(auth_token)
 @bp.input(KeyPairDelIn, arg_name='parm')
 @bp.output(KeypairOut)
-def del_keypair():
+def del_keypair(parm):
     '''从指定数据中心删除keypair'''
     dcName = get_dc_name()
     keyName = parm['keyName']

@@ -8,9 +8,9 @@
 from apiflask import APIBlueprint
 from easyun.common.auth import auth_token
 from easyun.common.result import Result
-from easyun.common.schemas import DcNameQuery, get_dc_name
+from easyun.common.schemas import get_dc_name
 from .schemas import AddIntGateway, AddNatGateway, GatewayModel, DcMsgOut
-from easyun.providers import get_datacenter
+from easyun.cloud import get_datacenter
 
 
 bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')
@@ -20,7 +20,7 @@ bp = APIBlueprint('Gateway', __name__, url_prefix='/gateway')
 @bp.auth_required(auth_token)
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 @bp.output(GatewayModel(many=True))
-def list_all_igw(param):
+def list_all_igw():
     '''获取全部Internet网关(igw)信息'''
     dcName = get_dc_name()
     try:
@@ -37,7 +37,7 @@ def list_all_igw(param):
 @bp.auth_required(auth_token)
 @bp.input(AddIntGateway, arg_name='parm')
 @bp.output(GatewayModel)
-def create_intgateway():
+def create_intgateway(parm):
     '''新建 Internet Gateway'''
     dcName = get_dc_name()
     tagName = parm['tagName']
@@ -55,7 +55,7 @@ def create_intgateway():
 @bp.auth_required(auth_token)
 # @output(SubnetsOut, description='List DataCenter Subnets Resources')
 @bp.output(GatewayModel(many=True))
-def list_all_natgw(param):
+def list_all_natgw():
     '''获取全部NAT网关(natgw)信息'''
     dcName = get_dc_name()
     try:
@@ -72,7 +72,7 @@ def list_all_natgw(param):
 @bp.auth_required(auth_token)
 @bp.input(AddNatGateway, arg_name='parm')
 @bp.output(GatewayModel)
-def create_natgateway():
+def create_natgateway(parm):
     '''新建 NAT Gateway'''
     dcName = get_dc_name()
     connectType = parm['connectType']
